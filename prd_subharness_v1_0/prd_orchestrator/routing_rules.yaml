@@ -1,0 +1,57 @@
+routing_rules:
+  version: "1.0"
+
+  keyword_routes:
+    prd_core_harness:
+      - "目标"
+      - "范围"
+      - "背景"
+      - "用户"
+      - "风险"
+      - "non-goal"
+      - "scope"
+      - "persona"
+
+    requirement_harness:
+      - "需求"
+      - "功能"
+      - "C-EARS"
+      - "验收"
+      - "应当"
+      - "不得"
+      - "验证码"
+      - "登录"
+
+    screen_state_harness:
+      - "页面"
+      - "状态"
+      - "错误"
+      - "失败"
+      - "重试"
+      - "文案"
+      - "可访问性"
+      - "loading"
+      - "empty"
+
+    metrics_events_harness:
+      - "指标"
+      - "埋点"
+      - "事件"
+      - "baseline"
+      - "target"
+      - "漏斗"
+      - "实验"
+      - "p95"
+
+    release_ops_harness:
+      - "发布"
+      - "灰度"
+      - "回滚"
+      - "监控"
+      - "客服"
+      - "FAQ"
+      - "运营"
+
+  default_route_if_unmatched:
+    action: "open_question"
+    owner: "prd_core_harness"

@@ -1,0 +1,54 @@
+dependency_graph:
+  version: "1.0"
+  default_edges:
+    - from_type: "structured_source_baseline"
+      to_document: "runs/<run-id>/prd_orchestrator/source_extraction/sub_harness_inputs/*.yaml"
+      relation: "creates_sub_harness_input_slices"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/requirements.yaml"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/screens.yaml"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/metrics.yaml"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/events.yaml"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/release-plan.md"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "requirement"
+      to_document: "product-spec/PRD.md"
+      relation: "projects_to_prd"
+
+    - from_type: "requirement"
+      to_document: "product-spec/screens.yaml"
+      relation: "may_affect_screen"
+
+    - from_type: "requirement"
+      to_document: "product-spec/traceability.md"
+      relation: "requires_trace"
+
+    - from_type: "screen"
+      to_document: "product-spec/traceability.md"
+      relation: "requires_trace"
+
+    - from_type: "metric"
+      to_document: "product-spec/events.yaml"
+      relation: "requires_event"
+
+    - from_type: "metric"
+      to_document: "product-spec/traceability.md"
+      relation: "requires_trace"
+
+    - from_type: "release"
+      to_document: "product-spec/PRD.md"
+      relation: "projects_to_prd"

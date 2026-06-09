@@ -1,0 +1,29 @@
+harness_contract:
+  id: "prd_core_harness"
+  name: "PRD Core Harness"
+  version: "1.0"
+  owns: "背景、问题、用户、目标、范围、非目标、风险、开放问题。"
+  not_owns: "C-EARS 细节、页面状态、指标埋点、发布灰度。"
+  required_outputs:
+    - "patch_report"
+    - "change_patch"
+    - "impact_analysis"
+    - "human_review_report"
+  authority_boundary:
+    llm_can_generate: "candidate"
+    validator_can_block: true
+    human_review_required_for_high_risk: true
+  run_lifecycle:
+    human_review_stage:
+      required: true
+      review_artifacts:
+        - "run_manifest"
+        - "candidate_outputs"
+        - "human_review_report"
+        - "validator_report"
+        - "impact_analysis"
+        - "review_decision"
+      approval_required_before:
+        - "candidate_to_confirmed"
+        - "write_instance_product_spec"
+        - "close_open_question"

@@ -1,0 +1,46 @@
+traceability_profile:
+  chain:
+    - "Goal"
+    - "Requirement"
+    - "Screen"
+    - "Event"
+    - "Acceptance"
+    - "Test"
+    - "Monitoring"
+
+  coverage_status:
+    - "covered"
+    - "partial"
+    - "uncovered"
+    - "blocked"
+    - "deprecated"
+
+  impact_analysis_required_for:
+    - "requirement_change"
+    - "screen_change"
+    - "metric_change"
+    - "event_change"
+    - "release_change"
+    - "delete_item"
+
+  rule_mappings:
+    - rule_id: "TRACE-CHAIN-001"
+      natural_language: "关键目标到需求、页面、事件、验收、测试、监控之间应能形成追踪链。"
+      machine_mapping:
+        check_type: "trace_chain_coverage"
+        chain_from: "traceability_profile.chain"
+      human_review_prompt: "从目标到监控是否能追通？哪里断了？"
+
+    - rule_id: "TRACE-IMPACT-002"
+      natural_language: "需求、页面、指标、事件、发布或删除变更必须生成 impact_analysis 和 partial_rerun_plan。"
+      machine_mapping:
+        check_type: "impact_required_for_change_types"
+        change_types_from: "traceability_profile.impact_analysis_required_for"
+      human_review_prompt: "变更影响是否覆盖了所有下游 harness？"
+
+    - rule_id: "TRACE-COVERAGE-003"
+      natural_language: "覆盖状态必须使用 allowed coverage_status；非 covered 状态必须解释原因。"
+      machine_mapping:
+        check_type: "coverage_status_allowed_and_reasoned"
+        allowed_values_from: "traceability_profile.coverage_status"
+      human_review_prompt: "partial、uncovered、blocked 的原因和负责人是否明确？"

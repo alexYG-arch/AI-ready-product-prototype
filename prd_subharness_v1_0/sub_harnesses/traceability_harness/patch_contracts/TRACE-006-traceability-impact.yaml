@@ -1,0 +1,16 @@
+patch_contract:
+  patch_id: "TRACE-006-traceability-impact"
+  title: "TRACE-006: 生成追踪矩阵、影响分析和局部重跑计划。"
+  status: "draft"
+  goal:
+    - "TRACE-006: 生成追踪矩阵、影响分析和局部重跑计划。"
+  allowed_files:
+    - "product-spec/"
+    - "prd_orchestrator/"
+    - "sub_harnesses/"
+  forbidden_files:
+    - "product-spec/legacy_prd.md"
+  done_when:
+    - "patch_report written"
+    - "change_patch written"
+    - "impact_analysis written"

@@ -1,0 +1,27 @@
+harness_contract:
+  id: "release_ops_harness"
+  name: "Release Ops Harness"
+  version: "1.0"
+  owns: "灰度、监控、回滚、运营、客服、发布条件。"
+  not_owns: "需求语句、页面状态、埋点口径。"
+  required_outputs:
+    - "patch_report"
+    - "change_patch"
+    - "impact_analysis"
+  authority_boundary:
+    llm_can_generate: "candidate"
+    validator_can_block: true
+    human_review_required_for_high_risk: true
+  run_lifecycle:
+    human_review_stage:
+      required: true
+      review_artifacts:
+        - "run_manifest"
+        - "candidate_outputs"
+        - "validator_report"
+        - "impact_analysis"
+        - "review_decision"
+      approval_required_before:
+        - "candidate_to_confirmed"
+        - "write_instance_product_spec"
+        - "close_open_question"

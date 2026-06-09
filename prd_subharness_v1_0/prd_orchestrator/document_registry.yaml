@@ -1,0 +1,97 @@
+document_registry:
+  version: "1.0"
+  documents:
+    - document_id: "DOC-STRUCTURED-SOURCE-BASELINE"
+      path: "runs/<run-id>/prd_orchestrator/source_extraction/structured_source_baseline.yaml"
+      doc_type: "source_prd_structured_extraction_baseline"
+      authority_role: "reviewed_source_input_baseline"
+      writable_by:
+        - "prd_orchestrator"
+      fact_promotion_requires_review_decision: true
+      consumed_by:
+        - "prd_core_harness"
+        - "requirement_harness"
+        - "screen_state_harness"
+        - "metrics_events_harness"
+        - "release_ops_harness"
+        - "traceability_harness"
+        - "projection_sync_harness"
+
+    - document_id: "DOC-STRUCTURED-SOURCE-SLICES"
+      path: "runs/<run-id>/prd_orchestrator/source_extraction/sub_harness_inputs/*.yaml"
+      doc_type: "source_prd_sub_harness_input_slice"
+      authority_role: "reviewed_source_input_slice"
+      writable_by:
+        - "prd_orchestrator"
+      fact_promotion_requires_review_decision: true
+      consumed_by:
+        - "target_sub_harness"
+
+    - document_id: "DOC-PRD"
+      path: "product-spec/PRD.md"
+      doc_type: "narrative_prd_projection"
+      authority_role: "human_readable_projection"
+      writable_by:
+        - "projection_sync_harness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-REQ"
+      path: "product-spec/requirements.yaml"
+      doc_type: "requirements_fact_store"
+      authority_role: "structured_requirement_fact_store"
+      writable_by:
+        - "requirement_harness"
+
+    - document_id: "DOC-SCREENS"
+      path: "product-spec/screens.yaml"
+      doc_type: "screen_semantic_model"
+      authority_role: "screen_fact_store"
+      writable_by:
+        - "screen_state_harness"
+
+    - document_id: "DOC-METRICS"
+      path: "product-spec/metrics.yaml"
+      doc_type: "metric_model"
+      authority_role: "metric_fact_store"
+      writable_by:
+        - "metrics_events_harness"
+
+    - document_id: "DOC-EVENTS"
+      path: "product-spec/events.yaml"
+      doc_type: "event_model"
+      authority_role: "event_fact_store"
+      writable_by:
+        - "metrics_events_harness"
+
+    - document_id: "DOC-TRACE"
+      path: "product-spec/traceability.md"
+      doc_type: "traceability_projection"
+      authority_role: "traceability_index"
+      writable_by:
+        - "traceability_harness"
+
+    - document_id: "DOC-TECH"
+      path: "product-spec/tech-design.md"
+      doc_type: "tech_design_projection"
+      authority_role: "engineering_projection"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-TEST"
+      path: "product-spec/test-plan.md"
+      doc_type: "test_plan_projection"
+      authority_role: "qa_projection"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-ANALYTICS"
+      path: "product-spec/analytics-spec.md"
+      doc_type: "analytics_projection"
+      authority_role: "analytics_projection"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-RELEASE"
+      path: "product-spec/release-plan.md"
+      doc_type: "release_projection"
+      authority_role: "release_projection"
+      writable_by:
+        - "release_ops_harness"
+      forbidden_as_fact_source: true

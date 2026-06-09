@@ -1,0 +1,76 @@
+automation_policy:
+  default_level: "assisted"
+
+  levels:
+    manual:
+      level: 0
+      chinese_name: "手动模式"
+      description: "人指定 patch，AI 只执行。"
+
+    assisted:
+      level: 1
+      chinese_name: "辅助自动化"
+      description: "LLM 提候选，规则和 validator 校验，人批准高风险。"
+      default: true
+
+    guarded_auto:
+      level: 2
+      chinese_name: "受控自动"
+      description: "低风险同步可自动执行，但必须通过 validators。"
+
+    full_auto:
+      level: 3
+      chinese_name: "完全自动"
+      default_enabled: false
+
+  human_review_required_if:
+    - "delete_item"
+    - "p0_p1_requirement_changed"
+    - "candidate_to_confirmed"
+    - "metric_target_confirmed"
+    - "proposed_api_to_existing"
+    - "open_question_closed"
+    - "cross_document_authority_change"
+
+  run_isolation:
+    harness_package_is_read_only: true
+    instance_root_required_for_write_commands: true
+    runtime_outputs_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/"
+    approved_artifacts_default_write_under: "prd_instances/<instance_id>/outputs/approved_artifacts/<run_id>/"
+    approved_outputs_must_write_under: "prd_instances/<instance_id>/product-spec/"
+    review_decisions_must_write_under: "prd_instances/<instance_id>/prd_orchestrator/review_decisions/"
+    product_spec_write_requires_explicit_flag: true
+    forbidden_runtime_write_targets:
+      - "prd_subharness_v1_0/prd_orchestrator/impact_candidates/"
+      - "prd_subharness_v1_0/prd_orchestrator/change_patch_candidates/"
+      - "prd_subharness_v1_0/prd_orchestrator/impact_analysis/"
+      - "prd_subharness_v1_0/prd_orchestrator/partial_rerun_plans/"
+      - "prd_subharness_v1_0/sub_harnesses/*/reports/"
+
+  human_review_stage:
+    required_for_each_sub_harness_run: true
+    candidate_status_before_review: "candidate_not_approved"
+    approved_status_requires_review_decision: true
+    review_artifacts:
+      - "run_manifest"
+      - "candidate_outputs"
+      - "validator_report"
+      - "impact_analysis"
+      - "partial_rerun_plan"
+      - "review_decision"
+    review_decision_record:
+      required_fields:
+        - "artifact_relpath"
+        - "artifact_sha256"
+        - "decision"
+        - "reviewer"
+        - "reviewed_at"
+      allowed_decisions:
+        - "approved"
+        - "rejected"
+        - "changes_requested"
+    promotion_gate:
+      requires_approved_decision: true
+      must_match_artifact_sha256: true
+      default_target_root: "outputs/approved_artifacts/<run_id>/"
+      product_spec_target_requires_explicit_flag: true

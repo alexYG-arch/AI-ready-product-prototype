@@ -1,0 +1,27 @@
+harness_contract:
+  id: "screen_state_harness"
+  name: "Screen State Harness"
+  version: "1.0"
+  owns: "页面语义、入口出口、状态推理链、异常路径、恢复、文案、可访问性。"
+  not_owns: "需求批准、指标 target、发布计划。"
+  required_outputs:
+    - "patch_report"
+    - "change_patch"
+    - "impact_analysis"
+  authority_boundary:
+    llm_can_generate: "candidate"
+    validator_can_block: true
+    human_review_required_for_high_risk: true
+  run_lifecycle:
+    human_review_stage:
+      required: true
+      review_artifacts:
+        - "run_manifest"
+        - "candidate_outputs"
+        - "validator_report"
+        - "impact_analysis"
+        - "review_decision"
+      approval_required_before:
+        - "candidate_to_confirmed"
+        - "write_instance_product_spec"
+        - "close_open_question"
