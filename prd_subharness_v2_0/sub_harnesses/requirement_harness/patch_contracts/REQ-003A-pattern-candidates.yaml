@@ -1,0 +1,16 @@
+patch_contract:
+  patch_id: "REQ-003A-pattern-candidates"
+  title: "REQ-003A: 将需求描述转换为 pattern-based C-EARS candidates。"
+  status: "draft"
+  goal:
+    - "REQ-003A: 将需求描述转换为 pattern-based C-EARS candidates。"
+  allowed_files:
+    - "product-spec/"
+    - "prd_orchestrator/"
+    - "sub_harnesses/"
+  forbidden_files:
+    - "product-spec/legacy_prd.md"
+  done_when:
+    - "patch_report written"
+    - "change_patch written"
+    - "impact_analysis written"

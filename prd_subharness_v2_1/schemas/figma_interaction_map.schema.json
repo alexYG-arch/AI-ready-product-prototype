@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Figma Interaction Map",
+  "type": "object",
+  "required": [
+    "figma_interaction_map"
+  ],
+  "properties": {
+    "figma_interaction_map": {
+      "type": "object",
+      "required": [
+        "version",
+        "owner",
+        "authority_role",
+        "forbidden_as_fact_source",
+        "interactions"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "authority_role": {
+          "type": "string"
+        },
+        "forbidden_as_fact_source": {
+          "type": "boolean"
+        },
+        "runtime_hash": {
+          "type": "string"
+        },
+        "interactions": {
+          "type": "array"
+        },
+        "comment_bindings": {
+          "type": "array"
+        },
+        "layout_route_plan_hash": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

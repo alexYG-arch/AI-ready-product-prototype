@@ -1,0 +1,47 @@
+component_primitive_library_policy:
+  id: COMP-PRIM-001
+  id_zh: 组件原语库策略
+  version: "3.0"
+
+  requirement:
+    must_have_seeded_primitive_library: true
+    must_have_seeded_primitive_library_zh: 必须有基础原语库，但不必须有完整设计系统。
+    reason_zh: 基础原语库提升按钮、输入、列表、反馈、弹窗、通知等基础实现的一致性；同时允许项目设计系统覆盖，避免限制扩展。
+
+  resolution_priority:
+    - project_design_system_component
+    - project_component_override
+    - seeded_platform_primitive
+    - generated_low_fi_primitive
+
+  seeded_platform_primitives:
+    material_reference_enabled: true
+    ios_hig_reference_enabled: true
+    style_lock: false
+    style_lock_zh: 不锁定 Material 或 iOS 视觉风格，仅参考组件语义和基础控件分类。
+
+  primitive_roles:
+    - action_button
+    - text_input
+    - list_item
+    - card
+    - dialog
+    - transient_feedback
+    - notification_item
+    - sheet_or_panel
+    - popover
+    - toggle
+    - slider
+    - segmented_control
+    - result_card
+    - empty_state
+    - loading_state
+    - error_state
+    - capability_entry
+
+  extension_rules:
+    project_design_system_wins: true
+    renderer_skill_pack_may_suggest: true
+    validators_win_over_all_components: true
+    preserve_semantic_role_required: true
+    preserve_source_refs_required: true

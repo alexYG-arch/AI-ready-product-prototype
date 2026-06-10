@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-ready Requirement",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "pattern_id",
+    "priority",
+    "status",
+    "source_refs",
+    "cn_ears",
+    "semantic_slots",
+    "acceptance",
+    "verification",
+    "quality_profile"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "stable_id": { "type": "boolean" },
+    "title": { "type": "string" },
+    "pattern_id": { "type": "string", "minLength": 1 },
+    "kind": {
+      "enum": ["functional", "non_functional", "data", "permission", "accessibility", "experiment", "release"]
+    },
+    "priority": { "enum": ["P0", "P1", "P2", "P3"] },
+    "status": { "enum": ["draft", "review", "candidate", "approved", "confirmed", "changed", "deprecated", "blocked"] },
+    "evidence_status": { "enum": ["confirmed", "derived", "candidate", "assumed", "missing"] },
+    "source_refs": { "type": "array", "items": { "type": "string" } },
+    "parent_goal_refs": { "type": "array", "items": { "type": "string" } },
+    "cn_ears": { "type": "string" },
+    "semantic_slots": { "type": "object" },
+    "fit_criteria": { "type": "object" },
+    "acceptance": { "type": "array" },
+    "verification": { "type": ["object", "array"] },
+    "analytics": { "type": "object" },
+    "permissions": { "type": "array" },
+    "privacy": { "type": "array" },
+    "accessibility": { "type": "array" },
+    "dependencies": { "type": "array" },
+    "unknowns": { "type": "array" },
+    "gaps": { "type": "array" },
+    "quality_profile": { "type": "object" },
+    "quantification_review": { "type": "object" }
+  }
+}

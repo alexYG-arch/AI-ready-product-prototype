@@ -1,0 +1,47 @@
+projection_review_report_rules:
+  id: REVIEW-001
+  id_zh: 投射评审与报告规则
+  version: "3.0"
+
+  review_gate_role:
+    role: display_and_record_projection_decisions
+    role_zh: 展示和记录投射决策，不默认回写 PRD。
+
+  prd_patch_candidate_only_when:
+    - prd_logic_conflict
+    - missing_critical_flow
+    - missing_recovery_path_blocks_projection
+    - contradiction_between_fact_slices
+    - semantic_defect_confirmed_by_review
+
+  review_log_required_fields:
+    - decision_id
+    - decision_type
+    - target_packet
+    - selected_decision
+    - rejected_options
+    - rationale_zh
+    - source_slices
+    - human_review_status
+    - requires_prd_writeback
+
+  projection_report_required_sections:
+    - run_summary
+    - input_hashes
+    - output_hashes
+    - board_coverage
+    - state_coverage
+    - interaction_coverage
+    - annotation_coverage
+    - pen_line_coverage
+    - surface_decisions
+    - gaps
+    - warnings
+    - validator_results
+    - review_decisions
+    - next_actions_zh
+
+  forbidden:
+    - treating_reviewed_payload_as_prd_fact
+    - silently_writing_prd_from_review_gate
+    - hiding_projection_decisions_from_report

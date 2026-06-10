@@ -1,0 +1,101 @@
+validator_spec_version: "1.0"
+review_status: "approved_by_human_review"
+intent: "确保页面语义和状态推理链覆盖用户入口、交互、系统结果、异常恢复、文案和可访问性，并且不替需求或指标做批准。"
+
+validators:
+  - id: "screen_state_harness_contract_validator"
+    severity: "blocker"
+    natural_language: "Screen State 只能维护 screens、states、state_reasoning_chains、copy 和 accessibility；不能把页面状态写成新需求批准或指标 target。"
+    applies_to:
+      documents:
+        - "product-spec/screens.yaml"
+      owned_fields:
+        - "screens"
+        - "state_reasoning_chains"
+        - "screen_state_gaps"
+    machine_rule:
+      check_type: "screen_state_shape_and_boundary"
+      required_chain_steps:
+        - "feature"
+        - "task"
+        - "journey_step"
+        - "decision_point"
+        - "interaction"
+        - "trigger"
+        - "system_operation"
+        - "outcome"
+        - "state"
+        - "recovery"
+        - "acceptance_or_event"
+      pass_when:
+        - "Each high-priority screen state satisfies state_reasoning_rules.completeness_definition.minimum_complete_chain."
+        - "Accessibility and user-visible copy are captured for error, empty, loading, and success states."
+        - "Scenario-specific required states are covered or marked not_applicable with reason."
+        - "Inferred states, recovery paths, copy, and acceptance/event links are marked candidate and include inference_notes."
+      fail_when:
+        - "Screen patch confirms requirement priority, metric target, or release decision."
+        - "State chain omits recovery for failure or retry paths."
+        - "Only page/state name is present without trigger, outcome, recovery, or acceptance/event linkage."
+        - "Inferred state, recovery, copy, or event link is written as confirmed without review."
+    human_review:
+      reviewer_prompt: "每条状态链是否满足完整定义，用户是否知道发生了什么、下一步做什么、失败后如何恢复？"
+      evidence:
+        - "screens"
+        - "state_reasoning_chains"
+        - "copy"
+        - "accessibility notes"
+
+  - id: "screen_state_harness_source_ref_validator"
+    severity: "blocker"
+    natural_language: "页面状态必须来源于需求、旧 PRD、设计稿或人工 decision；如果只是推测状态，必须标为 candidate 或 gap。"
+    applies_to:
+      documents:
+        - "product-spec/screens.yaml"
+        - "product-spec/requirements.yaml"
+        - "prd_orchestrator/review_decisions/"
+    machine_rule:
+      check_type: "screen_source_reference_required"
+      pass_when:
+        - "Confirmed screen states reference requirement ids, design refs, or review decisions."
+        - "Inferred states are marked candidate or listed in screen_state_gaps."
+      fail_when:
+        - "Confirmed screen state has no source_refs or requirement_refs."
+        - "Assumed copy is written as approved production copy."
+    human_review:
+      reviewer_prompt: "这些页面状态来自已确认需求/设计，还是需要 PM 或设计确认？"
+      evidence:
+        - "requirement_refs"
+        - "source_refs"
+        - "design refs"
+
+  - id: "screen_state_harness_gap_validator"
+    severity: "major"
+    natural_language: "如果缺少场景必备状态、状态维度、loading、empty、error、permission、offline、retry 或 accessibility 状态，需要显式记录 gap。"
+    applies_to:
+      documents:
+        - "product-spec/screens.yaml"
+        - "sub_harnesses/screen_state_harness/state_reasoning_rules.yaml"
+    machine_rule:
+      check_type: "screen_state_gap_capture"
+      required_state_dimensions:
+        - "data_state"
+        - "network_state"
+        - "permission_state"
+        - "input_state"
+        - "request_lifecycle"
+        - "consistency_state"
+        - "recovery_state"
+        - "platform_device_state"
+      pass_when:
+        - "Required dimensions are covered or marked not_applicable with reason."
+        - "Missing states are recorded in screen_state_gaps."
+        - "Scenario-specific required states are covered according to state_reasoning_rules.scenario_required_states."
+      fail_when:
+        - "Critical state dimension is absent with no gap."
+        - "Failure state has no feedback, retry, fallback, or escalation path."
+        - "A known scenario type lacks its minimum state set and no not_applicable reason is provided."
+    human_review:
+      reviewer_prompt: "是否有用户会遇到但文档没有覆盖的页面状态？"
+      evidence:
+        - "screen_state_gaps"
+        - "state dimension coverage"

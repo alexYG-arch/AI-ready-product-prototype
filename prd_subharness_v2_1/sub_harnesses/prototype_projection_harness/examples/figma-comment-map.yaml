@@ -1,0 +1,33 @@
+figma_comment_map:
+  version: "2.1"
+  owner: "prototype_projection_harness"
+  authority_role: "review_annotation_map"
+  forbidden_as_fact_source: true
+  runtime_hash: "sha256:sample"
+  comments:
+    - comment_semantic_id: "CMT-INT-AUTH-SUBMIT"
+      comment_role: "interaction_explanation"
+      interaction_id: "INT-AUTH-SUBMIT"
+      edge_id: "EDGE-AUTH-SUBMIT"
+      anchor:
+        strategy: "FrameOffsetRegion"
+        target_semantic_id: "CMP-AUTH-SUBMIT"
+        target_type: "component_instance"
+        figma_frame_node_id: "12:100"
+        computed_node_offset: {x: 316, y: 642}
+        region_width: 56
+        region_height: 40
+        comment_pin_corner: "top-right"
+      message_template: |-
+        [INT] INT-AUTH-SUBMIT
+        Trigger: On tap
+        If: phone.valid && otp.valid
+        Then: Set request_state=submitting; Navigate Home
+        Else: Show validation toast
+        State effect: Login ready/submitting → Home or toast
+        Event: EVT-AUTH-SUBMIT-CLICK
+        Refs: REQ-AUTH-001, SCREEN-AUTH-LOGIN
+      source_refs:
+        - "REQ-AUTH-001"
+        - "SCREEN-AUTH-LOGIN"
+      reverse_sync_policy: "comment_text_change_is_candidate_only"

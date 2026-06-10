@@ -1,0 +1,9 @@
+{
+  // 中文说明：这是给 Codex 和人类阅读的 JSONC 草稿，不是严格 JSON。
+  // 正式机器 JSON 不允许注释，应改用 *_zh / description_zh 字段。
+  "packet_id": "FP-AI-TOOLBAR-VISIBLE",
+  "packet_id_zh": "AI 工具栏可见状态 Frame 包",
+  "semantic_target": "SCR-AI-TOOLBAR/TOOLBAR-VISIBLE",
+  "display_reason": "prd_declared_state",
+  "display_reason_zh": "PRD 声明的主展示状态"
+}

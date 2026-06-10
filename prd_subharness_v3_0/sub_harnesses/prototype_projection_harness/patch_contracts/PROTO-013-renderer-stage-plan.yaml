@@ -1,0 +1,15 @@
+patch_contract:
+  schema_version: '2.1'
+  id: PROTO-013
+  name: Renderer staged implementation
+  version: '2.1'
+  summary: 'Adds skeleton-first Figma rendering stages: canvas blueprint, sequence
+    pages, comments, reactions, visual lines.'
+  required_outputs:
+  - layout_route_plan.yaml
+  - figma_projection_plan.stage_02_skeleton.yaml
+  - figma_projection_plan.stage_03_pages.yaml
+  blocks_if:
+  - page details are rendered before skeleton
+  - route corridors are missing
+  owner: prototype_projection_harness

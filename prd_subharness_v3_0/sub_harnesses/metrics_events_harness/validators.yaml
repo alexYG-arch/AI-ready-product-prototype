@@ -1,0 +1,91 @@
+validator_spec_version: "1.0"
+review_status: "approved_by_human_review"
+intent: "确保指标、事件、漏斗和实验具备来源、口径、状态和埋点计划；禁止在 baseline 不明时编造 target。"
+
+validators:
+  - id: "metrics_events_harness_contract_validator"
+    severity: "blocker"
+    natural_language: "Metrics Events 只能维护 metrics、events、funnels、experiments 和 instrumentation；不能批准需求、页面状态或发布回滚。"
+    applies_to:
+      documents:
+        - "product-spec/metrics.yaml"
+        - "product-spec/events.yaml"
+      owned_fields:
+        - "metrics"
+        - "metric_gaps"
+        - "events"
+        - "event_candidates"
+        - "event_gaps"
+    machine_rule:
+      check_type: "metric_event_shape_and_boundary"
+      required_metric_fields:
+        - "metric_id"
+        - "definition"
+        - "state"
+        - "owner"
+        - "source_refs"
+      required_event_fields:
+        - "event_id"
+        - "trigger"
+        - "properties"
+        - "owner"
+        - "source_refs"
+      pass_when:
+        - "Metrics and events include required fields or are recorded as gaps."
+        - "Metric state is one of metric_event_profile.metric_states."
+      fail_when:
+        - "Patch confirms requirement behavior, screen state, or release decision."
+        - "Metric/event id is missing, duplicated, or has no owner."
+    human_review:
+      reviewer_prompt: "这些指标和事件是否真的能被采集、归因和解释？"
+      evidence:
+        - "metrics.yaml"
+        - "events.yaml"
+        - "metric_event_profile.yaml"
+
+  - id: "metrics_events_harness_source_ref_validator"
+    severity: "blocker"
+    natural_language: "指标 baseline、target、事件触发条件和属性必须有来源；没有 baseline 时不能生成看似精确的 target。"
+    applies_to:
+      documents:
+        - "product-spec/metrics.yaml"
+        - "product-spec/events.yaml"
+    machine_rule:
+      check_type: "metric_event_source_reference_required"
+      pass_when:
+        - "Confirmed metrics/events include source_refs."
+        - "Unknown baseline leads to target=TBD_AFTER_BASELINE or metric_gaps."
+        - "Event properties have source, type, and privacy classification when available."
+      fail_when:
+        - "Numeric target exists while baseline and source_refs are missing."
+        - "Confirmed event has no trigger source or owner."
+    human_review:
+      reviewer_prompt: "是否有任何数字、target 或埋点属性是凭空生成的？"
+      evidence:
+        - "baseline"
+        - "target"
+        - "source_refs"
+        - "event properties"
+
+  - id: "metrics_events_harness_gap_validator"
+    severity: "major"
+    natural_language: "当指标不可立即度量或需要埋点时，必须写清 required_events、owner、required_before 和 forbidden_inference。"
+    applies_to:
+      documents:
+        - "product-spec/metrics.yaml"
+        - "product-spec/events.yaml"
+        - "sub_harnesses/metrics_events_harness/metric_event_profile.yaml"
+    machine_rule:
+      check_type: "metric_event_gap_capture"
+      pass_when:
+        - "needs_instrumentation metrics include required_events, owner, required_before, and forbidden_inference."
+        - "Blocked or proxy_only metrics include reason and review owner."
+      fail_when:
+        - "needs_instrumentation metric lacks an instrumentation plan."
+        - "Event gap is hidden while metric claims measurable_now."
+    human_review:
+      reviewer_prompt: "哪些指标现在量不到？需要哪些事件、负责人和时间点才能量到？"
+      evidence:
+        - "metric_gaps"
+        - "event_gaps"
+        - "instrumentation plan"

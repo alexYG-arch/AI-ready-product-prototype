@@ -1,0 +1,18 @@
+fixture_id: "metric_target_invented"
+bad_metric:
+  id: "M-BAD-001"
+  name: "体验提升率"
+  state: "needs_instrumentation"
+  definition: "用户体验提升的占比。"
+  baseline:
+    value: "unknown"
+    reason: "尚未埋点"
+  target:
+    value: "85%"
+    source_refs: []
+  ai_reasoning_rule: "baseline 未确认前，不得推导 target、实验成功阈值或上线成功结论。"
+expected_result: "blocked"
+reason: "baseline unknown 时不得生成具体 target；应使用 TBD_AFTER_BASELINE。"
+validator_targets:
+  - "metrics_events_harness_source_ref_validator"
+  - "metrics_events_harness_gap_validator"

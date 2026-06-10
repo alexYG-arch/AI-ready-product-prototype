@@ -1,0 +1,91 @@
+pen_line_logic_rules:
+  id: PEN-LOGIC-001
+  id_zh: Pen 线逻辑说明规则
+  version: "3.0"
+
+  authority:
+    pen_lines_are_documentation_only: true
+    pen_lines_are_documentation_only_zh: Pen 线仅为文档说明
+    pen_lines_are_not_real_behavior: true
+    pen_lines_are_not_real_behavior_zh: Pen 线不是真实点击行为
+    generated_from_interaction_packets: true
+    generated_from_interaction_packets_zh: Pen 线必须从 interaction packets 生成
+
+  required_line_fields:
+    - line_id
+    - interaction_id
+    - annotation_id
+    - source_anchor
+    - destination_anchor
+    - trigger
+    - guard_or_precondition
+    - semantic_action
+    - destination_or_effect
+    - source_refs
+
+  line_types:
+    - type: primary_flow
+      type_zh: 主流程线
+    - type: state_transition
+      type_zh: 状态转换线
+    - type: conditional_branch
+      type_zh: 条件分支线
+    - type: feedback_line
+      type_zh: 反馈线
+    - type: recovery_line
+      type_zh: 恢复线
+    - type: surface_transition
+      type_zh: 宿主表面变化线
+    - type: external_handoff
+      type_zh: 外部交接线
+    - type: gap_or_review_line
+      type_zh: 缺口/待评审线
+
+  label_schema:
+    compact_label_format: "{interaction_id} · {trigger_zh} · 若 {guard_zh} → {destination_zh}"
+    max_label_length_zh: 32
+    overflow_behavior: use_short_label_and_full_annotation
+    overflow_behavior_zh: 线标签只写短摘要，完整逻辑写入备注。
+
+  anchor_rules:
+    source_anchor_priority:
+      - exact_component_instance
+      - exact_region
+      - generated_hotspot
+      - source_state_frame
+      - source_board_gateway
+    destination_anchor_priority:
+      - exact_destination_state_frame
+      - exact_destination_region
+      - overlay_or_feedback_frame
+      - destination_board_gateway
+      - external_handoff_placeholder
+
+  dedup_and_density_rules:
+    same_source_same_trigger:
+      action: merge_to_single_conditional_line_or_gateway
+      action_zh: 合并为一条条件线或网关节点
+    same_interaction_across_states:
+      action: one_line_with_applies_to_state_list
+      action_zh: 使用一条线并标记适用状态列表
+    too_many_edges_from_one_frame:
+      threshold: 5
+      action: use_gateway_or_interaction_summary
+      action_zh: 使用网关节点或交互摘要面板
+    self_transition:
+      action: loopback_stub
+      action_zh: 使用短回环线
+    local_feedback:
+      action: short_local_stub_near_source
+      action_zh: 使用源控件附近的短反馈线
+    cross_board:
+      action: route_through_board_gateway
+      action_zh: 跨画布线必须经过画布网关
+
+  forbidden:
+    - pen_line_without_interaction_id
+    - pen_line_without_annotation_id
+    - pen_line_creates_new_logic
+    - pen_line_treated_as_real_interaction
+    - duplicate_same_source_same_trigger_independent_lines
+    - line_crosses_frame_content_when_corridor_available

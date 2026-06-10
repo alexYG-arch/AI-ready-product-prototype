@@ -1,0 +1,40 @@
+uxwriter_copy_catalog:
+  version: "2.1"
+  owner: "prototype_projection_harness"
+  authority_role: "derived_copy_projection"
+  locale: "zh-CN"
+  copy_items:
+    - copy_id: "COPY-AUTH-SUBMIT"
+      semantic_role: "button.primary.submit"
+      screen_id: "SCREEN-AUTH-LOGIN"
+      state_id: "ST-READY"
+      component_id: "CMP-AUTH-SUBMIT"
+      original_copy_ref: "PRD:SCREEN-AUTH-LOGIN.submit_label"
+      original_copy: "提交"
+      final_copy: "登录"
+      intent: "提交手机号和验证码，进入登录校验"
+      rewrite_reason: "按钮结果更明确，降低理解成本。"
+      source_refs:
+        - "REQ-AUTH-001"
+      validation:
+        passed:
+          - "UXW-VAL-001"
+          - "UXW-VAL-003"
+        warnings: []
+    - copy_id: "COPY-AUTH-ERROR-OTP"
+      semantic_role: "feedback.inline_error"
+      screen_id: "SCREEN-AUTH-LOGIN"
+      state_id: "ST-INPUT-INVALID"
+      component_id: "CMP-AUTH-OTP-INPUT"
+      original_copy_ref: "PRD:SCREEN-AUTH-LOGIN.otp_error"
+      original_copy: "验证码错误"
+      final_copy: "验证码不对。检查后再试一次。"
+      intent: "说明错误并给出恢复动作"
+      rewrite_reason: "补充恢复动作，语气更自然。"
+      source_refs:
+        - "REQ-AUTH-001"
+      validation:
+        passed:
+          - "UXW-VAL-006"
+          - "UXW-VAL-007"
+        warnings: []

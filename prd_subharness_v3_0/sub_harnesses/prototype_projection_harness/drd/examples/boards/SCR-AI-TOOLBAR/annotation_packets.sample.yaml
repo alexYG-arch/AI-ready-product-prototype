@@ -1,0 +1,16 @@
+annotation_packets:
+  - annotation_id: ANN-INT-TOOLBAR-TOPIC-TAP
+    anchor:
+      board_id: BOARD-SCR-AI-TOOLBAR
+      instance_id: INST-TOOLBAR-TOPIC-ENTRY
+    linked_interaction_ids:
+      - INT-TOOLBAR-TOPIC-TAP
+    body:
+      title_zh: 点击话题推荐
+      summary_zh: 点击后在宿主表面内打开话题推荐状态画布；DRD 模式下仅用 Pen 线表达，不写真实 reaction。
+      trigger_zh: 点击 / 轻触
+      guard_zh: 无特殊前置条件
+      action_summary_zh: 展开话题推荐区域
+      source_refs:
+        - PRD.md#7:SCR-AI-TOOLBAR
+    source_slices: [SLICE-SCR-AI-TOOLBAR]

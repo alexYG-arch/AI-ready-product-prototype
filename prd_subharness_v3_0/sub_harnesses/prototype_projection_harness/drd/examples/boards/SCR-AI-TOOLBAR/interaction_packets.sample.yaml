@@ -1,0 +1,17 @@
+interaction_packets:
+  - interaction_id: INT-TOOLBAR-TOPIC-TAP
+    source:
+      board_id: BOARD-SCR-AI-TOOLBAR
+      instance_id: INST-TOOLBAR-TOPIC-ENTRY
+    trigger: ON_TAP
+    trigger_zh: 点击 / 轻触
+    semantic_action: expand_from_anchor
+    semantic_action_zh: 从当前宿主区域展开
+    ordered_actions:
+      - order: 1
+        action: open_topic_recommendation_surface
+        action_zh: 打开话题推荐宿主表面
+    destination_or_effect:
+      target_board: BOARD-SCR-TOPIC-RECOMMENDATION
+      target_state: TOPIC-IMAGE-SELECT
+    source_slices: [SLICE-SCR-AI-TOOLBAR]

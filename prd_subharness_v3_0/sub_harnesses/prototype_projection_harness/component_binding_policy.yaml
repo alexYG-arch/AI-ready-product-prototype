@@ -1,0 +1,65 @@
+component_binding_policy:
+  version: "2.1"
+  purpose: "定义 runtime semantic component 如何绑定 Figma component / pattern / JSON semantic library。"
+
+  priority_order:
+    - id: "existing_figma_component"
+      rule: "语义角色、component key、variant properties 可解析时，优先创建或 patch component instance。"
+    - id: "existing_figma_pattern_or_template"
+      rule: "页面或区域级 pattern 可解析时，使用 pattern template。"
+    - id: "design_semantic_library_composition"
+      rule: "无真实组件但 JSON 语义库可组合时，生成低保真结构。"
+    - id: "low_fi_placeholder_with_gap"
+      rule: "无法解析时生成 placeholder 并记录 binding gap。"
+
+  matching_keys:
+    semantic_component:
+      - "semantic_key"
+      - "semantic_role"
+      - "required_props"
+      - "state_kind"
+    figma_component:
+      - "component_key"
+      - "component_name"
+      - "variant_properties"
+      - "component_properties"
+
+  variant_rules:
+    button_state:
+      runtime_values: ["enabled", "disabled", "loading", "pressed"]
+      figma_binding: "variant:State"
+    input_state:
+      runtime_values: ["empty", "focused", "filled", "error", "disabled"]
+      figma_binding: "variant:State"
+    intent:
+      runtime_values: ["primary", "secondary", "danger", "neutral"]
+      figma_binding: "variant:Intent"
+
+  prop_override_rules:
+    allowed:
+      - "label"
+      - "placeholder"
+      - "value"
+      - "icon"
+      - "width"
+    semantic_locked:
+      - "semantic_role"
+      - "interaction_destination"
+      - "source_refs"
+      - "requirement_refs"
+    requires_patch_candidate:
+      - "role_changed"
+      - "primary_to_secondary_intent_changed"
+      - "button_to_link_changed"
+      - "component_replaced_with_different_semantic_role"
+
+  fallback_gap_policy:
+    missing_component_key:
+      severity: "warning"
+      action: "use_semantic_library_if_available"
+    missing_required_variant:
+      severity: "review_required"
+      action: "generate_component_gap"
+    missing_required_prop_slot:
+      severity: "blocker"
+      action: "block_component_projection"

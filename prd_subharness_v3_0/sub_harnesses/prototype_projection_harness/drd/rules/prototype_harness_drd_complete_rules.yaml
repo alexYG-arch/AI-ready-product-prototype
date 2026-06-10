@@ -1,0 +1,78 @@
+# Prototype Harness DRD Complete Rules v3.0
+# 原型 Harness DRD 完整规则 v3.0
+#
+# 用途：Codex 优先读取的完整规则入口。
+# 说明：本文件聚合 rules/*.yaml 的核心配置；单个规则文件是可维护源，merged 文件是 Codex 单入口。
+prototype_harness_drd_complete_rules:
+  version: "3.0"
+  version_zh: DRD 设计评审文档模式规则
+  default_projection_mode: DRD_MODE
+  default_projection_mode_zh: 设计评审文档模式
+
+  language_policy_ref: rules/00_language_and_comment_policy.yaml
+  harness_contract_ref: rules/01_harness_contract.yaml
+  stage_plan_ref: rules/02_drd_pipeline_stage_plan.yaml
+  payload_sharding_ref: rules/03_payload_sharding_policy.yaml
+  source_slice_ref: rules/04_source_slice_policy.yaml
+  host_surface_inference_ref: rules/05_host_surface_inference_rules.yaml
+  surface_morphology_ref: rules/06_surface_morphology_rules.yaml
+  drd_board_layout_ref: rules/07_drd_board_layout_rules.yaml
+  materialization_packet_ref: rules/08_materialization_packet_rules.yaml
+  component_library_ref: rules/09_component_primitive_library_policy.yaml
+  component_resolution_ref: rules/10_component_resolution_rules.yaml
+  feedback_surface_ref: rules/11_feedback_surface_rules.yaml
+  annotation_ref: rules/12_annotation_rules.yaml
+  pen_line_logic_ref: rules/13_pen_line_logic_rules.yaml
+  runtime_validation_ref: rules/14_runtime_validation_policy.yaml
+  projection_review_ref: rules/15_projection_review_report_rules.yaml
+  skill_hook_ref: rules/16_renderer_skill_hook_policy.yaml
+  reverse_sync_ref: rules/17_reverse_sync_policy.yaml
+  validators_ref: rules/18_validators.yaml
+  negative_acceptance_ref: rules/19_negative_acceptance_rules.yaml
+  codex_protocol_ref: rules/20_codex_execution_protocol.yaml
+
+  essential_rules:
+    - id: ESS-001
+      zh: PRD / prd_fact_bundle 是事实源。
+    - id: ESS-002
+      zh: Runtime 只做 validation、gap、candidate、review evidence。
+    - id: ESS-003
+      zh: DRD Mode 不写 Figma node.reactions。
+    - id: ESS-004
+      zh: Payload 必须分片，不能生成单体大 payload。
+    - id: ESS-005
+      zh: 每个页面/宿主表面生成大画布，只展示必要状态。
+    - id: ESS-006
+      zh: Pen 线是逻辑说明，不是真实交互，也不是事实源。
+    - id: ESS-007
+      zh: 每条 Pen 线必须引用 interaction_id 和 annotation_id。
+    - id: ESS-008
+      zh: Host Surface Inference 必须通用化，不写输入法专属 validator。
+    - id: ESS-009
+      zh: 组件实现先走项目设计系统，再走 seeded primitive library，再低保真 fallback。
+    - id: ESS-010
+      zh: 严格 JSON 不写注释；中文说明使用 YAML 注释、JSONC 草稿或 *_zh 字段。
+
+  required_output_tree:
+    - manifest.yaml
+    - input/prd_fact_bundle.yaml
+    - source_slices/slice_index.yaml
+    - decisions/surface_decisions.yaml
+    - decisions/morphology_decisions.yaml
+    - decisions/review_log.yaml
+    - libs/surface_primitive_library.yaml
+    - libs/component_primitive_library.yaml
+    - boards/<board_id>/board_manifest.yaml
+    - boards/<board_id>/frame_packets.yaml
+    - boards/<board_id>/component_instance_packets.yaml
+    - boards/<board_id>/interaction_packets.yaml
+    - boards/<board_id>/annotation_packets.yaml
+    - boards/<board_id>/pen_line_packets.yaml
+    - flows/<flow_id>/cross_board_lines.yaml
+    - reports/projection_report.yaml
+
+  skipped_in_drd_mode:
+    - RND-07 Real Prototype Reactions
+
+  must_validate_with:
+    - scripts/validate_rules.py

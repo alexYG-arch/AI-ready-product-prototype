@@ -1,0 +1,30 @@
+visual_line_style_library:
+  version: "3.0"
+  name_zh: 视觉线条样式库
+  rule_zh: 不仅依赖颜色，还必须使用标签前缀、虚线、箭头、粗细或 lane 区分。
+  styles:
+    - line_type: primary_flow
+      zh: 主流程线
+      prefix: MAIN
+      stroke_style: solid
+      arrow: end
+    - line_type: conditional_branch
+      zh: 条件分支线
+      prefix: IF
+      stroke_style: dashed
+      arrow: end
+    - line_type: feedback_line
+      zh: 反馈线
+      prefix: FB
+      stroke_style: dotted
+      arrow: end
+    - line_type: recovery_line
+      zh: 恢复线
+      prefix: RECOVER
+      stroke_style: dashed
+      arrow: end
+    - line_type: external_handoff
+      zh: 外部交接线
+      prefix: EXT
+      stroke_style: long_dash
+      arrow: end

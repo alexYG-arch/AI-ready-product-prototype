@@ -1,0 +1,555 @@
+harness_rule_review_crosswalk:
+  crosswalk_version: '3.0'
+  review_status: approved_by_human_review
+  reviewer: alexYG
+  reviewed_at: '2026-06-10'
+  source_review_doc: prd_orchestrator/HARNESS_RULE_REVIEW.md
+  purpose: Map human-review GEN rules to concrete YAML rule, transformation, inference,
+    profile, or validator rules so the review document can be traced back to executable
+    sub-harness assets.
+  mappings:
+  - rule_id: CORE-GEN-001
+    harness_id: prd_core_harness
+    review_section: '4.1'
+    maps_to:
+    - file: sub_harnesses/prd_core_harness/prd_core_profile.yaml
+      ids:
+      - CORE-SOURCE-001
+    mapping_note: Source inventory is enforced through confirmed core fact source
+      rules.
+  - rule_id: CORE-GEN-002
+    harness_id: prd_core_harness
+    review_section: '4.1'
+    maps_to:
+    - file: sub_harnesses/prd_core_harness/prd_core_profile.yaml
+      ids:
+      - CORE-BOUNDARY-002
+    mapping_note: Core fact classification is constrained by ownership boundary rules.
+  - rule_id: CORE-GEN-003
+    harness_id: prd_core_harness
+    review_section: '4.1'
+    maps_to:
+    - file: sub_harnesses/prd_core_harness/prd_core_profile.yaml
+      ids:
+      - CORE-SOURCE-001
+    mapping_note: Evidence status review is covered by source requirements for confirmed
+      facts.
+  - rule_id: CORE-GEN-004
+    harness_id: prd_core_harness
+    review_section: '4.1'
+    maps_to:
+    - file: sub_harnesses/prd_core_harness/prd_core_profile.yaml
+      ids:
+      - CORE-GAP-003
+    mapping_note: Missing core fields must become gaps or open questions.
+  - rule_id: CORE-GEN-005
+    harness_id: prd_core_harness
+    review_section: '4.1'
+    maps_to:
+    - file: sub_harnesses/prd_core_harness/prd_core_profile.yaml
+      ids:
+      - CORE-BOUNDARY-002
+    - file: sub_harnesses/traceability_harness/traceability_profile.yaml
+      ids:
+      - TRACE-IMPACT-002
+    mapping_note: Downstream handoff is represented by boundary protection and impact
+      analysis rules.
+  - rule_id: REQ-GEN-001
+    harness_id: requirement_harness
+    review_section: '4.2'
+    maps_to:
+    - file: sub_harnesses/requirement_harness/requirement_pattern_registry.yaml
+      ids:
+      - REQ-XFORM-001
+    mapping_note: Atomic requirement splitting maps to the first transformation step.
+  - rule_id: REQ-GEN-002
+    harness_id: requirement_harness
+    review_section: '4.2'
+    maps_to:
+    - file: sub_harnesses/requirement_harness/requirement_pattern_registry.yaml
+      ids:
+      - REQ-XFORM-002
+    - file: sub_harnesses/requirement_harness/cears_quality_profile.yaml
+      ids:
+      - REQ-PATTERN-001
+    mapping_note: C-EARS pattern selection is covered by transformation and quality
+      profile rules.
+  - rule_id: REQ-GEN-003
+    harness_id: requirement_harness
+    review_section: '4.2'
+    maps_to:
+    - file: sub_harnesses/requirement_harness/requirement_pattern_registry.yaml
+      ids:
+      - REQ-XFORM-003
+    mapping_note: Semantic slot filling maps directly to the slot transformation step.
+  - rule_id: REQ-GEN-004
+    harness_id: requirement_harness
+    review_section: '4.2'
+    maps_to:
+    - file: sub_harnesses/requirement_harness/requirement_pattern_registry.yaml
+      ids:
+      - REQ-XFORM-004
+    mapping_note: Chinese C-EARS rendering maps directly to the render transformation
+      step.
+  - rule_id: REQ-GEN-005
+    harness_id: requirement_harness
+    review_section: '4.2'
+    maps_to:
+    - file: sub_harnesses/requirement_harness/requirement_pattern_registry.yaml
+      ids:
+      - REQ-XFORM-005
+    - file: sub_harnesses/requirement_harness/cears_quality_profile.yaml
+      ids:
+      - REQ-RECORD-006
+    mapping_note: REQ record assembly is checked both in transformation and quality
+      gate rules.
+  - rule_id: REQ-GEN-006
+    harness_id: requirement_harness
+    review_section: '4.2'
+    maps_to:
+    - file: sub_harnesses/requirement_harness/requirement_pattern_registry.yaml
+      ids:
+      - REQ-XFORM-006
+    - file: sub_harnesses/requirement_harness/cears_quality_profile.yaml
+      ids:
+      - REQ-QUALITY-003
+    mapping_note: Acceptance and verification are required before a requirement can
+      pass quality review.
+  - rule_id: REQ-GEN-007
+    harness_id: requirement_harness
+    review_section: '4.2'
+    maps_to:
+    - file: sub_harnesses/requirement_harness/requirement_pattern_registry.yaml
+      ids:
+      - REQ-XFORM-007
+    - file: sub_harnesses/requirement_harness/cears_quality_profile.yaml
+      ids:
+      - REQ-NUMERIC-004
+      - REQ-QUANT-005
+      - QUANT-SOURCE-001
+      - QUANT-FIT-002
+      - QUANT-NOT-APPLICABLE-003
+    mapping_note: Quantification review maps to numeric source, quantification decision,
+      and fit criteria rules.
+  - rule_id: REQ-GEN-008
+    harness_id: requirement_harness
+    review_section: '4.2'
+    maps_to:
+    - file: sub_harnesses/requirement_harness/requirement_pattern_registry.yaml
+      ids:
+      - REQ-INFER-004
+    - file: sub_harnesses/prd_core_harness/prd_core_profile.yaml
+      ids:
+      - CORE-BOUNDARY-002
+    mapping_note: Downstream handoff stays candidate and cannot approve facts owned
+      by another harness.
+  - rule_id: SCREEN-GEN-001
+    harness_id: screen_state_harness
+    review_section: '4.3'
+    maps_to:
+    - file: sub_harnesses/screen_state_harness/state_reasoning_rules.yaml
+      ids:
+      - SCREEN-INFER-001
+    mapping_note: Scenario classification drives required state inference.
+  - rule_id: SCREEN-GEN-002
+    harness_id: screen_state_harness
+    review_section: '4.3'
+    maps_to:
+    - file: sub_harnesses/screen_state_harness/state_reasoning_rules.yaml
+      ids:
+      - SCREEN-INFER-001
+      - SCREEN-DIMENSION-002
+    mapping_note: State inventory is derived from scenario required states and dimension
+      coverage rules.
+  - rule_id: SCREEN-GEN-003
+    harness_id: screen_state_harness
+    review_section: '4.3'
+    maps_to:
+    - file: sub_harnesses/screen_state_harness/state_reasoning_rules.yaml
+      ids:
+      - SCREEN-CHAIN-001
+    mapping_note: State chain assembly maps to minimum complete chain rules.
+  - rule_id: SCREEN-GEN-004
+    harness_id: screen_state_harness
+    review_section: '4.3'
+    maps_to:
+    - file: sub_harnesses/screen_state_harness/state_reasoning_rules.yaml
+      ids:
+      - SCREEN-DIMENSION-002
+    mapping_note: State dimension coverage maps to the dimension coverage rule.
+  - rule_id: SCREEN-GEN-005
+    harness_id: screen_state_harness
+    review_section: '4.3'
+    maps_to:
+    - file: sub_harnesses/screen_state_harness/state_reasoning_rules.yaml
+      ids:
+      - SCREEN-INFER-003
+      - SCREEN-COPY-A11Y-003
+    mapping_note: Copy and accessibility candidates map to inference and copy/a11y
+      profile rules.
+  - rule_id: SCREEN-GEN-006
+    harness_id: screen_state_harness
+    review_section: '4.3'
+    maps_to:
+    - file: sub_harnesses/screen_state_harness/state_reasoning_rules.yaml
+      ids:
+      - SCREEN-INFER-001
+      - SCREEN-INFER-002
+      - SCREEN-INFER-003
+      - SCREEN-INFER-004
+    mapping_note: Gap recording is represented by inference rules that emit candidate
+      gaps and open questions.
+  - rule_id: DATA-GEN-001
+    harness_id: metrics_events_harness
+    review_section: '4.4'
+    maps_to:
+    - file: sub_harnesses/metrics_events_harness/metric_event_profile.yaml
+      ids:
+      - DATA-METRIC-STATE-001
+    mapping_note: Metric intent is checked through metric state classification.
+  - rule_id: DATA-GEN-002
+    harness_id: metrics_events_harness
+    review_section: '4.4'
+    maps_to:
+    - file: sub_harnesses/metrics_events_harness/metric_event_profile.yaml
+      ids:
+      - DATA-METRIC-STATE-001
+    mapping_note: Measurable/proxy/blocked status maps to metric state rules.
+  - rule_id: DATA-GEN-003
+    harness_id: metrics_events_harness
+    review_section: '4.4'
+    maps_to:
+    - file: sub_harnesses/metrics_events_harness/metric_event_profile.yaml
+      ids:
+      - DATA-NO-INVENTED-TARGET-002
+    mapping_note: Baseline and target review maps to the no-invented-target rule.
+  - rule_id: DATA-GEN-004
+    harness_id: metrics_events_harness
+    review_section: '4.4'
+    maps_to:
+    - file: sub_harnesses/metrics_events_harness/metric_event_profile.yaml
+      ids:
+      - DATA-INSTRUMENTATION-003
+    mapping_note: Event design is covered by instrumentation planning.
+  - rule_id: DATA-GEN-005
+    harness_id: metrics_events_harness
+    review_section: '4.4'
+    maps_to:
+    - file: sub_harnesses/metrics_events_harness/metric_event_profile.yaml
+      ids:
+      - DATA-INSTRUMENTATION-003
+    mapping_note: Instrumentation owner and required-before planning map directly
+      to instrumentation rules.
+  - rule_id: DATA-GEN-006
+    harness_id: metrics_events_harness
+    review_section: '4.4'
+    maps_to:
+    - file: sub_harnesses/metrics_events_harness/validators.yaml
+      ids:
+      - metrics_events_harness_source_ref_validator
+      - metrics_events_harness_gap_validator
+    mapping_note: Privacy and property checks are reviewed through source and gap
+      validator evidence.
+  - rule_id: REL-GEN-001
+    harness_id: release_ops_harness
+    review_section: '4.5'
+    maps_to:
+    - file: sub_harnesses/release_ops_harness/release_ops_profile.yaml
+      ids:
+      - REL-FIELDS-001
+    mapping_note: Rollout stage identification is part of release required fields.
+  - rule_id: REL-GEN-002
+    harness_id: release_ops_harness
+    review_section: '4.5'
+    maps_to:
+    - file: sub_harnesses/release_ops_harness/release_ops_profile.yaml
+      ids:
+      - REL-FIELDS-001
+    mapping_note: Release field completion maps to release required fields.
+  - rule_id: REL-GEN-003
+    harness_id: release_ops_harness
+    review_section: '4.5'
+    maps_to:
+    - file: sub_harnesses/release_ops_harness/release_ops_profile.yaml
+      ids:
+      - REL-ROLLBACK-003
+    mapping_note: Monitoring and rollback binding maps to rollback rules.
+  - rule_id: REL-GEN-004
+    harness_id: release_ops_harness
+    review_section: '4.5'
+    maps_to:
+    - file: sub_harnesses/release_ops_harness/release_ops_profile.yaml
+      ids:
+      - REL-HIGH-RISK-002
+    mapping_note: Ops/support readiness is reviewed as a high-risk human approval
+      point.
+  - rule_id: REL-GEN-005
+    harness_id: release_ops_harness
+    review_section: '4.5'
+    maps_to:
+    - file: sub_harnesses/release_ops_harness/release_ops_profile.yaml
+      ids:
+      - REL-HIGH-RISK-002
+    mapping_note: High-risk release approval maps to the high-risk review rule.
+  - rule_id: PROJ-GEN-001
+    harness_id: projection_sync_harness
+    review_section: '4.6'
+    maps_to:
+    - file: sub_harnesses/projection_sync_harness/prd_section_projection_map.yaml
+      ids:
+      - PROJ-MAP-001
+    mapping_note: Section source mapping maps directly to projection map rules.
+  - rule_id: PROJ-GEN-002
+    harness_id: projection_sync_harness
+    review_section: '4.6'
+    maps_to:
+    - file: sub_harnesses/projection_sync_harness/prd_template_profile.yaml
+      ids:
+      - PROJ-SOURCE-002
+    mapping_note: Fact projection is constrained by source trace rules.
+  - rule_id: PROJ-GEN-003
+    harness_id: projection_sync_harness
+    review_section: '4.6'
+    maps_to:
+    - file: sub_harnesses/projection_sync_harness/prd_template_profile.yaml
+      ids:
+      - PROJ-SUBSTANCE-003
+    mapping_note: Gap and not-applicable display maps to substance/no-placeholder
+      rules.
+  - rule_id: PROJ-GEN-004
+    harness_id: projection_sync_harness
+    review_section: '4.6'
+    maps_to:
+    - file: sub_harnesses/projection_sync_harness/prd_section_projection_map.yaml
+      ids:
+      - PROJ-MAP-002
+    mapping_note: Reverse fact protection maps to forbidden fact source rules.
+  - rule_id: TRACE-GEN-001
+    harness_id: traceability_harness
+    review_section: '4.7'
+    maps_to:
+    - file: sub_harnesses/traceability_harness/traceability_profile.yaml
+      ids:
+      - TRACE-CHAIN-001
+    mapping_note: ID inventory is the first input to trace chain construction.
+  - rule_id: TRACE-GEN-002
+    harness_id: traceability_harness
+    review_section: '4.7'
+    maps_to:
+    - file: sub_harnesses/traceability_harness/traceability_profile.yaml
+      ids:
+      - TRACE-CHAIN-001
+    mapping_note: Trace link creation maps directly to trace chain rules.
+  - rule_id: TRACE-GEN-003
+    harness_id: traceability_harness
+    review_section: '4.7'
+    maps_to:
+    - file: sub_harnesses/traceability_harness/traceability_profile.yaml
+      ids:
+      - TRACE-COVERAGE-003
+    mapping_note: Coverage status maps to trace coverage rules.
+  - rule_id: TRACE-GEN-004
+    harness_id: traceability_harness
+    review_section: '4.7'
+    maps_to:
+    - file: sub_harnesses/traceability_harness/traceability_profile.yaml
+      ids:
+      - TRACE-IMPACT-002
+    mapping_note: Impact analysis maps to trace impact rules.
+  - rule_id: TRACE-GEN-005
+    harness_id: traceability_harness
+    review_section: '4.7'
+    maps_to:
+    - file: sub_harnesses/traceability_harness/traceability_profile.yaml
+      ids:
+      - TRACE-IMPACT-002
+    mapping_note: Partial rerun planning is derived from impact analysis.
+  - rule_id: TRACE-GEN-006
+    harness_id: traceability_harness
+    review_section: '4.7'
+    maps_to:
+    - file: sub_harnesses/traceability_harness/validators.yaml
+      ids:
+      - traceability_harness_source_ref_validator
+      - traceability_harness_gap_validator
+    mapping_note: Tombstone safety is reviewed through source integrity and gap validators.
+  - rule_id: PROTO-GEN-001
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/harness_contract.yaml
+      ids:
+      - prototype_projection_harness
+    mapping_note: v3.0 prototype harness contract owns DRD projection artifacts but
+      not PRD fact stores.
+  - rule_id: PROTO-GEN-002
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - RT-001
+      - RT-002
+      - SOURCE-001
+      - SOURCE-002
+    mapping_note: Runtime stays validation/gap evidence; source slices and source
+      refs remain the render evidence boundary.
+  - rule_id: PROTO-GEN-003
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - SOURCE-001
+      - SURFACE-001
+      - DRD-STATE-002
+      - MAT-002
+      - MAT-003
+    mapping_note: DRD completeness is checked through source slice, surface, state
+      display reason and materialization packet validators.
+  - rule_id: PROTO-GEN-004
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - SHARD-001
+      - SHARD-002
+      - MAT-001
+      - MAT-002
+      - DRD-BOARD-001
+    mapping_note: Forward projection uses sharded materialization packets and DRD
+      board policy instead of a monolithic Figma/runtime payload.
+  - rule_id: PROTO-GEN-005
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - MAT-005
+      - ANN-001
+      - ANN-002
+      - ANN-003
+      - PEN-001
+      - PEN-002
+      - PEN-003
+    mapping_note: Interactions are materialized as interaction packets, Dev Mode annotations
+      and Pen lines in DRD mode.
+  - rule_id: PROTO-GEN-006
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - COMP-001
+      - COMP-002
+      - COMP-003
+    mapping_note: Component primitive and project design-system mapping cannot change
+      semantic roles.
+  - rule_id: PROTO-GEN-007
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - REV-001
+      - REV-002
+      - REVIEW-001
+      - REVIEW-002
+    mapping_note: DRD/Figma changes can only become reverse-sync candidates or review
+      log entries.
+  - rule_id: PROTO-GEN-008
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - REV-001
+      - REV-002
+    mapping_note: Reverse sync remains candidate-only and cannot directly write PRD
+      fact stores.
+  - rule_id: PROTO-GEN-009
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - RT-001
+      - RT-002
+    mapping_note: Runtime is preserved as a validation boundary and cannot become
+      renderer authority.
+  - rule_id: PROTO-GEN-010
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/renderer_stage_plan.yaml
+      ids:
+      - RUN-00
+      - FACT-01
+      - PAYLOAD-01
+      - PAYLOAD-02
+      - PAYLOAD-03
+      - SURF-01
+      - SURF-02
+      - SURF-03
+      - RND-00
+      - RND-01
+      - RND-02
+      - RND-03
+      - RND-04
+      - RND-05
+      - RND-06
+      - RND-07
+      - RND-08
+      - RND-09
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - SHARD-001
+      - MAT-002
+      - DRD-BOARD-001
+    mapping_note: Renderer stage plan maps to RUN/FACT/PAYLOAD/SURF/RND stages, with
+      RND-07 skipped in DRD_MODE.
+  - rule_id: PROTO-GEN-011
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - SOURCE-001
+      - LANG-002
+    mapping_note: UX copy remains source-slice-backed and language-policy constrained
+      in DRD mode.
+  - rule_id: PROTO-GEN-012
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - ANN-001
+      - ANN-002
+      - ANN-003
+    mapping_note: Figma remarks are Dev Mode annotations, not REST comments or canvas
+      cards.
+  - rule_id: PROTO-GEN-013
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - SURFACE-003
+      - PEN-001
+      - PEN-002
+      - PEN-003
+      - PEN-004
+      - PEN-006
+    mapping_note: Layout, surface and Pen line logic are documentation-only and cannot
+      create product behavior.
+  - rule_id: PROTO-GEN-014
+    harness_id: prototype_projection_harness
+    review_section: '4.8'
+    maps_to:
+    - file: sub_harnesses/prototype_projection_harness/validators.yaml
+      ids:
+      - SKILL-HOOK-001
+    mapping_note: Renderer skill hooks are advisory and must not override facts or
+      validators.

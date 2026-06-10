@@ -1,0 +1,21 @@
+fixture_id: "unknown_as_confirmed"
+bad_requirement:
+  id: "REQ-BAD-UNKNOWN-001"
+  title: "把未知需求标为确认"
+  pattern_id: "event_driven"
+  priority: "P0"
+  status: "confirmed"
+  evidence_status: "assumed"
+  source_refs: []
+  cn_ears: "当用户触发未知动作时，系统应当执行未知能力。"
+  semantic_slots:
+    trigger: "未知动作"
+    component: "系统"
+    response:
+      - "执行未知能力"
+  gaps: []
+expected_result: "blocked"
+reason: "unknown/assumed/candidate 不得被写成 confirmed，confirmed 必须有 source_refs 或 review decision。"
+validator_targets:
+  - "requirement_harness_source_ref_validator"
+  - "quality-gate"

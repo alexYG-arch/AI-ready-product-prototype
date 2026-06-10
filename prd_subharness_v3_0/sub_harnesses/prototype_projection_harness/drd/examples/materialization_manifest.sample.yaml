@@ -1,0 +1,20 @@
+materialization_manifest:
+  run_id: RUN-SAMPLE-001
+  libraries:
+    surface_primitives: ../libs/surface_primitive_library.yaml
+    component_primitives: ../libs/component_primitive_library.yaml
+    feedback_primitives: ../libs/feedback_primitive_library.yaml
+    transition_operators: ../libs/transition_operator_library.yaml
+    annotation_templates: ../libs/annotation_template_library.yaml
+    visual_line_styles: ../libs/visual_line_style_library.yaml
+    ux_copy_styles: ../libs/ux_copy_style_library.yaml
+  boards:
+    - board_id: BOARD-SCR-AI-TOOLBAR
+      path: boards/SCR-AI-TOOLBAR/board_manifest.sample.yaml
+  flows: []
+  execution:
+    mode: DRD_MODE
+    board_internal: serial
+    independent_boards: parallel_allowed
+    cross_board_lines: after_all_boards
+  write_figma_reactions: false

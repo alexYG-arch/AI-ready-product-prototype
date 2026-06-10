@@ -1,0 +1,67 @@
+feedback_surface_rules:
+  id: FEEDBACK-001
+  id_zh: 反馈表面规则
+  version: "3.0"
+
+  purpose_zh: 把提示、错误、成功、警告、通知、确认等反馈映射到合适的通用 surface，不写专属场景 validator。
+
+  feedback_types:
+    - feedback_type: inline_feedback
+      feedback_type_zh: 内联反馈
+      blocking: false
+      use_when_zh: 与具体字段、控件或局部区域强相关。
+    - feedback_type: transient_feedback
+      feedback_type_zh: 短暂反馈，例如 toast/snackbar
+      blocking: false
+      dismiss_required: true
+      use_when_zh: 成功、轻量提示、无需用户决策。
+    - feedback_type: dialog_modal
+      feedback_type_zh: 阻断式弹窗
+      blocking: true
+      use_when_zh: 需要确认、破坏性动作、重要风险、需要用户做决定。
+    - feedback_type: notification_surface
+      feedback_type_zh: 通知表面
+      blocking: false
+      persistence_required: true
+      use_when_zh: 异步通知、系统/站内通知、稍后可读信息。
+    - feedback_type: anchored_popover
+      feedback_type_zh: 锚定说明浮层
+      blocking: semi_blocking
+      use_when_zh: 对某个控件或区域做局部解释。
+
+  selection_rules:
+    - rule_id: FB-SEL-001
+      when: {severity: success, requires_user_decision: false, blocking: false}
+      choose: transient_feedback
+      choose_zh: 短暂反馈
+    - rule_id: FB-SEL-002
+      when: {action_type: destructive, requires_confirmation: true}
+      choose: dialog_modal
+      choose_zh: 阻断式确认弹窗
+    - rule_id: FB-SEL-003
+      when: {explanation_scope: local_component, blocking: false}
+      choose: anchored_popover
+      choose_zh: 锚定说明浮层
+    - rule_id: FB-SEL-004
+      when: {requires_user_input: true}
+      choose: dialog_modal
+      choose_zh: 弹窗或面板
+    - rule_id: FB-SEL-005
+      when: {async_or_later_read: true}
+      choose: notification_surface
+      choose_zh: 通知表面
+
+  required_fields:
+    - feedback_id
+    - feedback_type
+    - severity
+    - blocking
+    - persistence
+    - source_anchor
+    - source_slices
+
+  forbidden:
+    - success_feedback_as_blocking_modal_without_reason
+    - destructive_action_without_confirmation_or_explicit_exception
+    - transient_feedback_without_dismiss_strategy
+    - local_error_as_global_feedback_without_reason

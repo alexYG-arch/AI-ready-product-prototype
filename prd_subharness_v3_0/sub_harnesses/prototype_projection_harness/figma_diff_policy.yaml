@@ -1,0 +1,76 @@
+figma_diff_policy:
+  version: "2.1"
+  purpose: "定义 Figma 修改如何被提取、分类、生成 patch candidate。"
+
+  diff_sources:
+    - "figma node metadata"
+    - "figma-sync-map.yaml"
+    - "figma-interaction-map.yaml"
+    - "last projected runtime snapshot"
+    - "current figma semantic extract"
+    - "current PRD runtime regeneration"
+
+  semantic_extract_fields:
+    node:
+      - "semantic_id"
+      - "semantic_type"
+      - "runtime_hash"
+      - "source_refs"
+      - "visible_text_slots"
+      - "component_binding_key"
+      - "variant_properties"
+    reaction:
+      - "trigger"
+      - "actions"
+      - "destination_node_id"
+      - "transition"
+      - "overlay_options"
+    annotation:
+      - "interaction_id"
+      - "source_refs"
+      - "display_label"
+
+  classification_rules:
+    visual_only:
+      examples:
+        - "x/y/width/height changed"
+        - "font or color changed without semantic role change"
+        - "annotation card moved"
+      action: "record_only_or_keep_in_figma"
+    semantic_candidate:
+      examples:
+        - "user visible copy changed"
+        - "reaction destination changed"
+        - "trigger changed"
+        - "new overlay added"
+        - "new state frame added with semantic metadata"
+        - "analytics event label added/removed"
+      action: "generate_change_patch_candidate"
+    high_risk_candidate:
+      examples:
+        - "critical path deleted"
+        - "modal close path deleted"
+        - "guard/action chain changed for payment/login/permission flow"
+        - "source node for P0 interaction deleted"
+      action: "block_auto_apply_and_generate_candidate"
+    conflict:
+      examples:
+        - "same semantic field changed in Figma and PRD since last projection"
+      action: "require_review_decision"
+
+  target_harness_routing:
+    copy_change: "screen_state_harness"
+    navigation_change: "screen_state_harness"
+    overlay_added: "screen_state_harness"
+    overlay_removed: "screen_state_harness"
+    state_added: "screen_state_harness"
+    state_removed: "screen_state_harness"
+    analytics_change: "metrics_events_harness"
+    requirement_semantics_change: "requirement_harness"
+    traceability_change: "traceability_harness"
+    component_visual_binding_change: "prototype_projection_harness"
+
+  direct_write_policy:
+    allowed_direct_fact_write: false
+    candidate_required: true
+    human_review_required: true

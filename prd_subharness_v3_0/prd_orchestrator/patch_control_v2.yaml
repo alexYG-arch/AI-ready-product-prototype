@@ -1,0 +1,136 @@
+patch_control_v2:
+  version: "2.1"
+  purpose: "统一 natural language / YAML / Figma diff / prototype runtime 的 patch 候选、review、路由和落盘规则。"
+
+  source_channels:
+    natural_language:
+      description: "用户或 PM 编写的 change_request.md。"
+      allowed_entrypoints:
+        - "prd_orchestrator/change_requests/*.md"
+    structured_yaml:
+      description: "由 owner harness 产生的结构化事实变更。"
+      allowed_entrypoints:
+        - "product-spec/*.yaml"
+    figma_diff:
+      description: "Figma 侧修改提取出的 semantic diff。"
+      allowed_entrypoints:
+        - "prd_orchestrator/figma_diff_reports/*.yaml"
+      must_generate_candidate: true
+      direct_fact_write_allowed: false
+    prototype_runtime:
+      description: "prototype.runtime.json 的生成或校验结果。"
+      direct_fact_write_allowed: false
+    prototype_renderer_projection:
+      description: "UX writer、layout route、Figma comments、visual lines、renderer skill influence 等原型渲染阶段产物。"
+      direct_fact_write_allowed: false
+    generated_projection:
+      description: "PRD.md、Figma frame、Flow Map、Interaction Spec 等投影。"
+      forbidden_as_fact_source: true
+
+  authority_boundaries:
+    fact_stores:
+      - path: "product-spec/requirements.yaml"
+        owner: "requirement_harness"
+      - path: "product-spec/screens.yaml"
+        owner: "screen_state_harness"
+      - path: "product-spec/metrics.yaml"
+        owner: "metrics_events_harness"
+      - path: "product-spec/events.yaml"
+        owner: "metrics_events_harness"
+    projections:
+      - path: "product-spec/PRD.md"
+        owner: "projection_sync_harness"
+        forbidden_as_fact_source: true
+      - path: "product-spec/prototype.runtime.json"
+        owner: "prototype_projection_harness"
+        forbidden_as_fact_source: true
+      - path: "product-spec/prototype.runtime.base.json"
+        owner: "prototype_projection_harness"
+        forbidden_as_fact_source: true
+      - path: "product-spec/figma-sync-map.yaml"
+        owner: "prototype_projection_harness"
+        forbidden_as_fact_source: true
+      - path: "product-spec/figma-interaction-map.yaml"
+        owner: "prototype_projection_harness"
+        forbidden_as_fact_source: true
+
+  figma_diff_classification:
+    visual_only:
+      examples:
+        - "坐标、间距、字号、颜色、对齐方式变化"
+        - "非语义 layer rename"
+      action: "keep_in_figma_only"
+      fact_patch_allowed: false
+    semantic_candidate:
+      examples:
+        - "按钮文案、错误提示、空状态文案变化"
+        - "跳转目标变化"
+        - "新增 modal / toast / page state"
+        - "新增或删除 analytics event 标注"
+      action: "generate_change_patch_candidate"
+      human_review_required: true
+    high_risk_candidate:
+      examples:
+        - "删除 P0/P1 主路径"
+        - "删除关键页面或恢复路径"
+        - "改变支付、权限、登录等关键流程的 guard 或 action chain"
+      action: "generate_candidate_and_block_auto_apply"
+      human_review_required: true
+    ignored_generated_noise:
+      examples:
+        - "runtime_hash 变化但 semantic id 未变化"
+        - "自动生成 annotation card 的位置微调"
+      action: "ignore_or_record_only"
+      fact_patch_allowed: false
+
+  three_way_diff:
+    required: true
+    base: "last_projected_runtime_snapshot"
+    left: "current_figma_semantic_extract"
+    right: "current_prd_runtime_regeneration"
+    conflict_rule: "same_semantic_field_changed_both_sides_requires_review"
+
+  review_policy:
+    llm_can_create_candidate: true
+    llm_can_approve_patch: false
+    validator_can_block: true
+    human_review_required_for:
+      - "source_channel == figma_diff"
+      - "classification in [semantic_candidate, high_risk_candidate, conflict]"
+      - "target_document in fact_stores"
+      - "delete_item"
+      - "same_semantic_field_changed_both_sides"
+
+  write_policy:
+    prototype_projection_harness:
+      allowed_writes:
+        - "product-spec/prototype.runtime.json"
+        - "product-spec/prototype.runtime.base.json"
+        - "product-spec/figma-sync-map.yaml"
+        - "product-spec/figma-interaction-map.yaml"
+        - "prd_orchestrator/figma_diff_reports/*.yaml"
+        - "prd_orchestrator/prototype_projection_reports/*.yaml"
+        - "prd_orchestrator/change_patch_candidates/*.candidate.yaml"
+      forbidden_direct_writes:
+        - "product-spec/requirements.yaml"
+        - "product-spec/screens.yaml"
+        - "product-spec/metrics.yaml"
+        - "product-spec/events.yaml"
+        - "product-spec/PRD.md"
+
+  done_means:
+    forward_projection:
+      - "prototype.runtime.json generated or validated"
+      - "prototype.runtime.base.json generated or validated"
+      - "reasoning_completion lineage is recorded"
+      - "UX writer, layout, comments, reactions and visual line validations passed or gaps recorded"
+      - "figma-sync-map.yaml updated"
+      - "figma-interaction-map.yaml updated"
+      - "projection report generated"
+      - "validators passed or gaps recorded"
+    reverse_sync:
+      - "figma_diff_report generated"
+      - "semantic diff classified"
+      - "candidate patch created"
+      - "owner harness routed"
+      - "no direct fact write occurred"

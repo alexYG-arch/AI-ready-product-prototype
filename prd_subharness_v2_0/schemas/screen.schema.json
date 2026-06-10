@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-ready Screen",
+  "type": "object",
+  "required": ["id", "name", "purpose", "entries", "exits", "states", "rules"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "type": { "type": "string" },
+    "purpose": { "type": "string" },
+    "figma": { "type": "object" },
+    "entries": { "type": "array" },
+    "exits": { "type": "array" },
+    "related_requirements": { "type": "array", "items": { "type": "string" } },
+    "related_events": { "type": "array", "items": { "type": "string" } },
+    "states": { "type": "array" },
+    "rules": { "type": "array" },
+    "copy": { "type": "array" },
+    "accessibility": { "type": "array" }
+  }
+}

@@ -1,0 +1,85 @@
+harness_registry:
+  version: '3.0'
+  orchestrator: prd_orchestrator
+  sub_harnesses:
+  - id: prd_core_harness
+    path: sub_harnesses/prd_core_harness
+    owns:
+    - prd_core
+    - goals
+    - scope
+    - non_goals
+    - risks
+    - open_questions
+  - id: requirement_harness
+    path: sub_harnesses/requirement_harness
+    owns:
+    - requirements
+    - c_ears
+    - fit_criteria
+    - acceptance
+    - verification
+    - requirement_gaps
+  - id: screen_state_harness
+    path: sub_harnesses/screen_state_harness
+    owns:
+    - screens
+    - states
+    - state_reasoning_chains
+    - copy
+    - accessibility
+  - id: metrics_events_harness
+    path: sub_harnesses/metrics_events_harness
+    owns:
+    - metrics
+    - events
+    - funnels
+    - experiments
+    - instrumentation
+  - id: release_ops_harness
+    path: sub_harnesses/release_ops_harness
+    owns:
+    - release_plan
+    - rollout
+    - monitoring
+    - rollback
+    - ops_readiness
+  - id: projection_sync_harness
+    path: sub_harnesses/projection_sync_harness
+    owns:
+    - prd_md_projection
+    - prd_template_validation
+    - yaml_to_prd_sync
+  - id: traceability_harness
+    path: sub_harnesses/traceability_harness
+    owns:
+    - traceability
+    - impact_analysis
+    - partial_rerun_plan
+    - dependency_graph
+    - tombstones
+  - id: prototype_projection_harness
+    path: sub_harnesses/prototype_projection_harness
+    owns:
+    - prototype_runtime_model
+    - figma_forward_projection
+    - figma_node_map
+    - figma_interaction_map
+    - interaction_graph_projection
+    - component_binding
+    - pattern_binding
+    - runtime_reasoning_completion
+    - renderer_stage_plan
+    - uxwriter_copy_projection
+    - figma_comment_map
+    - visual_flow_line_map
+    - renderer_skill_influence_trace
+    - figma_diff_ingest
+    - prototype_projection_reports
+    - source_slice_index
+    - materialization_manifest
+    - surface_decisions
+    - morphology_decisions
+    - board_page_shards
+    - figma_annotation_map
+    - projection_report

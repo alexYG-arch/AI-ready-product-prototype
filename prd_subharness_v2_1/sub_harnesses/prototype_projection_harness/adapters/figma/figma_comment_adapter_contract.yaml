@@ -1,0 +1,17 @@
+figma_comment_adapter_contract:
+  version: "2.1"
+  purpose: "Post, read, update strategy, and map Figma comments used as interaction explanations."
+  required_scopes:
+    read: "file_comments:read"
+    write: "file_comments:write"
+  input:
+    figma_comment_map: "io/output/figma-comment-map.yaml"
+    figma_sync_map: "io/output/figma-sync-map.yaml"
+  output:
+    posted_comment_results: "io/output/figma_comment_post_results.yaml"
+  rules:
+    use_client_meta: true
+    preferred_client_meta: "FrameOffsetRegion"
+    fallback_client_meta: "FrameOffset"
+    store_external_comment_id_when_posted: true
+    never_treat_comment_reply_as_approved_patch: true

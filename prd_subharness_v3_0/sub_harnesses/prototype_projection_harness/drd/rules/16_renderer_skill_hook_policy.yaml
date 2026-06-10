@@ -1,0 +1,44 @@
+renderer_skill_hook_policy:
+  id: SKILL-HOOK-001
+  id_zh: Renderer Skill Hook 策略
+  version: "3.0"
+
+  role_zh: 允许团队经验、个人经验和设计偏好影响布局密度、组件选择、说明风格和线条风格，但不能覆盖事实或 validator。
+
+  allowed_influence_areas:
+    - layout_density
+    - board_grouping
+    - surface_realization_preference
+    - component_primitive_selection
+    - annotation_style
+    - pen_line_style
+    - ux_writer_tone_preferences
+    - accessibility_heuristics
+
+  forbidden_influence_areas:
+    - create_confirmed_requirement
+    - remove_prd_requirement
+    - change_acceptance_criteria
+    - bypass_validator
+    - approve_semantic_diff
+    - treat_personal_experience_as_fact
+
+  precedence_order:
+    - hard_safety_and_accessibility_rules
+    - prd_fact_bundle
+    - source_slices
+    - surface_constraints
+    - validators
+    - project_design_system
+    - renderer_skill_pack
+    - aesthetic_default
+
+  trace_required_fields:
+    - skill_id
+    - rule_id
+    - affected_object
+    - before_decision
+    - after_decision
+    - rationale_zh
+    - confidence
+    - validator_result

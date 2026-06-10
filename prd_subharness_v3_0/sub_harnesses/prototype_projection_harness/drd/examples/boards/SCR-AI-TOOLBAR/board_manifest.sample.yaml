@@ -1,0 +1,20 @@
+board_manifest:
+  board_id: BOARD-SCR-AI-TOOLBAR
+  board_id_zh: AI 键盘工具栏画布
+  board_type: surface_state_board
+  board_type_zh: 宿主表面状态画布
+  host_surface:
+    surface_type: attached_panel
+    surface_type_zh: 依附面板
+    host_context: keyboard_or_input_surface
+    host_context_zh: 键盘或输入宿主表面
+  render_policy:
+    show_only_necessary_states: true
+    interactions_as_pen_lines: true
+    figma_reactions_enabled: false
+  artifacts:
+    frames: frame_packets.sample.yaml
+    components: component_instance_packets.sample.yaml
+    interactions: interaction_packets.sample.yaml
+    annotations: annotation_packets.sample.yaml
+    lines: pen_line_packets.sample.yaml

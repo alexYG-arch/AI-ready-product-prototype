@@ -1,0 +1,18 @@
+frame_packets:
+  - packet_id: FP-AI-TOOLBAR-VISIBLE
+    board_id: BOARD-SCR-AI-TOOLBAR
+    semantic_target: SCR-AI-TOOLBAR/TOOLBAR-VISIBLE
+    host_surface_ref: SURF-DEC-TOOLBAR
+    display_reason: prd_declared_state
+    display_reason_zh: PRD 声明的主展示状态
+    source_slices:
+      - SLICE-SCR-AI-TOOLBAR
+    regions:
+      - region_id: ACCESSORY_ENTRY_REGION
+        region_id_zh: 功能入口区域
+        region_role: capability_launcher_region
+        region_role_zh: 能力入口区域
+    component_instance_refs:
+      - INST-TOOLBAR-TOPIC-ENTRY
+      - INST-TOOLBAR-INTIMACY-ENTRY
+      - INST-TOOLBAR-RELATION-ENTRY

@@ -1,0 +1,33 @@
+runtime_validation_policy:
+  id: RUNTIME-VALIDATION-001
+  id_zh: Runtime 校验策略
+  version: "3.0"
+
+  runtime_role:
+    role: validation_gap_candidate_review_evidence_only
+    role_zh: Runtime 只用于校验、缺口、候选和评审证据。
+    forbidden_as_render_payload_source: true
+    forbidden_as_fact_source: true
+
+  allowed_runtime_outputs:
+    - validation_runtime_index
+    - runtime_gap_evidence
+    - reasoning_completion_report
+    - candidate_review_evidence
+    - state_coverage_index
+    - interaction_completeness_index
+
+  forbidden_runtime_outputs:
+    - direct_frame_payload
+    - component_instance_payload
+    - user_visible_copy_without_source
+    - figma_node_write_payload
+    - confirmed_product_fact_change
+
+  validation_checks:
+    - every_rendered_node_has_source_refs
+    - every_interaction_has_annotation_or_summary
+    - every_pen_line_has_interaction_id
+    - every_required_state_has_display_reason
+    - runtime_inferred_content_not_rendered_as_confirmed_product_ui
+    - materialization_packets_match_source_slices

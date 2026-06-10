@@ -1,0 +1,349 @@
+requirement_pattern_registry:
+  version: "1.0"
+
+  transformation_pipeline:
+    - step_id: "REQ-XFORM-001"
+      name: "extract_atomic_requirement"
+      natural_language: "先把自然语言拆成单一原子需求；一句话里同时包含多个行为、异常或指标时必须拆分。"
+      machine_mapping:
+        output_fields:
+          - "atomic_requirement"
+          - "split_recommendation"
+          - "open_questions"
+      human_review_prompt: "这条候选是否只表达一个可评审需求？是否需要拆成多条？"
+
+    - step_id: "REQ-XFORM-002"
+      name: "select_cears_mode"
+      natural_language: "根据触发词、状态、条件、异常、数据、权限、数值、实验、发布或合规意图选择 C-EARS 模式。"
+      machine_mapping:
+        output_fields:
+          - "pattern_id"
+          - "pattern_selection_reason"
+          - "confidence"
+      human_review_prompt: "选择的 C-EARS 模式是否匹配原始意图？是否把异常、数据或发布需求误判成功能需求？"
+
+    - step_id: "REQ-XFORM-003"
+      name: "fill_semantic_slots"
+      natural_language: "按 pattern 的 required_slots 填槽；缺槽不能硬补，应进入 gap/open question。"
+      machine_mapping:
+        output_fields:
+          - "semantic_slots"
+          - "slot_gaps"
+      human_review_prompt: "每个必填语义槽是否都有来源？缺槽是否被显式记录？"
+
+    - step_id: "REQ-XFORM-004"
+      name: "render_cn_ears"
+      natural_language: "只在语义槽足够时渲染中文 C-EARS；语法正确不代表质量通过。"
+      machine_mapping:
+        output_fields:
+          - "cn_ears"
+          - "syntax_status"
+      human_review_prompt: "C-EARS 句子是否忠实表达来源，而不是改写出新事实？"
+
+    - step_id: "REQ-XFORM-005"
+      name: "assemble_requirement_record"
+      natural_language: "C-EARS 渲染后必须落成 REQ 结构化记录；也就是写入 requirement_candidate 或 requirement record，而不是只保留一句 C-EARS。"
+      machine_mapping:
+        output_fields:
+          - "id"
+          - "title"
+          - "priority"
+          - "evidence_status"
+          - "source_refs"
+          - "pattern_id"
+          - "cn_ears"
+          - "semantic_slots"
+          - "gaps"
+          - "target_collection"
+      human_review_prompt: "C-EARS 是否已经落成可追踪、可排序、可 review 的 REQ 记录？还是只停留在一句句式化文本？"
+
+    - step_id: "REQ-XFORM-006"
+      name: "attach_acceptance_and_verification"
+      natural_language: "给需求补验收和 verification；无法验证时不能进入 confirmed。"
+      machine_mapping:
+        output_fields:
+          - "acceptance"
+          - "verification"
+          - "verification_gaps"
+      human_review_prompt: "QA 或工程能否据此判断需求完成？"
+
+    - step_id: "REQ-XFORM-007"
+      name: "quantification_review"
+      natural_language: "C-EARS 后必须做数值化判断：能数值化就写 scale/meter/baseline/target/tolerance/window，不能数值化则写 not_applicable 或 TBD 原因。"
+      machine_mapping:
+        output_fields:
+          - "quantification_review"
+          - "fit_criteria"
+          - "numeric_gaps"
+      human_review_prompt: "这条需求是否需要数值化？如果需要，数值和口径从哪里来？"
+
+  reasoning_completion_rules:
+    - rule_id: "REQ-INFER-001"
+      name: "infer_missing_actor_or_component"
+      natural_language: "当原句省略责任主体时，可以从上下文推断候选 component，但必须标记为 inferred_candidate，不能直接 confirmed。"
+      allowed_inputs:
+        - "same change request context"
+        - "confirmed requirement refs"
+        - "legacy PRD section context"
+      output_fields:
+        - "semantic_slots.component"
+        - "inference_notes"
+        - "slot_gaps"
+      pass_condition: "推断出的 component 有上下文依据，并在 inference_notes 中说明依据。"
+      fail_condition: "无依据补出 component，或把推断 component 写成 confirmed。"
+      human_review_prompt: "这个主体是原文明确写的，还是我们从上下文推断的？"
+
+    - rule_id: "REQ-INFER-002"
+      name: "infer_trigger_condition_or_state"
+      natural_language: "当需求暗含触发条件、状态或前置条件时，可以补成候选 trigger/condition/state，但必须保留原文和推断理由。"
+      allowed_inputs:
+        - "raw requirement text"
+        - "neighboring atomic requirements"
+        - "screen state candidates"
+      output_fields:
+        - "semantic_slots.trigger"
+        - "semantic_slots.condition"
+        - "semantic_slots.state"
+        - "inference_notes"
+      pass_condition: "推断条件能回链到文本语义或相邻需求，并且不会改变原始意图。"
+      fail_condition: "把业务策略、异常路径或发布条件推断成普通功能触发。"
+      human_review_prompt: "这个触发/条件/状态是否是原文隐含，而不是新增产品决策？"
+
+    - rule_id: "REQ-INFER-003"
+      name: "infer_acceptance_candidate"
+      natural_language: "可以从 response、fit criteria 或异常恢复中推导验收候选，但只能作为 acceptance_candidate，等待人工或 QA review。"
+      allowed_inputs:
+        - "cn_ears"
+        - "semantic_slots"
+        - "fit_criteria"
+        - "verification hints"
+      output_fields:
+        - "acceptance"
+        - "verification_gaps"
+        - "inference_notes"
+      pass_condition: "验收候选只验证需求已表达行为，不额外添加新行为。"
+      fail_condition: "验收候选引入新的页面、指标、发布或工程实现要求。"
+      human_review_prompt: "这条验收是在验证需求，还是偷偷新增了需求？"
+
+    - rule_id: "REQ-INFER-004"
+      name: "infer_downstream_handoff"
+      natural_language: "当需求暗含页面、指标、事件或发布影响时，可以生成 downstream handoff candidate，但不能在 requirement 层替下游 harness 完成确认。"
+      allowed_inputs:
+        - "pattern_id"
+        - "semantic_slots"
+        - "acceptance candidates"
+        - "quantification_review"
+      output_fields:
+        - "target_sub_harness_candidate"
+        - "impact_candidate"
+        - "open_questions"
+      pass_condition: "下游影响被路由为 candidate，并触发 impact/rerun plan。"
+      fail_condition: "Requirement harness 直接确认页面状态、事件口径、指标 target 或发布计划。"
+      human_review_prompt: "这个影响应该交给哪个下游 harness？是否越权确认了下游事实？"
+
+  pattern_selection_rules:
+    - pattern_id: "event_driven"
+      when_to_use: "用户动作、系统事件或外部事件触发系统响应。"
+      trigger_cues:
+        - "当"
+        - "触发"
+        - "点击"
+        - "提交"
+        - "收到"
+      conversion_rule: "trigger → component → response → acceptance"
+      conversion_explanation: "把原句中的触发动作或事件抽成 trigger，识别负责响应的系统模块为 component，再把系统必须产生的可观察行为写成 response，最后补一条能判断 response 是否完成的 acceptance。"
+      review_risk: "不要把长期状态误写成瞬时事件。"
+
+    - pattern_id: "state_driven"
+      when_to_use: "系统或用户处于某个状态时，应出现特定行为。"
+      trigger_cues:
+        - "在...下"
+        - "处于"
+        - "已登录"
+        - "未授权"
+        - "空数据"
+      conversion_rule: "state → component → behavior → entry_condition → exit_condition"
+      conversion_explanation: "先定义用户或系统所处的 state，再写该状态下 component 必须表现出的 behavior；entry_condition 说明何时进入该状态，exit_condition 说明何时离开该状态，避免状态永久悬空。"
+      review_risk: "状态必须有进入和退出条件，否则页面状态链会断。"
+
+    - pattern_id: "conditional"
+      when_to_use: "满足条件时执行响应，不强调持续状态。"
+      trigger_cues:
+        - "如果"
+        - "若"
+        - "当且仅当"
+        - "满足"
+      conversion_rule: "condition → component → response"
+      conversion_explanation: "把原句中的判断条件抽成 condition，只在该条件成立时要求 component 给出 response；如果重点是失败、错误或恢复，不应使用本模式。"
+      review_risk: "条件和异常处理要分开，失败恢复应走 exception_handling。"
+
+    - pattern_id: "exception_handling"
+      when_to_use: "失败、错误、超时、无权限、不可用等异常路径。"
+      trigger_cues:
+        - "失败"
+        - "错误"
+        - "超时"
+        - "不可用"
+        - "重试"
+      conversion_rule: "failure_condition → user_visible_feedback → recovery_path"
+      conversion_explanation: "把失败原因写成 failure_condition，把用户能看到的提示写成 user_visible_feedback，再写用户或系统下一步如何恢复为 recovery_path。异常处理需求不允许只记录后台错误。"
+      review_risk: "必须写用户可见反馈和恢复路径，不能只写系统记录错误。"
+
+    - pattern_id: "data_rule"
+      when_to_use: "记录、计算、同步、校验、埋点或数据属性要求。"
+      trigger_cues:
+        - "记录"
+        - "埋点"
+        - "事件"
+        - "属性"
+        - "校验"
+      conversion_rule: "event → data_service → properties → validation"
+      conversion_explanation: "把触发数据处理的业务动作写成 event，把负责记录或处理数据的服务写成 data_service，把必须记录/计算的字段写成 properties，并用 validation 说明字段类型、必填性或校验方式。"
+      review_risk: "数据规则要交叉检查 metrics_events_harness，避免重复定义事件口径。"
+
+    - pattern_id: "permission_privacy"
+      when_to_use: "权限、隐私、禁止行为、数据访问边界。"
+      trigger_cues:
+        - "权限"
+        - "隐私"
+        - "不得"
+        - "禁止"
+        - "授权"
+      conversion_rule: "permission_condition → forbidden_action → fallback"
+      conversion_explanation: "把权限或隐私前提写成 permission_condition，把系统明确不能做的行为写成 forbidden_action，同时必须给出用户或系统的 fallback。只有禁止没有 fallback 的规则不完整。"
+      review_risk: "必须写 fallback，不允许只写不得做什么。"
+
+    - pattern_id: "non_functional_fit_criteria"
+      when_to_use: "性能、可用性、准确率、容量、时延等数值型非功能要求。"
+      trigger_cues:
+        - "p95"
+        - "延迟"
+        - "准确率"
+        - "可用性"
+        - "吞吐"
+      conversion_rule: "scale → meter → baseline → target → verification"
+      conversion_explanation: "先定义测量对象范围 scale，再定义量尺 meter；baseline 是当前或来源基准，target 是目标值，verification 说明如何测量。baseline 或 meter 不明确时不能直接填 target。"
+      review_risk: "baseline 不明时不能编 target，必须进入 quantification_review。"
+
+    - pattern_id: "experiment"
+      when_to_use: "A/B 实验、分组、变体、guardrail。"
+      trigger_cues:
+        - "实验"
+        - "A/B"
+        - "分组"
+        - "variant"
+        - "guardrail"
+      conversion_rule: "experiment_group → variant_behavior → metric → guardrail"
+      conversion_explanation: "把命中的实验人群或分组写成 experiment_group，把该组看到的差异行为写成 variant_behavior，再绑定主指标 metric 和不能恶化的 guardrail。"
+      review_risk: "实验指标要和 metrics_events_harness 对齐。"
+
+    - pattern_id: "release_rule"
+      when_to_use: "发布条件、灰度动作、回滚条件。"
+      trigger_cues:
+        - "发布"
+        - "灰度"
+        - "回滚"
+        - "上线"
+      conversion_rule: "release_condition → release_owner → release_action → rollback_condition"
+      conversion_explanation: "把可以发布的前提写成 release_condition，把负责人写成 release_owner，把发布动作写成 release_action，并补回滚触发条件 rollback_condition；该模式通常需要 release_ops_harness 继续细化。"
+      review_risk: "发布规则要路由 release_ops_harness，不应停留在需求层批准。"
+
+    - pattern_id: "compliance"
+      when_to_use: "合规、审计、监管、证据留存。"
+      trigger_cues:
+        - "合规"
+        - "审计"
+        - "监管"
+        - "证据"
+      conversion_rule: "compliance_scope → compliance_behavior → evidence"
+      conversion_explanation: "把合规适用范围写成 compliance_scope，把系统必须执行的合规行为写成 compliance_behavior，再写能证明该行为发生的 evidence。"
+      review_risk: "必须说明证据来源和适用范围。"
+
+  patterns:
+    - pattern_id: "event_driven"
+      chinese_name: "事件触发型"
+      template: "当 [trigger] 时，[component] 应当 [response]。"
+      required_slots:
+        - trigger
+        - component
+        - response
+        - acceptance
+
+    - pattern_id: "state_driven"
+      chinese_name: "状态驱动型"
+      template: "在 [state] 下，[component] 应当 [behavior]。"
+      required_slots:
+        - state
+        - component
+        - behavior
+        - entry_condition
+        - exit_condition
+
+    - pattern_id: "conditional"
+      chinese_name: "条件型"
+      template: "如果 [condition]，则 [component] 应当 [response]。"
+      required_slots:
+        - condition
+        - component
+        - response
+
+    - pattern_id: "exception_handling"
+      chinese_name: "异常处理型"
+      template: "如果 [failure_condition]，则 [component] 应当 [feedback_or_recovery]。"
+      required_slots:
+        - failure_condition
+        - user_visible_feedback
+        - recovery_path
+
+    - pattern_id: "data_rule"
+      chinese_name: "数据规则型"
+      template: "当 [event] 发生时，[data_service] 应当记录 [properties]。"
+      required_slots:
+        - event
+        - data_service
+        - properties
+        - validation
+
+    - pattern_id: "permission_privacy"
+      chinese_name: "权限/隐私型"
+      template: "如果 [permission_condition]，则 [component] 不得 [forbidden_action]，并应当 [fallback]。"
+      required_slots:
+        - permission_condition
+        - forbidden_action
+        - fallback
+
+    - pattern_id: "non_functional_fit_criteria"
+      chinese_name: "非功能数值规格型"
+      template: "当 [trigger] 时，[component] 应当在 [fit_criteria] 内 [response]。"
+      required_slots:
+        - scale
+        - meter
+        - baseline
+        - target
+        - verification
+
+    - pattern_id: "experiment"
+      chinese_name: "实验型"
+      template: "若用户命中 [experiment_group]，则 [component] 应当 [variant_behavior]。"
+      required_slots:
+        - experiment_group
+        - variant_behavior
+        - metric
+        - guardrail
+
+    - pattern_id: "release_rule"
+      chinese_name: "发布型"
+      template: "当 [release_condition] 满足时，[release_owner] 可 [release_action]。"
+      required_slots:
+        - release_condition
+        - release_owner
+        - release_action
+        - rollback_condition
+
+    - pattern_id: "compliance"
+      chinese_name: "合规型"
+      template: "在 [compliance_scope] 内，[system] 必须 [compliance_behavior]。"
+      required_slots:
+        - compliance_scope
+        - compliance_behavior
+        - evidence

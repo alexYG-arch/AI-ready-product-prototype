@@ -1,0 +1,26 @@
+pen_line_packets:
+  - line_id: LINE-TOOLBAR-TOPIC-TAP
+    interaction_id: INT-TOOLBAR-TOPIC-TAP
+    annotation_id: ANN-INT-TOOLBAR-TOPIC-TAP
+    line_type: surface_transition
+    line_type_zh: 宿主表面变化线
+    source_anchor:
+      board_id: BOARD-SCR-AI-TOOLBAR
+      instance_id: INST-TOOLBAR-TOPIC-ENTRY
+    destination_anchor:
+      board_id: BOARD-SCR-TOPIC-RECOMMENDATION
+      state_id: TOPIC-IMAGE-SELECT
+    trigger: ON_TAP
+    trigger_zh: 点击 / 轻触
+    guard_or_precondition: none
+    guard_or_precondition_zh: 无
+    semantic_action: expand_from_anchor
+    semantic_action_zh: 从锚点展开
+    label:
+      text: INT-TOOLBAR-TOPIC-TAP · 点击 → 话题推荐
+      text_zh: 点击话题推荐入口，进入话题推荐画布
+    routing:
+      route_through_gateway: true
+      avoid_crossing_frame_content: true
+    source_refs:
+      - PRD.md#7:SCR-AI-TOOLBAR

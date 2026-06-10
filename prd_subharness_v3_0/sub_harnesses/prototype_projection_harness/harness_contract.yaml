@@ -1,0 +1,122 @@
+harness_contract:
+  id: prototype_projection_harness
+  name: Prototype Projection Harness
+  version: '3.0'
+  type: projection_harness
+  default_projection_mode: DRD_MODE
+  projection_modes:
+    default: DRD_MODE
+    modes:
+    - mode: DRD_MODE
+      write_figma_reactions: false
+      description: 平铺必要状态、写 Dev Mode annotations、画 Pen logic lines，不写真实点击原型。
+    - mode: INTERACTIVE_PLAYABLE_MODE
+      write_figma_reactions: true
+      description: 保留模式边界；可沿用 v2.1 reaction rules 写真实 Figma node.reactions。
+  owns:
+  - source_slice_index
+  - materialization_manifest
+  - surface_decisions
+  - morphology_decisions
+  - board_page_shards
+  - layout_route_plan
+  - figma_projection_plan
+  - figma_sync_map
+  - figma_annotation_map
+  - visual_flow_line_map
+  - projection_report
+  - validation_runtime_index
+  - prototype_runtime_model
+  - runtime_reasoning_completion
+  - renderer_stage_plan
+  - component_binding
+  - pattern_binding
+  - renderer_skill_influence_trace
+  - figma_diff_ingest
+  not_owns:
+  - confirmed_product_requirements
+  - screen_fact_store
+  - metric_or_event_fact_store
+  - PRD.md narrative projection
+  - human approval of patch
+  - Figma design system source components
+  allowed_inputs:
+  - product-spec/requirements.yaml
+  - product-spec/screens.yaml
+  - product-spec/metrics.yaml
+  - product-spec/events.yaml
+  - product-spec/traceability.md
+  - product-spec/component-binding-map.yaml
+  - product-spec/design-semantic-library.json
+  - prd_orchestrator/patch_control_v3.yaml
+  - sub_harnesses/prototype_projection_harness/drd/examples/run_manifest.sample.yaml
+  - sub_harnesses/prototype_projection_harness/drd/examples/source_slices/*.yaml
+  forbidden_inputs_as_fact_source:
+  - product-spec/PRD.md narrative projection
+  - Figma frame text
+  - Figma layer name
+  - Figma Dev Mode annotation
+  - Pen logic line
+  - Flow Map annotation
+  - Interaction Spec annotation
+  allowed_outputs:
+  - runs/<run-id>/prototype_drd/manifest.yaml
+  - runs/<run-id>/prototype_drd/source_slices/*.yaml
+  - runs/<run-id>/prototype_drd/decisions/*.yaml
+  - runs/<run-id>/prototype_drd/boards/**/*.yaml
+  - runs/<run-id>/prototype_drd/flows/**/*.yaml
+  - runs/<run-id>/prototype_drd/reports/projection_report.yaml
+  - product-spec/prototype.runtime.base.json
+  - product-spec/prototype.runtime.json
+  - product-spec/figma-sync-map.yaml
+  - product-spec/figma-interaction-map.yaml
+  - prd_orchestrator/figma_diff_reports/*.yaml
+  - prd_orchestrator/prototype_projection_reports/*.yaml
+  - prd_orchestrator/change_patch_candidates/*.candidate.yaml
+  forbidden_direct_writes:
+  - product-spec/requirements.yaml
+  - product-spec/screens.yaml
+  - product-spec/metrics.yaml
+  - product-spec/events.yaml
+  - product-spec/PRD.md
+  required_outputs:
+    drd_forward_projection:
+    - run_manifest
+    - source_slice_index
+    - materialization_manifest
+    - surface_decisions
+    - board_manifests
+    - frame_packets
+    - component_instance_packets
+    - interaction_packets
+    - annotation_packets
+    - pen_line_packets
+    - figma_annotation_map
+    - visual_flow_line_map
+    - projection_report
+    reverse_sync:
+    - figma_diff_report
+    - change_patch_candidate_or_review_log
+  authority_boundary:
+    fact_authority: prd_fact_bundle
+    render_authority: board_page_shards
+    runtime_authority: validation_gap_candidate_review_evidence_only
+    figma_authority: visual_projection_only
+    reverse_sync_authority: candidate_or_review_log_only
+    validator_can_block: true
+    human_review_required_for_high_risk: true
+  run_lifecycle:
+    human_review_stage:
+      required: true
+      review_artifacts:
+      - runs/<run-id>/prototype_drd/reports/projection_report.yaml
+      - runs/<run-id>/prototype_drd/decisions/review_log.yaml
+      - prd_orchestrator/figma_diff_reports/*.yaml
+      - prd_orchestrator/prototype_projection_reports/*.yaml
+      - prd_orchestrator/change_patch_candidates/*.candidate.yaml
+      approval_required_before:
+      - writing Figma fact-change candidates into owner fact stores
+      - accepting high-risk Figma diff candidates
+      - deleting or tombstoning previously projected semantic ids
+      - changing component role, binding key, interaction destination, or host surface
+        type

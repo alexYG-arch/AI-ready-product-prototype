@@ -1,0 +1,63 @@
+annotation_rules:
+  id: ANNOTATION-001
+  id_zh: Dev Mode 备注规则
+  version: "3.0"
+
+  figma_target:
+    target_api: node.annotations_labelMarkdown
+    target_api_zh: Figma Dev Mode annotations / labelMarkdown
+    not_allowed:
+      - REST_comments
+      - side_panel_note
+      - canvas_comment_card
+      - harness_audit_panel
+
+  categories:
+    - interaction
+    - state
+    - guard
+    - gap
+    - evidence
+    - surface_decision
+    - projection_decision
+
+  target_resolution_order:
+    - exact_component_instance_node
+    - generated_gesture_region_node
+    - affected_region_node
+    - source_state_frame_node
+    - board_gateway_node
+
+  required_interaction_annotation_body:
+    - interaction_id
+    - trigger
+    - guard_or_precondition
+    - ordered_actions_summary
+    - else_actions_summary_when_applicable
+    - state_effect
+    - analytics_event_or_none
+    - source_refs
+
+  required_state_annotation_body:
+    - state_id
+    - display_reason
+    - entry_condition
+    - exit_condition
+    - recovery_path_or_none
+    - source_refs
+
+  required_pen_line_annotation_link:
+    rule: every_pen_line_references_annotation_id
+    rule_zh: 每条 Pen 线必须引用解释它的 annotation_id。
+
+  density_rules:
+    max_annotations_per_state: 8
+    max_annotations_per_component: 2
+    overflow: collapse_to_summary_annotation
+    duplicate_semantic_annotation: use_applies_to_state_list
+
+  forbidden:
+    - annotation_without_source_refs
+    - annotation_not_anchored_to_source
+    - canvas_note_substitute
+    - harness_audit_inside_product_board

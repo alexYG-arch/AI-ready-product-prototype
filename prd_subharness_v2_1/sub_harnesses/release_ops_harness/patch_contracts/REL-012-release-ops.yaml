@@ -1,0 +1,16 @@
+patch_contract:
+  patch_id: "REL-012-release-ops"
+  title: "REL-012: 生成发布、灰度、监控和回滚计划。"
+  status: "draft"
+  goal:
+    - "REL-012: 生成发布、灰度、监控和回滚计划。"
+  allowed_files:
+    - "product-spec/"
+    - "prd_orchestrator/"
+    - "sub_harnesses/"
+  forbidden_files:
+    - "product-spec/legacy_prd.md"
+  done_when:
+    - "patch_report written"
+    - "change_patch written"
+    - "impact_analysis written"

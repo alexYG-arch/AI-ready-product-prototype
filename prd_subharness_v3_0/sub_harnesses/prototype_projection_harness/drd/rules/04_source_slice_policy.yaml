@@ -1,0 +1,54 @@
+source_slice_policy:
+  id: SOURCE-SLICE-001
+  id_zh: PRD 来源切片策略
+  version: "3.0"
+
+  purpose_zh: 把 PRD / fact bundle 切成可追踪、可哈希、可被 packet 引用的小片段，避免 renderer 直接读整份 PRD，也避免重复内联大段原文。
+
+  source_slice:
+    required_fields:
+      - slice_id
+      - source_ref
+      - source_hash
+      - extraction_role
+      - semantic_targets
+      - render_fields
+      - evidence_level
+    optional_fields:
+      - excerpt_zh
+      - notes_zh
+      - original_text_ref
+
+  extraction_roles:
+    - screen_definition
+    - state_definition
+    - component_requirement
+    - interaction_requirement
+    - feedback_policy
+    - entitlement_policy
+    - copy_source
+    - acceptance_criteria
+    - analytics_requirement
+    - surface_hint
+
+  evidence_levels:
+    - confirmed_fact
+    - inferred_from_multiple_refs
+    - projection_decision
+    - gap_candidate
+    - review_required
+
+  render_field_evidence:
+    rule_zh: 每个关键渲染字段必须能指向 source slice，而不是只指向章节。
+    examples:
+      result_count:
+        value: 3
+        source_slice: SLICE-REQ-003A-001
+      feedback_surface:
+        value: transient_feedback
+        source_slice: SLICE-COPY-SUCCESS-001
+
+  forbidden:
+    - source_refs_only_at_chapter_level_when_field_specific_evidence_needed
+    - unsourced_llm_summary_as_slice
+    - figma_layer_name_as_source_slice

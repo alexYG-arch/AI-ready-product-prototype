@@ -1,0 +1,8 @@
+meta_schema_note: "Lightweight YAML schema for Codex and validator hints, not full JSON Schema."
+meta_schema_note_zh: "轻量 YAML schema，用于 Codex 和 validator 提示，不是完整 JSON Schema。"
+
+required: [packet_id, board_id, semantic_target, host_surface_ref, display_reason, display_reason_zh, regions, source_slices]
+properties:
+  packet_id: string
+  regions: list[region]
+  component_instance_refs: list[string]

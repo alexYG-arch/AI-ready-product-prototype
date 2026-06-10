@@ -1,0 +1,31 @@
+component_instance_packets:
+  - instance_id: INST-TOOLBAR-TOPIC-ENTRY
+    component_ref: PRIM-CAPABILITY-ENTRY
+    semantic_role: entry.topic_recommendation
+    semantic_role_zh: 话题推荐入口
+    host_region: ACCESSORY_ENTRY_REGION
+    props:
+      label: 话题推荐
+      icon_semantic: topic
+      state: enabled
+    source_slices: [SLICE-SCR-AI-TOOLBAR]
+  - instance_id: INST-TOOLBAR-INTIMACY-ENTRY
+    component_ref: PRIM-CAPABILITY-ENTRY
+    semantic_role: entry.intimacy_setting
+    semantic_role_zh: 亲密度设置入口
+    host_region: ACCESSORY_ENTRY_REGION
+    props:
+      label: 亲密度设置
+      icon_semantic: intimacy
+      state: enabled
+    source_slices: [SLICE-SCR-AI-TOOLBAR]
+  - instance_id: INST-TOOLBAR-RELATION-ENTRY
+    component_ref: PRIM-CAPABILITY-ENTRY
+    semantic_role: entry.relation_analysis
+    semantic_role_zh: 关系分析入口
+    host_region: ACCESSORY_ENTRY_REGION
+    props:
+      label: 关系分析
+      icon_semantic: relation
+      state: enabled
+    source_slices: [SLICE-SCR-AI-TOOLBAR]

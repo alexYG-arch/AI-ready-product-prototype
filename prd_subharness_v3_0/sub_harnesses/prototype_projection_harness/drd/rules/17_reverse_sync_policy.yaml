@@ -1,0 +1,33 @@
+reverse_sync_policy:
+  id: REVERSE-001
+  id_zh: 反向同步策略
+  version: "3.0"
+
+  drd_mode_scope:
+    semantic_source_from_figma: annotations_and_managed_metadata_only
+    pen_line_edits_are_documentation_only: true
+    figma_reactions_absent_by_default: true
+
+  classification:
+    visual_only:
+      examples: [x_y_width_height, color_font_without_semantic_change, pen_line_reroute]
+      action: record_only
+      action_zh: 仅记录，不回写 PRD
+    projection_decision_change:
+      examples: [surface_decision_note_changed, component_binding_note_changed, annotation_order_changed]
+      action: projection_review_log
+      action_zh: 写入投射评审日志
+    semantic_candidate:
+      examples: [visible_copy_semantic_change, destination_semantic_change, new_required_state_annotation]
+      action: candidate_only
+      action_zh: 只生成候选，不直接写 PRD
+    conflict:
+      examples: [prd_and_figma_changed_same_semantic_field]
+      action: human_review_required
+      action_zh: 需要人工评审
+
+  forbidden:
+    - direct_prd_write
+    - treating_pen_line_as_behavior_change
+    - treating_annotation_order_as_fact_change
+    - writing_fact_store_from_figma_without_candidate

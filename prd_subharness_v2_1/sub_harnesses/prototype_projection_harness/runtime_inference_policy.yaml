@@ -1,0 +1,137 @@
+runtime_inference_policy:
+  version: "2.1"
+  decision: "two_pass_inside_runtime_stage"
+
+  rationale:
+    summary: >-
+      The harness builds the prototype runtime from the existing PRD fact bundle first, then runs a separate
+      reasoning-completion pass inside the same runtime stage. This keeps the renderer deterministic and prevents
+      Figma from becoming the place where missing product logic is silently invented.
+    rejected_options:
+      one_shot_runtime_generation:
+        reason: "Too easy to hide inferred states and interaction branches inside a single generation step."
+      post_runtime_renderer_reasoning:
+        reason: "Too late; renderer would have to make product-state decisions while drawing frames and lines."
+
+  artifacts:
+    base_runtime:
+      path: "io/output/prototype.runtime.base.json"
+      purpose: "Direct structural projection from PRD facts. No completion beyond mechanical normalization."
+      fact_authority: "derived_from_prd_fact_bundle_only"
+    completed_runtime:
+      path: "io/output/prototype.runtime.json"
+      purpose: "Runtime with state, logic, interaction, UX-copy and gap completion annotations."
+      fact_authority: "projection_intermediate_not_fact_source"
+    reasoning_report:
+      path: "io/output/prototype_runtime_reasoning_report.yaml"
+      purpose: "Human-readable explanation of what was inferred, blocked, or left as a gap."
+
+  pass_1_base_runtime:
+    name: "base_runtime_from_prd"
+    input:
+      - prd_fact_bundle
+      - component_binding_map
+      - design_semantic_library
+    allowed_operations:
+      - normalize_ids
+      - resolve_screen_to_screen_state_candidates
+      - copy_existing_requirements_and_acceptance_refs
+      - map_declared_components_and_events
+      - preserve_prd_traceability
+    forbidden_operations:
+      - inventing_new_requirements
+      - inventing_unmentioned_business_rules
+      - changing_copy_tone
+      - selecting_layout_or_visual_routes
+    output_must_include:
+      - source_snapshot
+      - flows
+      - screens
+      - overlays
+      - variables
+      - interaction_graph
+      - prototype_gaps
+      - generation_lineage.pass_1
+
+  pass_2_reasoning_completion:
+    name: "logic_state_interaction_completion"
+    input:
+      - prototype.runtime.base.json
+      - prd_fact_bundle
+      - state_dimension_profile
+      - interaction_completion_rules
+      - uxwriter_stage_output
+    allowed_operations:
+      - complete_missing_screen_state_dimensions
+      - infer_standard_loading_empty_error_success_states_when_supported
+      - expand interaction outcome branches from acceptance criteria
+      - add recovery paths for declared failure outcomes
+      - mark ambiguous states as prototype_gaps
+      - generate copy_candidates before UX writer finalization
+      - attach inference_confidence and inference_basis
+    forbidden_operations:
+      - silently converting inferred branch into confirmed PRD fact
+      - deleting PRD-declared interaction branches
+      - hiding unresolved conflicts
+      - collapsing page-level state into component variant when business state is affected
+    inference_confidence:
+      high: "Directly supported by requirement/screen/event/acceptance refs."
+      medium: "Supported by common UX pattern and adjacent PRD evidence; requires source_refs plus rationale."
+      low: "Useful prototype assumption; must remain a gap or review_candidate."
+    output_must_include:
+      - generation_lineage.pass_2
+      - reasoning_completion.inferred_states
+      - reasoning_completion.inferred_interactions
+      - reasoning_completion.blocked_inferences
+      - prototype_gaps
+
+  state_completion_rules:
+    required_dimensions:
+      - data_state
+      - network_state
+      - permission_state
+      - input_state
+      - request_lifecycle
+      - consistency_state
+      - recovery_state
+      - platform_device_state
+      - empty_state
+      - error_state
+      - loading_state
+      - success_state
+    dimension_policy:
+      explicit_not_applicable_required: true
+      missing_dimension_blocks_projection: true
+      ungrounded_dimension_generates_gap: true
+
+  interaction_completion_rules:
+    every_user_action_needs:
+      - source_screen_state
+      - source_component_or_hotspot
+      - trigger
+      - guard_or_precondition
+      - ordered_actions
+      - destination_or_state_effect
+      - fallback_or_gap
+      - analytics_event_or_no_event_reason
+      - source_refs
+    branch_policy:
+      success_failure_cancel_retry_are_separate_branches: true
+      repeated_same_source_same_trigger_must_merge_as_conditional: true
+      same_semantic_interaction_across_states_uses_single_canonical_interaction_with_state_bindings: true
+
+  gap_policy:
+    gap_when:
+      - missing_destination_state
+      - ambiguous_error_recovery
+      - missing_permission_policy
+      - missing_event_ownership
+      - component_role_unmapped
+      - copy_intent_unclear
+    gap_fields_required:
+      - gap_id
+      - affected_runtime_object
+      - missing_decision
+      - severity
+      - owner_candidate
+      - recommended_question

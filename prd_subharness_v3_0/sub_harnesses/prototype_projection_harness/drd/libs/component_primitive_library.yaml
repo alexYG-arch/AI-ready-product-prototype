@@ -1,0 +1,43 @@
+component_primitive_library:
+  version: "3.0"
+  name_zh: 组件原语库
+  style_lock: false
+  description_zh: 参考 Material / iOS 的基础控件语义，但不锁定视觉风格。
+  primitives:
+    - id: PRIM-ACTION-BUTTON
+      zh: 操作按钮
+      semantic_roles: [primary_action, secondary_action, destructive_action]
+      required_props: [label, state]
+      optional_props: [icon_semantic, intent]
+      states: [enabled, disabled, loading, pressed]
+    - id: PRIM-TEXT-INPUT
+      zh: 文本输入框
+      semantic_roles: [text_input, search_input, form_field]
+      required_props: [placeholder, state]
+      states: [empty, focused, filled, error, disabled]
+    - id: PRIM-LIST-ITEM
+      zh: 列表项
+      semantic_roles: [navigation_item, selectable_item, result_item]
+      required_props: [label, state]
+      optional_props: [description, icon_semantic, trailing_action]
+    - id: PRIM-CAPABILITY-ENTRY
+      zh: 功能入口
+      semantic_roles: [capability_entry, tool_entry, navigation_entry]
+      required_props: [label, state]
+      optional_props: [icon_semantic, description]
+      allowed_realizations: [text_button, icon_label_entry, list_row, compact_chip, card_entry]
+    - id: PRIM-FEEDBACK
+      zh: 反馈组件
+      semantic_roles: [inline_feedback, transient_feedback, error_message, success_message]
+      required_props: [message, severity]
+      optional_props: [action_label, dismiss_strategy]
+    - id: PRIM-PANEL
+      zh: 面板
+      semantic_roles: [attached_panel, assistant_panel, settings_panel, result_panel]
+      required_props: [title, surface_type]
+      optional_props: [dismiss_action, pinned_actions]
+    - id: PRIM-NOTIFICATION
+      zh: 通知卡片
+      semantic_roles: [notification_item, notification_banner]
+      required_props: [title, persistence]
+      optional_props: [body, timestamp, action]

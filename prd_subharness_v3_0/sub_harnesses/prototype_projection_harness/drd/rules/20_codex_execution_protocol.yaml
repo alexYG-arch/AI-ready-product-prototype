@@ -1,0 +1,48 @@
+codex_execution_protocol:
+  id: CODEX-EXEC-001
+  id_zh: Codex 执行协议
+  version: "3.0"
+
+  read_order:
+    - package_manifest.yaml
+    - rules/prototype_harness_drd_complete_rules.yaml
+    - libs/surface_primitive_library.yaml
+    - libs/component_primitive_library.yaml
+    - schemas/run_manifest.schema.yaml
+    - examples/run_manifest.sample.yaml
+
+  implementation_steps:
+    - step: update_pipeline
+      step_zh: 更新 stage pipeline 为 DRD-first
+    - step: implement_payload_sharding
+      step_zh: 实现 manifest + libs + board/page shards
+    - step: implement_surface_inference
+      step_zh: 实现通用宿主表面推理
+    - step: implement_board_render
+      step_zh: 实现必要状态画布平铺
+    - step: implement_annotations
+      step_zh: 实现 Dev Mode annotation map
+    - step: implement_pen_lines
+      step_zh: 实现 Pen 逻辑线 map
+    - step: implement_projection_report
+      step_zh: 实现 projection report
+    - step: run_validators
+      step_zh: 运行 validators
+
+  no_go_actions:
+    - do_not_write_prd_fact_store
+    - do_not_write_figma_reactions_in_drd_mode
+    - do_not_generate_single_giant_payload
+    - do_not_use_runtime_as_payload
+    - do_not_create_surface_specific_validators_when_generic_validator_suffices
+
+  output_contract:
+    required_artifacts:
+      - source_slice_index.yaml
+      - materialization_manifest.yaml
+      - surface_decisions.yaml
+      - board_shards
+      - layout_route_plan.yaml
+      - figma_annotation_map.yaml
+      - visual_flow_line_map.yaml
+      - projection_report.yaml

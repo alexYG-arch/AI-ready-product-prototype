@@ -1,0 +1,49 @@
+figma_sync_map:
+  version: "2.1"
+  owner: "prototype_projection_harness"
+  authority_role: "artifact_binding_map"
+  forbidden_as_fact_source: true
+
+  figma_file:
+    file_key: ""
+    file_name: ""
+    last_projected_at: ""
+    last_projected_runtime_hash: ""
+
+  projection_zones:
+    managed_by_harness:
+      description: "系统可 patch 的节点。"
+      figma_page_names:
+        - "Prototype"
+        - "Prototype Flow Map"
+        - "Interaction Spec"
+    designer_owned:
+      description: "系统默认不覆盖，只读取 semantic diff。"
+      figma_page_names: []
+    generated_draft:
+      description: "可重建的低保真草稿区。"
+      figma_page_names:
+        - "Generated Draft"
+
+  semantic_to_figma_nodes: []
+
+  node_metadata_policy:
+    namespace: "prd_proto"
+    required_keys:
+      - "semantic_id"
+      - "semantic_type"
+      - "runtime_hash"
+      - "source_refs"
+      - "managed_by"
+      - "override_policy"
+
+  override_policies:
+    semantic_locked_visual_editable:
+      semantic_fields: "locked"
+      visual_fields: "editable_in_figma"
+    generated_fully_managed:
+      semantic_fields: "managed"
+      visual_fields: "managed"
+    designer_owned_readonly:
+      semantic_fields: "read_for_diff_only"
+      visual_fields: "designer_owned"

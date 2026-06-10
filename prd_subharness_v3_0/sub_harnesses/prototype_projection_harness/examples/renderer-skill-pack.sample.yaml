@@ -1,0 +1,30 @@
+renderer_skill_pack:
+  version: "2.1"
+  skill_id: "SKILL-PERSONAL-PROTOTYPE-HEURISTICS-SAMPLE"
+  authority_role: "advisory_renderer_influence"
+  priority: 50
+  applicability:
+    product_type: "consumer_mobile_app"
+    fidelity: "mid_fidelity"
+  rules:
+    - rule_id: "SKILL-LAYOUT-001"
+      hook: "before_layout_route_blueprint"
+      recommendation:
+        grouping_hint: "Keep happy path in one horizontal row; stack error states under their source screen."
+      confidence: "medium"
+      reason: "Improves review readability for mobile flow prototypes."
+    - rule_id: "SKILL-COPY-001"
+      hook: "before_copy_finalization"
+      recommendation:
+        tone_preference: "warm_but_direct"
+        words_to_avoid:
+          - "系统异常"
+          - "未知错误"
+      confidence: "medium"
+      reason: "Reduces cold machine tone in recoverable errors."
+    - rule_id: "SKILL-LINE-001"
+      hook: "before_visual_flow_lines"
+      recommendation:
+        line_simplification_preference: "show primary path lines on canvas; move rare secondary branches to spec panel."
+      confidence: "medium"
+      reason: "Prevents spaghetti lines when state stacks are dense."

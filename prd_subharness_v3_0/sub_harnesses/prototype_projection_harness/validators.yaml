@@ -1,0 +1,1285 @@
+validator_spec_version: '3.0'
+validator_group_spec: prototype_drd_stage_grouped
+review_status: approved_by_human_review
+intent: 把结构化 PRD facts 安全投射为 DRD source slices、surface decisions、board/page shards、Dev
+  Mode annotations、Pen logic lines 和 projection report；runtime/Figma/annotation/Pen
+  line 均不得成为事实源。
+validators:
+  language_validators:
+  - id: LANG-001
+    stage: language
+    severity: blocker
+    natural_language: 严格 JSON 文件不得包含 // 或 /* */ 注释；需要中文注释时使用 YAML 或 JSONC 草稿。
+    applies_to:
+      documents: &id001
+      - sub_harnesses/prototype_projection_harness/drd/rules/00_language_and_comment_policy.yaml
+      - sub_harnesses/prototype_projection_harness/drd/examples/jsonc/commented_payload_example.jsonc
+    machine_rule:
+      check_type: lang_001
+      pass_when:
+      - 严格 JSON 文件不得包含 // 或 /* */ 注释；需要中文注释时使用 YAML 或 JSONC 草稿。 is satisfied with
+        explicit source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - 严格 JSON 文件不得包含 // 或 /* */ 注释；需要中文注释时使用 YAML 或 JSONC 草稿。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 LANG-001：严格 JSON 文件不得包含 // 或 /* */ 注释；需要中文注释时使用 YAML 或 JSONC
+        草稿。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD
+        事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: LANG-002
+    stage: language
+    severity: warning
+    natural_language: 机器字段名必须使用稳定英文 key，中文说明进入 *_zh / description_zh / copy.zh-CN。
+    applies_to:
+      documents: *id001
+    machine_rule:
+      check_type: lang_002
+      pass_when:
+      - 机器字段名必须使用稳定英文 key，中文说明进入 *_zh / description_zh / copy.zh-CN。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - 机器字段名必须使用稳定英文 key，中文说明进入 *_zh / description_zh / copy.zh-CN。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 LANG-002：机器字段名必须使用稳定英文 key，中文说明进入 *_zh / description_zh
+        / copy.zh-CN。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen
+        line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  payload_sharding_validators:
+  - id: SHARD-001
+    stage: payload_sharding
+    severity: blocker
+    natural_language: 不得生成单体大 payload；必须使用 manifest + libs + board/page shards。
+    applies_to:
+      documents: &id002
+      - sub_harnesses/prototype_projection_harness/drd/rules/03_payload_sharding_policy.yaml
+      - sub_harnesses/prototype_projection_harness/drd/schemas/materialization_manifest.schema.yaml
+    machine_rule:
+      check_type: shard_001
+      pass_when:
+      - 不得生成单体大 payload；必须使用 manifest + libs + board/page shards。 is satisfied with
+        explicit source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - 不得生成单体大 payload；必须使用 manifest + libs + board/page shards。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SHARD-001：不得生成单体大 payload；必须使用 manifest + libs + board/page
+        shards。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成
+        PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SHARD-002
+    stage: payload_sharding
+    severity: blocker
+    natural_language: manifest 只能索引路径、hash、依赖和执行顺序，不得内联全部 frame/component/line payload。
+    applies_to:
+      documents: *id002
+    machine_rule:
+      check_type: shard_002
+      pass_when:
+      - manifest 只能索引路径、hash、依赖和执行顺序，不得内联全部 frame/component/line payload。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - manifest 只能索引路径、hash、依赖和执行顺序，不得内联全部 frame/component/line payload。 is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SHARD-002：manifest 只能索引路径、hash、依赖和执行顺序，不得内联全部 frame/component/line
+        payload。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line
+        当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SHARD-003
+    stage: payload_sharding
+    severity: major
+    natural_language: board shard 内不得复制公共库内容。
+    applies_to:
+      documents: *id002
+    machine_rule:
+      check_type: shard_003
+      pass_when:
+      - board shard 内不得复制公共库内容。 is satisfied with explicit source-slice, packet, annotation,
+        pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - board shard 内不得复制公共库内容。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SHARD-003：board shard 内不得复制公共库内容。 是否由 v3.0 DRD stage 证据支撑，且没有把
+        runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  source_slice_validators:
+  - id: SOURCE-001
+    stage: source_slice
+    severity: blocker
+    natural_language: 每个关键渲染字段必须能追踪到 source slice。
+    applies_to:
+      documents: &id003
+      - sub_harnesses/prototype_projection_harness/drd/rules/04_source_slice_policy.yaml
+      - sub_harnesses/prototype_projection_harness/drd/schemas/source_slice.schema.yaml
+      - sub_harnesses/prototype_projection_harness/drd/examples/source_slices/SLICE-SCR-AI-TOOLBAR.sample.yaml
+    machine_rule:
+      check_type: source_001
+      pass_when:
+      - 每个关键渲染字段必须能追踪到 source slice。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 每个关键渲染字段必须能追踪到 source slice。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SOURCE-001：每个关键渲染字段必须能追踪到 source slice。 是否由 v3.0 DRD stage
+        证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SOURCE-002
+    stage: source_slice
+    severity: blocker
+    natural_language: 无 source refs 的 LLM 总结不得作为事实或 payload。
+    applies_to:
+      documents: *id003
+    machine_rule:
+      check_type: source_002
+      pass_when:
+      - 无 source refs 的 LLM 总结不得作为事实或 payload。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 无 source refs 的 LLM 总结不得作为事实或 payload。 is missing, contradicted, or used to
+        create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SOURCE-002：无 source refs 的 LLM 总结不得作为事实或 payload。 是否由 v3.0
+        DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  surface_validators:
+  - id: SURFACE-001
+    stage: surface
+    severity: blocker
+    natural_language: 每个 frame/board/panel packet 必须声明 host_surface 或 inherited_host_surface。
+    applies_to:
+      documents: &id004
+      - sub_harnesses/prototype_projection_harness/drd/rules/05_host_surface_inference_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/rules/06_surface_morphology_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/schemas/surface_decision.schema.yaml
+    machine_rule:
+      check_type: surface_001
+      pass_when:
+      - 每个 frame/board/panel packet 必须声明 host_surface 或 inherited_host_surface。 is
+        satisfied with explicit source-slice, packet, annotation, pen-line, review-log,
+        or DRD projection evidence.
+      fail_when:
+      - 每个 frame/board/panel packet 必须声明 host_surface 或 inherited_host_surface。 is
+        missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-001：每个 frame/board/panel packet 必须声明 host_surface
+        或 inherited_host_surface。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation
+        或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-002
+    stage: surface
+    severity: blocker
+    natural_language: host_surface 必须有 source evidence 或 explicit design assumption。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_002
+      pass_when:
+      - host_surface 必须有 source evidence 或 explicit design assumption。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - host_surface 必须有 source evidence 或 explicit design assumption。 is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-002：host_surface 必须有 source evidence 或 explicit
+        design assumption。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或
+        Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-003
+    stage: surface
+    severity: blocker
+    natural_language: materialization_target 必须与 surface_type 匹配。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_003
+      pass_when:
+      - materialization_target 必须与 surface_type 匹配。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - materialization_target 必须与 surface_type 匹配。 is missing, contradicted, or used
+        to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-003：materialization_target 必须与 surface_type 匹配。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-004
+    stage: surface
+    severity: major
+    natural_language: attached surface 不得脱离 anchor 变成无关 floating page。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_004
+      pass_when:
+      - attached surface 不得脱离 anchor 变成无关 floating page。 is satisfied with explicit
+        source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - attached surface 不得脱离 anchor 变成无关 floating page。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-004：attached surface 不得脱离 anchor 变成无关 floating page。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-005
+    stage: surface
+    severity: blocker
+    natural_language: blocking surface 必须有 close/cancel/confirm 路径。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_005
+      pass_when:
+      - blocking surface 必须有 close/cancel/confirm 路径。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - blocking surface 必须有 close/cancel/confirm 路径。 is missing, contradicted, or
+        used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-005：blocking surface 必须有 close/cancel/confirm 路径。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-006
+    stage: surface
+    severity: major
+    natural_language: transient/persistent/user-dismissed/system-dismissed 生命周期必须声明。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_006
+      pass_when:
+      - transient/persistent/user-dismissed/system-dismissed 生命周期必须声明。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - transient/persistent/user-dismissed/system-dismissed 生命周期必须声明。 is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-006：transient/persistent/user-dismissed/system-dismissed
+        生命周期必须声明。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line
+        当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-007
+    stage: surface
+    severity: major
+    natural_language: interaction 必须写 semantic_transition_operator，不能只写 NAVIGATE。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_007
+      pass_when:
+      - interaction 必须写 semantic_transition_operator，不能只写 NAVIGATE。 is satisfied with
+        explicit source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - interaction 必须写 semantic_transition_operator，不能只写 NAVIGATE。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-007：interaction 必须写 semantic_transition_operator，不能只写
+        NAVIGATE。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line
+        当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-008
+    stage: surface
+    severity: major
+    natural_language: 涉及系统能力时必须声明 system_handoff 或 external_surface。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_008
+      pass_when:
+      - 涉及系统能力时必须声明 system_handoff 或 external_surface。 is satisfied with explicit
+        source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - 涉及系统能力时必须声明 system_handoff 或 external_surface。 is missing, contradicted, or
+        used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-008：涉及系统能力时必须声明 system_handoff 或 external_surface。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-009
+    stage: surface
+    severity: major
+    natural_language: 非 app_page surface 必须提供 surface_layout_profile。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_009
+      pass_when:
+      - 非 app_page surface 必须提供 surface_layout_profile。 is satisfied with explicit
+        source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - 非 app_page surface 必须提供 surface_layout_profile。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-009：非 app_page surface 必须提供 surface_layout_profile。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: SURFACE-010
+    stage: surface
+    severity: major
+    natural_language: inferred surface 必须进入 projection review log。
+    applies_to:
+      documents: *id004
+    machine_rule:
+      check_type: surface_010
+      pass_when:
+      - inferred surface 必须进入 projection review log。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - inferred surface 必须进入 projection review log。 is missing, contradicted, or
+        used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 SURFACE-010：inferred surface 必须进入 projection review log。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  drd_board_validators:
+  - id: DRD-STATE-001
+    stage: drd_board
+    severity: blocker
+    natural_language: 不得为每个页面强制生成 loading/empty/error/success/recovery 全量状态。
+    applies_to:
+      documents: &id005
+      - sub_harnesses/prototype_projection_harness/drd/rules/02_drd_pipeline_stage_plan.yaml
+      - sub_harnesses/prototype_projection_harness/drd/rules/07_drd_board_layout_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/examples/boards/SCR-AI-TOOLBAR/board_manifest.sample.yaml
+    machine_rule:
+      check_type: drd_state_001
+      pass_when:
+      - 不得为每个页面强制生成 loading/empty/error/success/recovery 全量状态。 is satisfied with explicit
+        source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - 不得为每个页面强制生成 loading/empty/error/success/recovery 全量状态。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 DRD-STATE-001：不得为每个页面强制生成 loading/empty/error/success/recovery
+        全量状态。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成
+        PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: DRD-STATE-002
+    stage: drd_board
+    severity: blocker
+    natural_language: 每个被展示的状态必须有 display_reason_zh。
+    applies_to:
+      documents: *id005
+    machine_rule:
+      check_type: drd_state_002
+      pass_when:
+      - 每个被展示的状态必须有 display_reason_zh。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 每个被展示的状态必须有 display_reason_zh。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 DRD-STATE-002：每个被展示的状态必须有 display_reason_zh。 是否由 v3.0 DRD
+        stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: DRD-STATE-003
+    stage: drd_board
+    severity: major
+    natural_language: 视觉相同且只是交互事件的状态必须折叠为 Pen 线或备注。
+    applies_to:
+      documents: *id005
+    machine_rule:
+      check_type: drd_state_003
+      pass_when:
+      - 视觉相同且只是交互事件的状态必须折叠为 Pen 线或备注。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 视觉相同且只是交互事件的状态必须折叠为 Pen 线或备注。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 DRD-STATE-003：视觉相同且只是交互事件的状态必须折叠为 Pen 线或备注。 是否由 v3.0 DRD
+        stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: DRD-BOARD-001
+    stage: drd_board
+    severity: blocker
+    natural_language: DRD_MODE 下 RND-07 必须 skipped，不写真实 Figma reactions。
+    applies_to:
+      documents: *id005
+    machine_rule:
+      check_type: drd_board_001
+      pass_when:
+      - DRD_MODE 下 RND-07 必须 skipped，不写真实 Figma reactions。 is satisfied with explicit
+        source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - DRD_MODE 下 RND-07 必须 skipped，不写真实 Figma reactions。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 DRD-BOARD-001：DRD_MODE 下 RND-07 必须 skipped，不写真实 Figma reactions。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  materialization_validators:
+  - id: MAT-001
+    stage: materialization
+    severity: blocker
+    natural_language: renderer 不得消费 screens[].states[].components[] 作为 frame payload。
+    applies_to:
+      documents: &id006
+      - sub_harnesses/prototype_projection_harness/drd/rules/08_materialization_packet_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/schemas/frame_packet.schema.yaml
+      - sub_harnesses/prototype_projection_harness/drd/schemas/interaction_packet.schema.yaml
+    machine_rule:
+      check_type: mat_001
+      pass_when:
+      - renderer 不得消费 screens[].states[].components[] 作为 frame payload。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - renderer 不得消费 screens[].states[].components[] 作为 frame payload。 is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 MAT-001：renderer 不得消费 screens[].states[].components[] 作为
+        frame payload。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen
+        line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: MAT-002
+    stage: materialization
+    severity: blocker
+    natural_language: 每个可渲染 frame 必须有独立 frame_packet。
+    applies_to:
+      documents: *id006
+    machine_rule:
+      check_type: mat_002
+      pass_when:
+      - 每个可渲染 frame 必须有独立 frame_packet。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 每个可渲染 frame 必须有独立 frame_packet。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 MAT-002：每个可渲染 frame 必须有独立 frame_packet。 是否由 v3.0 DRD stage
+        证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: MAT-003
+    stage: materialization
+    severity: blocker
+    natural_language: frame_packet 必须有 regions、component_instance_refs、source_slices。
+    applies_to:
+      documents: *id006
+    machine_rule:
+      check_type: mat_003
+      pass_when:
+      - frame_packet 必须有 regions、component_instance_refs、source_slices。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - frame_packet 必须有 regions、component_instance_refs、source_slices。 is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 MAT-003：frame_packet 必须有 regions、component_instance_refs、source_slices。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: MAT-004
+    stage: materialization
+    severity: blocker
+    natural_language: frame 内必须使用 component instances，不得只引用 component definitions。
+    applies_to:
+      documents: *id006
+    machine_rule:
+      check_type: mat_004
+      pass_when:
+      - frame 内必须使用 component instances，不得只引用 component definitions。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - frame 内必须使用 component instances，不得只引用 component definitions。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 MAT-004：frame 内必须使用 component instances，不得只引用 component
+        definitions。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line
+        当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: MAT-005
+    stage: materialization
+    severity: blocker
+    natural_language: 点击、复制、提交、选择、上传等动作必须进入 interaction_packet，不得伪装成 state。
+    applies_to:
+      documents: *id006
+    machine_rule:
+      check_type: mat_005
+      pass_when:
+      - 点击、复制、提交、选择、上传等动作必须进入 interaction_packet，不得伪装成 state。 is satisfied with explicit
+        source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - 点击、复制、提交、选择、上传等动作必须进入 interaction_packet，不得伪装成 state。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 MAT-005：点击、复制、提交、选择、上传等动作必须进入 interaction_packet，不得伪装成 state。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  annotation_validators:
+  - id: ANN-001
+    stage: annotation
+    severity: blocker
+    natural_language: 每个语义交互必须有 Dev Mode annotation 或折叠摘要 annotation。
+    applies_to:
+      documents: &id007
+      - sub_harnesses/prototype_projection_harness/drd/rules/12_annotation_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/schemas/annotation_packet.schema.yaml
+    machine_rule:
+      check_type: ann_001
+      pass_when:
+      - 每个语义交互必须有 Dev Mode annotation 或折叠摘要 annotation。 is satisfied with explicit
+        source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - 每个语义交互必须有 Dev Mode annotation 或折叠摘要 annotation。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 ANN-001：每个语义交互必须有 Dev Mode annotation 或折叠摘要 annotation。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: ANN-002
+    stage: annotation
+    severity: blocker
+    natural_language: annotation 必须锚定 source component、region、state frame 或 gateway。
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: ann_002
+      pass_when:
+      - annotation 必须锚定 source component、region、state frame 或 gateway。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - annotation 必须锚定 source component、region、state frame 或 gateway。 is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 ANN-002：annotation 必须锚定 source component、region、state frame
+        或 gateway。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line
+        当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: ANN-003
+    stage: annotation
+    severity: blocker
+    natural_language: interaction annotation 必须包含 trigger、guard、actions、effect、event、refs。
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: ann_003
+      pass_when:
+      - interaction annotation 必须包含 trigger、guard、actions、effect、event、refs。 is satisfied
+        with explicit source-slice, packet, annotation, pen-line, review-log, or DRD
+        projection evidence.
+      fail_when:
+      - interaction annotation 必须包含 trigger、guard、actions、effect、event、refs。 is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 ANN-003：interaction annotation 必须包含 trigger、guard、actions、effect、event、refs。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  pen_line_validators:
+  - id: PEN-001
+    stage: pen_line
+    severity: blocker
+    natural_language: 每条 Pen 线必须引用 interaction_id。
+    applies_to:
+      documents: &id008
+      - sub_harnesses/prototype_projection_harness/drd/rules/13_pen_line_logic_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/schemas/pen_line_packet.schema.yaml
+    machine_rule:
+      check_type: pen_001
+      pass_when:
+      - 每条 Pen 线必须引用 interaction_id。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 每条 Pen 线必须引用 interaction_id。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PEN-001：每条 Pen 线必须引用 interaction_id。 是否由 v3.0 DRD stage
+        证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: PEN-002
+    stage: pen_line
+    severity: blocker
+    natural_language: 每条 Pen 线必须引用 annotation_id。
+    applies_to:
+      documents: *id008
+    machine_rule:
+      check_type: pen_002
+      pass_when:
+      - 每条 Pen 线必须引用 annotation_id。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 每条 Pen 线必须引用 annotation_id。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PEN-002：每条 Pen 线必须引用 annotation_id。 是否由 v3.0 DRD stage 证据支撑，且没有把
+        runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: PEN-003
+    stage: pen_line
+    severity: blocker
+    natural_language: Pen 线不得作为真实交互行为。
+    applies_to:
+      documents: *id008
+    machine_rule:
+      check_type: pen_003
+      pass_when:
+      - Pen 线不得作为真实交互行为。 is satisfied with explicit source-slice, packet, annotation,
+        pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - Pen 线不得作为真实交互行为。 is missing, contradicted, or used to create/overwrite PRD
+        facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PEN-003：Pen 线不得作为真实交互行为。 是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation
+        或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: PEN-004
+    stage: pen_line
+    severity: blocker
+    natural_language: 同一源点 + 同一触发方式不得产生多条独立 Pen 线。
+    applies_to:
+      documents: *id008
+    machine_rule:
+      check_type: pen_004
+      pass_when:
+      - 同一源点 + 同一触发方式不得产生多条独立 Pen 线。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 同一源点 + 同一触发方式不得产生多条独立 Pen 线。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PEN-004：同一源点 + 同一触发方式不得产生多条独立 Pen 线。 是否由 v3.0 DRD stage
+        证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: PEN-005
+    stage: pen_line
+    severity: blocker
+    natural_language: Pen 线不得创造 interaction_packet 中不存在的新逻辑。
+    applies_to:
+      documents: *id008
+    machine_rule:
+      check_type: pen_005
+      pass_when:
+      - Pen 线不得创造 interaction_packet 中不存在的新逻辑。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - Pen 线不得创造 interaction_packet 中不存在的新逻辑。 is missing, contradicted, or used to
+        create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PEN-005：Pen 线不得创造 interaction_packet 中不存在的新逻辑。 是否由 v3.0
+        DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: PEN-006
+    stage: pen_line
+    severity: major
+    natural_language: 线密度超限时必须 bundle、collapse 或使用 gateway。
+    applies_to:
+      documents: *id008
+    machine_rule:
+      check_type: pen_006
+      pass_when:
+      - 线密度超限时必须 bundle、collapse 或使用 gateway。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 线密度超限时必须 bundle、collapse 或使用 gateway。 is missing, contradicted, or used to
+        create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PEN-006：线密度超限时必须 bundle、collapse 或使用 gateway。 是否由 v3.0 DRD
+        stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  component_validators:
+  - id: COMP-001
+    stage: component
+    severity: major
+    natural_language: 必须存在 seeded primitive component library 或项目设计系统映射。
+    applies_to:
+      documents: &id009
+      - sub_harnesses/prototype_projection_harness/drd/rules/09_component_primitive_library_policy.yaml
+      - sub_harnesses/prototype_projection_harness/drd/rules/10_component_resolution_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/libs/component_primitive_library.yaml
+    machine_rule:
+      check_type: comp_001
+      pass_when:
+      - 必须存在 seeded primitive component library 或项目设计系统映射。 is satisfied with explicit
+        source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - 必须存在 seeded primitive component library 或项目设计系统映射。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 COMP-001：必须存在 seeded primitive component library 或项目设计系统映射。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: COMP-002
+    stage: component
+    severity: warning
+    natural_language: 项目设计系统优先于 seeded primitive。
+    applies_to:
+      documents: *id009
+    machine_rule:
+      check_type: comp_002
+      pass_when:
+      - 项目设计系统优先于 seeded primitive。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 项目设计系统优先于 seeded primitive。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 COMP-002：项目设计系统优先于 seeded primitive。 是否由 v3.0 DRD stage
+        证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: COMP-003
+    stage: component
+    severity: blocker
+    natural_language: 组件解析不得改变 semantic_role。
+    applies_to:
+      documents: *id009
+    machine_rule:
+      check_type: comp_003
+      pass_when:
+      - 组件解析不得改变 semantic_role。 is satisfied with explicit source-slice, packet, annotation,
+        pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 组件解析不得改变 semantic_role。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 COMP-003：组件解析不得改变 semantic_role。 是否由 v3.0 DRD stage 证据支撑，且没有把
+        runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  feedback_validators:
+  - id: FB-001
+    stage: feedback
+    severity: blocker
+    natural_language: 每个 feedback 必须声明 feedback_surface。
+    applies_to:
+      documents: &id010
+      - sub_harnesses/prototype_projection_harness/drd/rules/11_feedback_surface_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/libs/feedback_primitive_library.yaml
+    machine_rule:
+      check_type: fb_001
+      pass_when:
+      - 每个 feedback 必须声明 feedback_surface。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - 每个 feedback 必须声明 feedback_surface。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 FB-001：每个 feedback 必须声明 feedback_surface。 是否由 v3.0 DRD stage
+        证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: FB-002
+    stage: feedback
+    severity: blocker
+    natural_language: transient feedback 必须有 dismiss strategy。
+    applies_to:
+      documents: *id010
+    machine_rule:
+      check_type: fb_002
+      pass_when:
+      - transient feedback 必须有 dismiss strategy。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - transient feedback 必须有 dismiss strategy。 is missing, contradicted, or used
+        to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 FB-002：transient feedback 必须有 dismiss strategy。 是否由 v3.0
+        DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: FB-003
+    stage: feedback
+    severity: blocker
+    natural_language: destructive action 必须有 confirmation 或 explicit exception。
+    applies_to:
+      documents: *id010
+    machine_rule:
+      check_type: fb_003
+      pass_when:
+      - destructive action 必须有 confirmation 或 explicit exception。 is satisfied with
+        explicit source-slice, packet, annotation, pen-line, review-log, or DRD projection
+        evidence.
+      fail_when:
+      - destructive action 必须有 confirmation 或 explicit exception。 is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 FB-003：destructive action 必须有 confirmation 或 explicit exception。
+        是否由 v3.0 DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  runtime_validators:
+  - id: RT-001
+    stage: runtime
+    severity: blocker
+    natural_language: runtime 不得作为 render payload source。
+    applies_to:
+      documents: &id011
+      - sub_harnesses/prototype_projection_harness/drd/rules/14_runtime_validation_policy.yaml
+      - sub_harnesses/prototype_projection_harness/runtime_inference_policy.yaml
+    machine_rule:
+      check_type: rt_001
+      pass_when:
+      - runtime 不得作为 render payload source。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - runtime 不得作为 render payload source。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 RT-001：runtime 不得作为 render payload source。 是否由 v3.0 DRD
+        stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: RT-002
+    stage: runtime
+    severity: blocker
+    natural_language: runtime inferred 内容不得直接进入产品画布。
+    applies_to:
+      documents: *id011
+    machine_rule:
+      check_type: rt_002
+      pass_when:
+      - runtime inferred 内容不得直接进入产品画布。 is satisfied with explicit source-slice, packet,
+        annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - runtime inferred 内容不得直接进入产品画布。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 RT-002：runtime inferred 内容不得直接进入产品画布。 是否由 v3.0 DRD stage
+        证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  review_validators:
+  - id: REVIEW-001
+    stage: review
+    severity: major
+    natural_language: projection decision 必须进入 review log。
+    applies_to:
+      documents: &id012
+      - sub_harnesses/prototype_projection_harness/drd/rules/15_projection_review_report_rules.yaml
+      - sub_harnesses/prototype_projection_harness/drd/schemas/projection_report.schema.yaml
+    machine_rule:
+      check_type: review_001
+      pass_when:
+      - projection decision 必须进入 review log。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - projection decision 必须进入 review log。 is missing, contradicted, or used to
+        create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 REVIEW-001：projection decision 必须进入 review log。 是否由 v3.0
+        DRD stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: REVIEW-002
+    stage: review
+    severity: blocker
+    natural_language: review gate 不得默认回写 PRD。
+    applies_to:
+      documents: *id012
+    machine_rule:
+      check_type: review_002
+      pass_when:
+      - review gate 不得默认回写 PRD。 is satisfied with explicit source-slice, packet, annotation,
+        pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - review gate 不得默认回写 PRD。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 REVIEW-002：review gate 不得默认回写 PRD。 是否由 v3.0 DRD stage 证据支撑，且没有把
+        runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  reverse_sync_validators:
+  - id: REV-001
+    stage: reverse_sync
+    severity: blocker
+    natural_language: Figma diff 不得直接写 PRD fact store。
+    applies_to:
+      documents: &id013
+      - sub_harnesses/prototype_projection_harness/drd/rules/17_reverse_sync_policy.yaml
+      - prd_orchestrator/patch_control_v3.yaml
+    machine_rule:
+      check_type: rev_001
+      pass_when:
+      - Figma diff 不得直接写 PRD fact store。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - Figma diff 不得直接写 PRD fact store。 is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 REV-001：Figma diff 不得直接写 PRD fact store。 是否由 v3.0 DRD stage
+        证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  - id: REV-002
+    stage: reverse_sync
+    severity: blocker
+    natural_language: Pen line edit 默认为 documentation-only。
+    applies_to:
+      documents: *id013
+    machine_rule:
+      check_type: rev_002
+      pass_when:
+      - Pen line edit 默认为 documentation-only。 is satisfied with explicit source-slice,
+        packet, annotation, pen-line, review-log, or DRD projection evidence.
+      fail_when:
+      - Pen line edit 默认为 documentation-only。 is missing, contradicted, or used to
+        create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 REV-002：Pen line edit 默认为 documentation-only。 是否由 v3.0 DRD
+        stage 证据支撑，且没有把 runtime、Figma、annotation 或 Pen line 当成 PRD 事实源？
+      evidence:
+      - source_slices
+      - materialization_manifest
+      - board_packets
+      - annotation_packets
+      - pen_line_packets
+      - projection_report
+      - review_log
+  skill_hook_validators:
+  - id: SKILL-HOOK-001
+    stage: renderer_skill_hook
+    severity: blocker
+    natural_language: Renderer skill hook 可以影响布局、组件、备注和线条风格，但不能覆盖事实、validator 或人工审批。
+    applies_to:
+      documents:
+      - sub_harnesses/prototype_projection_harness/drd/rules/16_renderer_skill_hook_policy.yaml
+    machine_rule:
+      check_type: skill_hook_001
+      pass_when:
+      - Renderer skill hook 可以影响布局、组件、备注和线条风格，但不能覆盖事实、validator 或人工审批。 is satisfied
+        with explicit skill influence trace and validator evidence.
+      fail_when:
+      - Renderer skill hook 可以影响布局、组件、备注和线条风格，但不能覆盖事实、validator 或人工审批。 is missing,
+        contradicts PRD facts, or bypasses validator/human review.
+    human_review:
+      reviewer_prompt: 确认 SKILL-HOOK-001：Renderer skill hook 可以影响布局、组件、备注和线条风格，但不能覆盖事实、validator
+        或人工审批。
+      evidence:
+      - renderer_skill_influence_trace
+      - source_slices
+      - projection_report
+      - review_log

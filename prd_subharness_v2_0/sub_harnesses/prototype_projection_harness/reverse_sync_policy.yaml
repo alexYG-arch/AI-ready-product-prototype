@@ -1,0 +1,56 @@
+reverse_sync_policy:
+  version: "2.0"
+  purpose: "定义 Figma → PRD 的安全回流规则。"
+
+  allowed_reverse_outputs:
+    - "prd_orchestrator/figma_diff_reports/*.yaml"
+    - "prd_orchestrator/change_patch_candidates/*.candidate.yaml"
+
+  forbidden_reverse_outputs:
+    - "product-spec/requirements.yaml"
+    - "product-spec/screens.yaml"
+    - "product-spec/metrics.yaml"
+    - "product-spec/events.yaml"
+    - "product-spec/PRD.md"
+
+  three_way_diff:
+    required: true
+    base_model: "last_projected_runtime"
+    figma_model: "current_figma_semantic_extract"
+    prd_model: "current_prd_runtime_regeneration"
+
+  conflict_types:
+    same_semantic_field_changed_both_sides:
+      severity: "blocker"
+      required_decision: true
+    figma_deleted_prd_existing_semantic_node:
+      severity: "high_risk"
+      required_decision: true
+    prd_deleted_figma_modified_node:
+      severity: "high_risk"
+      required_decision: true
+    visual_only_vs_prd_semantic_change:
+      severity: "mergeable"
+      default_action: "preserve_figma_visual_apply_prd_semantic"
+
+  merge_rules:
+    visual_only_changes:
+      default: "preserve_in_figma"
+      write_to_prd: false
+    copy_changes:
+      default: "candidate_to_screen_state_harness"
+      write_to_prd: false
+    navigation_changes:
+      default: "candidate_to_screen_state_harness"
+      write_to_prd: false
+    analytics_changes:
+      default: "candidate_to_metrics_events_harness"
+      write_to_prd: false
+    component_binding_changes:
+      default: "candidate_to_prototype_projection_harness"
+      write_to_prd: false
+
+  approval_gate:
+    llm_can_prepare_candidate: true
+    llm_can_apply_to_fact_store: false
+    human_must_approve_fact_change: true

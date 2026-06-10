@@ -1,0 +1,27 @@
+harness_contract:
+  id: "projection_sync_harness"
+  name: "Projection Sync Harness"
+  version: "1.0"
+  owns: "YAML → PRD.md 完整 14 章投影，模板结构校验，同步覆盖校验。"
+  not_owns: "新增产品事实、关闭 open question。"
+  required_outputs:
+    - "patch_report"
+    - "change_patch"
+    - "impact_analysis"
+  authority_boundary:
+    llm_can_generate: "candidate"
+    validator_can_block: true
+    human_review_required_for_high_risk: true
+  run_lifecycle:
+    human_review_stage:
+      required: true
+      review_artifacts:
+        - "run_manifest"
+        - "candidate_outputs"
+        - "validator_report"
+        - "impact_analysis"
+        - "review_decision"
+      approval_required_before:
+        - "candidate_to_confirmed"
+        - "write_instance_product_spec"
+        - "close_open_question"

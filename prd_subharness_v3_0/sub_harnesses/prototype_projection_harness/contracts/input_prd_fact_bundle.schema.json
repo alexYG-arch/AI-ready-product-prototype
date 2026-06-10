@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Input PRD Fact Bundle",
+  "type": "object",
+  "required": [
+    "prd_fact_bundle"
+  ],
+  "properties": {
+    "prd_fact_bundle": {
+      "type": "object",
+      "required": [
+        "version",
+        "owner",
+        "source_snapshot",
+        "facts"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "authority_role": {
+          "type": "string"
+        },
+        "source_snapshot": {
+          "type": "object"
+        },
+        "facts": {
+          "type": "object",
+          "properties": {
+            "requirements": {
+              "type": "array"
+            },
+            "screens": {
+              "type": "array"
+            },
+            "metrics": {
+              "type": "array"
+            },
+            "events": {
+              "type": "array"
+            },
+            "traceability": {
+              "type": "array"
+            },
+            "component_bindings": {
+              "type": "array"
+            },
+            "design_semantic_library": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

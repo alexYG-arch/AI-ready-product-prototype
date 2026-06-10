@@ -1,0 +1,8 @@
+meta_schema_note: "Lightweight YAML schema for Codex and validator hints, not full JSON Schema."
+meta_schema_note_zh: "轻量 YAML schema，用于 Codex 和 validator 提示，不是完整 JSON Schema。"
+
+required: [run_id, status, coverage, validator_results, review_decisions]
+properties:
+  status: enum[completed, completed_with_warnings, blocked]
+  coverage: object
+  validator_results: object

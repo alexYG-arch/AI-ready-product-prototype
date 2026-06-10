@@ -1,0 +1,61 @@
+harness_contract:
+  id: PROTO-HARNESS-DRD
+  id_zh: 原型 Harness DRD 合同
+  version: "3.0"
+
+  authority_boundary:
+    fact_authority:
+      source: prd_fact_bundle
+      source_zh: PRD 事实包
+    render_authority:
+      source: board_page_shards
+      source_zh: 画布/页面分片包
+    runtime_authority:
+      role: validation_gap_candidate_review_evidence_only
+      role_zh: 仅用于校验、缺口、候选和评审证据
+    figma_authority:
+      role: visual_projection_only
+      role_zh: 仅为视觉投射，不是 PRD 事实源
+    reverse_sync_authority:
+      role: candidate_or_review_log_only
+      role_zh: 仅生成候选或评审记录
+
+  forbidden_direct_writes:
+    - product-spec/requirements.yaml
+    - product-spec/screens.yaml
+    - product-spec/metrics.yaml
+    - product-spec/events.yaml
+    - product-spec/PRD.md
+
+  owned_artifacts:
+    - source_slice_index
+    - materialization_manifest
+    - surface_decisions
+    - morphology_decisions
+    - board_page_shards
+    - layout_route_plan
+    - figma_projection_plan
+    - figma_sync_map
+    - figma_annotation_map
+    - visual_flow_line_map
+    - projection_report
+    - validation_runtime_index
+
+  not_owned:
+    - confirmed_product_requirements
+    - screen_fact_store
+    - metric_event_fact_store
+    - PRD.md
+    - figma_design_system_source_components
+
+  projection_modes:
+    default: DRD_MODE
+    modes:
+      - mode: DRD_MODE
+        mode_zh: 设计评审文档模式
+        write_figma_reactions: false
+        description_zh: 平铺必要状态、写 Dev Mode 备注、画 Pen 逻辑线，不写真实点击原型。
+      - mode: INTERACTIVE_PLAYABLE_MODE
+        mode_zh: 可点击原型模式
+        write_figma_reactions: true
+        description_zh: 后续阶段启用，写入 Figma node.reactions。

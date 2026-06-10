@@ -1,0 +1,92 @@
+drd_pipeline_stage_plan:
+  id: DRD-PIPELINE-001
+  id_zh: DRD 流程阶段计划
+  version: "3.0"
+
+  default_mode: DRD_MODE
+  default_mode_zh: 设计评审文档模式
+
+  stages:
+    - id: RUN-00
+      name: Isolated Prototype Run Setup
+      name_zh: 隔离原型运行准备
+      outputs: [run_manifest, frozen_input_copy]
+    - id: FACT-01
+      name: PRD Fact Bundle Validation
+      name_zh: PRD 事实包校验
+      outputs: [fact_bundle_validation_report, source_snapshot]
+    - id: PAYLOAD-01
+      name: Compile PRD Source Slices
+      name_zh: 编译 PRD 来源切片
+      outputs: [source_slice_index, source_slices]
+    - id: PAYLOAD-02
+      name: Build Materialization Manifest
+      name_zh: 构建物化清单
+      outputs: [materialization_manifest]
+    - id: PAYLOAD-03
+      name: Build Board And Page Shards
+      name_zh: 构建画布/页面分片
+      outputs: [board_manifests, frame_packets, component_instance_packets, interaction_packets, annotation_packets, pen_line_packets]
+    - id: SURF-01
+      name: Host Surface Inference
+      name_zh: 宿主表面推理
+      outputs: [surface_decisions]
+    - id: SURF-02
+      name: Surface Morphology Plan
+      name_zh: 宿主表面形态计划
+      outputs: [morphology_decisions]
+    - id: SURF-03
+      name: Surface Transition Semantics
+      name_zh: 宿主表面转换语义
+      outputs: [surface_transition_map]
+    - id: RND-00
+      name: Input Freeze And Hash
+      name_zh: 输入冻结与哈希
+      outputs: [render_input_lock]
+    - id: RND-01
+      name: DRD Board Layout Plan
+      name_zh: DRD 画布布局计划
+      outputs: [layout_route_plan]
+    - id: RND-02
+      name: Full Canvas Skeleton
+      name_zh: 完整画布骨架
+      outputs: [figma_projection_plan_stage_02_skeleton, figma_sync_map_initial]
+    - id: RND-03
+      name: Necessary State Board Render
+      name_zh: 必要状态画布渲染
+      outputs: [figma_projection_plan_stage_03_boards]
+    - id: RND-04
+      name: Component Primitive Fill
+      name_zh: 组件原语填充
+      outputs: [component_binding_resolution_report]
+    - id: RND-05
+      name: UX Writer Copy Application
+      name_zh: UX 文案应用
+      outputs: [uxwriter_copy_catalog, copy_application_report]
+    - id: RND-06
+      name: Figma Dev Mode Annotations
+      name_zh: Figma Dev Mode 备注
+      outputs: [figma_annotation_map]
+    - id: RND-07
+      name: Real Prototype Reactions
+      name_zh: 真实 Figma 点击交互
+      mode: INTERACTIVE_PLAYABLE_MODE_ONLY
+      skipped_in_drd_mode: true
+    - id: RND-08
+      name: Pen-Line Logic Documentation
+      name_zh: Pen 线逻辑文档
+      outputs: [visual_flow_line_map]
+    - id: RND-09
+      name: Final Validation And Report
+      name_zh: 最终校验与报告
+      outputs: [projection_report]
+
+  drd_mode_rules:
+    write_figma_reactions: false
+    write_figma_reactions_zh: 不写 Figma node.reactions
+    use_dev_mode_annotations: true
+    use_dev_mode_annotations_zh: 使用 Dev Mode 备注说明状态和交互
+    use_pen_lines: true
+    use_pen_lines_zh: 使用 Pen 线表达逻辑方向
+    render_only_necessary_states: true
+    render_only_necessary_states_zh: 只渲染必要状态

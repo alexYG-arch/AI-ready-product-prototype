@@ -1,0 +1,16 @@
+annotation_template_library:
+  version: "3.0"
+  name_zh: 备注模板库
+  templates:
+    - id: ANN-TPL-INTERACTION
+      zh: 交互备注模板
+      required_fields: [interaction_id, trigger_zh, guard_zh, action_summary_zh, destination_zh, source_refs]
+    - id: ANN-TPL-STATE
+      zh: 状态备注模板
+      required_fields: [state_id, display_reason_zh, entry_condition_zh, exit_condition_zh, source_refs]
+    - id: ANN-TPL-GAP
+      zh: 缺口备注模板
+      required_fields: [gap_id, missing_decision_zh, blocking_reason_zh, suggested_question_zh, source_refs]
+    - id: ANN-TPL-SURFACE
+      zh: 宿主表面决策备注模板
+      required_fields: [surface_type_zh, rationale_zh, rejected_surfaces_zh, source_refs]

@@ -1,0 +1,81 @@
+validator_spec_version: "1.0"
+review_status: "approved_by_human_review"
+intent: "确保 PRD.md 只是结构化 YAML 和已批准事实的可读投影；它必须完整、可追溯、无占位符，且不得反向创造事实。"
+
+validators:
+  - id: "projection_sync_harness_contract_validator"
+    severity: "blocker"
+    natural_language: "Projection Sync 只能把结构化事实投影到 PRD.md，不能新增产品事实、批准 open question 或把 PRD.md 当事实源反写 YAML。"
+    applies_to:
+      documents:
+        - "product-spec/PRD.md"
+        - "sub_harnesses/projection_sync_harness/prd_template_profile.yaml"
+        - "sub_harnesses/projection_sync_harness/prd_section_projection_map.yaml"
+    machine_rule:
+      check_type: "projection_contract_and_template"
+      required_sections_from_profile: true
+      pass_when:
+        - "PRD.md contains all required sections from prd_template_profile.yaml."
+        - "Each section maps to allowed source_documents or explicit not_applicable reason."
+      fail_when:
+        - "PRD.md adds confirmed facts not present in source YAML, review decisions, or legacy source."
+        - "PRD.md is edited by a non-projection patch as the source of truth."
+    human_review:
+      reviewer_prompt: "PRD.md 是否只是投影表达，而没有悄悄新增或批准事实？"
+      evidence:
+        - "PRD.md"
+        - "projection map"
+        - "source YAML"
+
+  - id: "projection_sync_harness_source_ref_validator"
+    severity: "blocker"
+    natural_language: "PRD.md 中的关键事实必须能映射回 YAML、旧 PRD 或 review decision；没有来源的事实必须标为 TBD、gap 或 open question。"
+    applies_to:
+      documents:
+        - "product-spec/PRD.md"
+        - "product-spec/requirements.yaml"
+        - "product-spec/screens.yaml"
+        - "product-spec/metrics.yaml"
+        - "product-spec/events.yaml"
+        - "product-spec/release-plan.md"
+    machine_rule:
+      check_type: "projection_source_trace"
+      pass_when:
+        - "Each non-placeholder section has source_documents from prd_section_projection_map.yaml."
+        - "Unsourced facts are represented as open questions, gaps, or not_applicable."
+      fail_when:
+        - "Narrative PRD contains a confirmed metric, requirement, state, or release claim absent from source documents."
+        - "Open question is closed in PRD.md without review decision."
+    human_review:
+      reviewer_prompt: "抽查 PRD.md 里的事实，是否都能回链到结构化来源？"
+      evidence:
+        - "source_documents"
+        - "review_decisions"
+        - "open_questions"
+
+  - id: "projection_sync_harness_gap_validator"
+    severity: "major"
+    natural_language: "PRD.md 不应保留模板占位符、只有标题的章节或只有‘由 YAML 投影’的空段落；缺信息时要展示 gap/not_applicable reason。"
+    applies_to:
+      documents:
+        - "product-spec/PRD.md"
+        - "sub_harnesses/projection_sync_harness/prd_template_profile.yaml"
+    machine_rule:
+      check_type: "projection_substance_gate"
+      blocked_markers:
+        - "待同步"
+        - "由 `requirements.yaml` 投影"
+        - "由 `screens.yaml` 投影"
+        - "[用一句话说明"
+      pass_when:
+        - "No blocked_markers remain."
+        - "Each required section has content, not_applicable reason, or explicit gap."
+      fail_when:
+        - "Placeholder marker remains in PRD.md."
+        - "A required section is title-only with no gap or not_applicable reason."
+    human_review:
+      reviewer_prompt: "PRD.md 哪些章节还只是模板，而不是可读的产品说明？"
+      evidence:
+        - "placeholder scan"
+        - "section coverage"
+        - "gap list"

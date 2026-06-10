@@ -1,0 +1,16 @@
+patch_contract:
+  patch_id: "REQ-003B-quality-gate"
+  title: "REQ-003B: 运行需求质量关口，生成 gaps/open questions。"
+  status: "draft"
+  goal:
+    - "REQ-003B: 运行需求质量关口，生成 gaps/open questions。"
+  allowed_files:
+    - "product-spec/"
+    - "prd_orchestrator/"
+    - "sub_harnesses/"
+  forbidden_files:
+    - "product-spec/legacy_prd.md"
+  done_when:
+    - "patch_report written"
+    - "change_patch written"
+    - "impact_analysis written"

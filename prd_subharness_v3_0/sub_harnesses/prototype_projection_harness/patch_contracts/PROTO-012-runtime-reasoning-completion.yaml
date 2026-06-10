@@ -1,0 +1,18 @@
+patch_contract:
+  schema_version: '2.1'
+  id: PROTO-012
+  name: Runtime reasoning completion
+  version: '2.1'
+  summary: Adds two-pass runtime generation and explicit logic/state/interaction completion
+    provenance.
+  required_inputs:
+  - prototype.runtime.base.json
+  - prd_fact_bundle
+  required_outputs:
+  - prototype.runtime.json
+  - prototype_runtime_reasoning_report.yaml
+  blocks_if:
+  - inferred object lacks source_refs
+  - inferred object lacks confidence
+  - missing required state dimension has no not_applicable reason
+  owner: prototype_projection_harness

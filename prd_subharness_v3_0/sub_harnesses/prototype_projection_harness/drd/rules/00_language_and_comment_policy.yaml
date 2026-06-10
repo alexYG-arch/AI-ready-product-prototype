@@ -1,0 +1,56 @@
+language_and_comment_policy:
+  id: LANG-001
+  name: Language And Comment Policy
+  name_zh: 语言与注释策略
+  version: "3.0"
+
+  machine_keys:
+    rule: use_stable_ascii_snake_case
+    rule_zh: 机器字段名使用稳定英文 snake_case
+    examples:
+      - interaction_id
+      - surface_type
+      - semantic_action
+      - source_refs
+
+  chinese_explanation:
+    preferred_locations:
+      - yaml_comments
+      - description_zh
+      - name_zh
+      - label_zh
+      - action_summary_zh
+      - copy.zh-CN
+      - x_comment_zh
+    rule_zh: 中文说明可以放在 YAML 注释、*_zh 字段或 copy.zh-CN 中。
+
+  json_policy:
+    strict_json:
+      comments_allowed: false
+      comments_allowed_zh: 严格 JSON 不允许 // 或 /* */ 注释。
+      allowed_chinese_fields:
+        - name_zh
+        - description_zh
+        - x_comment_zh
+        - copy.zh-CN
+    jsonc_for_codex_drafts:
+      comments_allowed: true
+      file_extension: .jsonc
+      production_allowed: false
+      production_allowed_zh: JSONC 只允许作为 Codex 草稿或人类说明，不作为正式机器输入。
+    yaml_preferred_for_rules:
+      enabled: true
+      reason_zh: YAML 支持注释，适合规则文件和 Codex 阅读。
+
+  enum_policy:
+    code_language: english
+    display_language: zh-CN
+    example:
+      surface_type: attached_panel
+      surface_type_zh: 依附面板
+
+  forbidden:
+    - chinese_only_machine_keys
+    - mixed_synonym_keys
+    - unstable_free_text_ids
+    - strict_json_with_comments

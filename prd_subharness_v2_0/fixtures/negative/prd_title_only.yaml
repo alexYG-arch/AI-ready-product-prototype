@@ -1,0 +1,14 @@
+fixture_id: "prd_title_only"
+bad_prd:
+  content: |
+    # PRD
+
+    ## 1. TL;DR
+
+    ## 2. 背景与问题
+
+    ## 3. 用户与场景
+expected_result: "review_required_or_blocked"
+reason: "PRD.md 不能只有标题、模板占位或投影标记；缺信息时必须写 gap 或 not_applicable reason。"
+validator_targets:
+  - "projection_sync_harness_gap_validator"

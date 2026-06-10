@@ -1,0 +1,40 @@
+layout_route_plan:
+  version: "2.1"
+  runtime_hash: "sha256:sample"
+  canvas:
+    flow_direction: "left_to_right"
+    frame_width: 390
+    frame_height: 844
+    route_corridor_width: 160
+    comment_lane_width: 280
+  sequence_groups:
+    - group_id: "SEQ-AUTH-PRIMARY"
+      flow_id: "FLOW-AUTH"
+      x: 0
+      y: 0
+      screen_states:
+        - "SCREEN-AUTH-LOGIN/ST-READY"
+        - "SCREEN-AUTH-LOGIN/ST-SUBMITTING"
+        - "SCREEN-HOME/ST-DEFAULT"
+  route_corridors:
+    - corridor_id: "COR-AUTH-PRIMARY-H"
+      corridor_type: "primary_horizontal"
+      bounds: {x: 420, y: 360, width: 360, height: 120}
+      max_edges: 5
+    - corridor_id: "COR-AUTH-OVERLAY"
+      corridor_type: "overlay_short"
+      bounds: {x: 420, y: 920, width: 300, height: 120}
+      max_edges: 4
+  edge_routes:
+    - edge_id: "EDGE-AUTH-SUBMIT"
+      interaction_id: "INT-AUTH-SUBMIT"
+      route_type: "conditional_branch"
+      source_anchor: {semantic_id: "CMP-AUTH-SUBMIT", side: "right"}
+      destination_anchor: {semantic_id: "SCREEN-HOME/ST-DEFAULT", side: "left"}
+      corridor_id: "COR-AUTH-PRIMARY-H"
+      lane_index: 0
+      dedupe_group: "INT-AUTH-SUBMIT/ON_CLICK"
+      label: "INT-AUTH-SUBMIT · On tap · valid → Home"
+  density_report:
+    frames_over_budget: []
+    bundled_edges: []

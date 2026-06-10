@@ -1,0 +1,27 @@
+harness_contract:
+  id: "metrics_events_harness"
+  name: "Metrics Events Harness"
+  version: "1.0"
+  owns: "指标、baseline、target、needs_instrumentation、事件、漏斗、实验。"
+  not_owns: "页面状态、需求批准、发布回滚。"
+  required_outputs:
+    - "patch_report"
+    - "change_patch"
+    - "impact_analysis"
+  authority_boundary:
+    llm_can_generate: "candidate"
+    validator_can_block: true
+    human_review_required_for_high_risk: true
+  run_lifecycle:
+    human_review_stage:
+      required: true
+      review_artifacts:
+        - "run_manifest"
+        - "candidate_outputs"
+        - "validator_report"
+        - "impact_analysis"
+        - "review_decision"
+      approval_required_before:
+        - "candidate_to_confirmed"
+        - "write_instance_product_spec"
+        - "close_open_question"

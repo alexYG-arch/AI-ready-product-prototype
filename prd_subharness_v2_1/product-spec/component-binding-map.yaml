@@ -1,0 +1,74 @@
+component_binding_map:
+  version: "2.1"
+  owner: "prototype_projection_harness"
+  role: "semantic adapter between runtime semantic components and Figma design system components"
+
+  binding_priority:
+    - "existing_figma_component"
+    - "existing_figma_pattern_or_template"
+    - "design_semantic_library_composition"
+    - "low_fi_placeholder_with_gap"
+
+  figma_libraries:
+    - library_id: "LIB-DEFAULT"
+      name: "Default Design System"
+      file_key: ""
+      enabled: false
+      note: "填入真实 Figma library 后启用。"
+
+  component_bindings:
+    - semantic_key: "button.primary.submit"
+      figma_component:
+        component_key: ""
+        component_name: "Button"
+        preferred_variant_properties:
+          Intent: "Primary"
+          Size: "Large"
+      prop_map:
+        label: "text:Label"
+        enabled: "variant:State"
+        loading: "variant:State"
+        icon: "instanceSwap:Icon"
+      fallback_semantic_library_key: "primitive.button"
+      allowed_overrides:
+        - "label"
+        - "width"
+        - "icon"
+      semantic_locked_fields:
+        - "semantic_role"
+        - "destination"
+        - "source_refs"
+
+    - semantic_key: "input.text"
+      figma_component:
+        component_key: ""
+        component_name: "Input"
+      prop_map:
+        label: "text:Label"
+        placeholder: "text:Placeholder"
+        value: "text:Value"
+        error: "text:Error"
+        state: "variant:State"
+      fallback_semantic_library_key: "primitive.input"
+
+    - semantic_key: "feedback.toast"
+      figma_component:
+        component_key: ""
+        component_name: "Toast"
+      prop_map:
+        message: "text:Message"
+        intent: "variant:Intent"
+      fallback_semantic_library_key: "primitive.toast"
+
+    - semantic_key: "overlay.modal.confirmation"
+      figma_component:
+        component_key: ""
+        component_name: "Modal/Confirmation"
+      prop_map:
+        title: "text:Title"
+        body: "text:Body"
+        primary_action: "slot:PrimaryButton"
+        secondary_action: "slot:SecondaryButton"
+      fallback_semantic_library_key: "primitive.modal"
+
+  binding_gaps: []

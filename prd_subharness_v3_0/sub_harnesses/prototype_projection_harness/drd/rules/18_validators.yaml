@@ -1,0 +1,157 @@
+validators:
+  version: "3.0"
+  groups:
+    language:
+      - id: LANG-001
+        zh: 严格 JSON 文件不得包含 // 或 /* */ 注释；需要中文注释时使用 YAML 或 JSONC 草稿。
+        severity: blocker
+      - id: LANG-002
+        zh: 机器字段名必须使用稳定英文 key，中文说明进入 *_zh / description_zh / copy.zh-CN。
+        severity: warning
+    payload_sharding:
+      - id: SHARD-001
+        zh: 不得生成单体大 payload；必须使用 manifest + libs + board/page shards。
+        severity: blocker
+      - id: SHARD-002
+        zh: manifest 只能索引路径、hash、依赖和执行顺序，不得内联全部 frame/component/line payload。
+        severity: blocker
+      - id: SHARD-003
+        zh: board shard 内不得复制公共库内容。
+        severity: major
+    source_slice:
+      - id: SOURCE-001
+        zh: 每个关键渲染字段必须能追踪到 source slice。
+        severity: blocker
+      - id: SOURCE-002
+        zh: 无 source refs 的 LLM 总结不得作为事实或 payload。
+        severity: blocker
+    surface:
+      - id: SURFACE-001
+        zh: 每个 frame/board/panel packet 必须声明 host_surface 或 inherited_host_surface。
+        severity: blocker
+      - id: SURFACE-002
+        zh: host_surface 必须有 source evidence 或 explicit design assumption。
+        severity: blocker
+      - id: SURFACE-003
+        zh: materialization_target 必须与 surface_type 匹配。
+        severity: blocker
+      - id: SURFACE-004
+        zh: attached surface 不得脱离 anchor 变成无关 floating page。
+        severity: major
+      - id: SURFACE-005
+        zh: blocking surface 必须有 close/cancel/confirm 路径。
+        severity: blocker
+      - id: SURFACE-006
+        zh: transient/persistent/user-dismissed/system-dismissed 生命周期必须声明。
+        severity: major
+      - id: SURFACE-007
+        zh: interaction 必须写 semantic_transition_operator，不能只写 NAVIGATE。
+        severity: major
+      - id: SURFACE-008
+        zh: 涉及系统能力时必须声明 system_handoff 或 external_surface。
+        severity: major
+      - id: SURFACE-009
+        zh: 非 app_page surface 必须提供 surface_layout_profile。
+        severity: major
+      - id: SURFACE-010
+        zh: inferred surface 必须进入 projection review log。
+        severity: major
+    drd_board:
+      - id: DRD-STATE-001
+        zh: 不得为每个页面强制生成 loading/empty/error/success/recovery 全量状态。
+        severity: blocker
+      - id: DRD-STATE-002
+        zh: 每个被展示的状态必须有 display_reason_zh。
+        severity: blocker
+      - id: DRD-STATE-003
+        zh: 视觉相同且只是交互事件的状态必须折叠为 Pen 线或备注。
+        severity: major
+      - id: DRD-BOARD-001
+        zh: DRD_MODE 下 RND-07 必须 skipped，不写真实 Figma reactions。
+        severity: blocker
+    materialization:
+      - id: MAT-001
+        zh: renderer 不得消费 screens[].states[].components[] 作为 frame payload。
+        severity: blocker
+      - id: MAT-002
+        zh: 每个可渲染 frame 必须有独立 frame_packet。
+        severity: blocker
+      - id: MAT-003
+        zh: frame_packet 必须有 regions、component_instance_refs、source_slices。
+        severity: blocker
+      - id: MAT-004
+        zh: frame 内必须使用 component instances，不得只引用 component definitions。
+        severity: blocker
+      - id: MAT-005
+        zh: 点击、复制、提交、选择、上传等动作必须进入 interaction_packet，不得伪装成 state。
+        severity: blocker
+    annotation:
+      - id: ANN-001
+        zh: 每个语义交互必须有 Dev Mode annotation 或折叠摘要 annotation。
+        severity: blocker
+      - id: ANN-002
+        zh: annotation 必须锚定 source component、region、state frame 或 gateway。
+        severity: blocker
+      - id: ANN-003
+        zh: interaction annotation 必须包含 trigger、guard、actions、effect、event、refs。
+        severity: blocker
+    pen_line:
+      - id: PEN-001
+        zh: 每条 Pen 线必须引用 interaction_id。
+        severity: blocker
+      - id: PEN-002
+        zh: 每条 Pen 线必须引用 annotation_id。
+        severity: blocker
+      - id: PEN-003
+        zh: Pen 线不得作为真实交互行为。
+        severity: blocker
+      - id: PEN-004
+        zh: 同一源点 + 同一触发方式不得产生多条独立 Pen 线。
+        severity: blocker
+      - id: PEN-005
+        zh: Pen 线不得创造 interaction_packet 中不存在的新逻辑。
+        severity: blocker
+      - id: PEN-006
+        zh: 线密度超限时必须 bundle、collapse 或使用 gateway。
+        severity: major
+    component:
+      - id: COMP-001
+        zh: 必须存在 seeded primitive component library 或项目设计系统映射。
+        severity: major
+      - id: COMP-002
+        zh: 项目设计系统优先于 seeded primitive。
+        severity: warning
+      - id: COMP-003
+        zh: 组件解析不得改变 semantic_role。
+        severity: blocker
+    feedback:
+      - id: FB-001
+        zh: 每个 feedback 必须声明 feedback_surface。
+        severity: blocker
+      - id: FB-002
+        zh: transient feedback 必须有 dismiss strategy。
+        severity: blocker
+      - id: FB-003
+        zh: destructive action 必须有 confirmation 或 explicit exception。
+        severity: blocker
+    runtime:
+      - id: RT-001
+        zh: runtime 不得作为 render payload source。
+        severity: blocker
+      - id: RT-002
+        zh: runtime inferred 内容不得直接进入产品画布。
+        severity: blocker
+    review:
+      - id: REVIEW-001
+        zh: projection decision 必须进入 review log。
+        severity: major
+      - id: REVIEW-002
+        zh: review gate 不得默认回写 PRD。
+        severity: blocker
+    reverse_sync:
+      - id: REV-001
+        zh: Figma diff 不得直接写 PRD fact store。
+        severity: blocker
+      - id: REV-002
+        zh: Pen line edit 默认为 documentation-only。
+        severity: blocker

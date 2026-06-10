@@ -1,0 +1,25 @@
+negative_acceptance_rules:
+  id: NEG-001
+  id_zh: 负向验收规则
+  version: "3.0"
+  run_must_fail_if:
+    - strict_json_contains_comments
+    - rendered_node_lacks_source_refs
+    - rendered_label_lacks_source_refs
+    - source_slice_missing_for_key_render_field
+    - screens_states_components_used_as_renderer_payload
+    - single_giant_payload_generated
+    - runtime_used_as_render_payload_source
+    - runtime_inferred_content_enters_product_canvas
+    - host_surface_missing
+    - surface_type_mismatches_materialization_target
+    - interaction_event_modeled_as_visual_state_without_reason
+    - semantic_interaction_lacks_annotation
+    - pen_line_lacks_interaction_id
+    - pen_line_lacks_annotation_id
+    - visual_line_treated_as_real_interaction_behavior
+    - duplicate_same_source_same_trigger_pen_lines_not_merged
+    - feedback_missing_surface_or_dismiss_policy
+    - harness_audit_records_appear_in_product_board
+    - review_gate_directly_writes_prd
+    - figma_diff_directly_writes_prd_facts

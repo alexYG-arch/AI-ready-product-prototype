@@ -1,0 +1,32 @@
+ux_copy_style_library:
+  version: "3.0"
+  name_zh: UX 文案风格库
+  dimensions:
+    - id: task_fit
+      zh: 任务匹配
+    - id: readability
+      zh: 可读性
+    - id: cognitive_load
+      zh: 降低理解成本
+    - id: consistency
+      zh: 统一性
+    - id: warmth
+      zh: 温暖感
+    - id: actionability
+      zh: 行动明确
+    - id: contextuality
+      zh: 上下文相关
+    - id: error_recovery
+      zh: 错误恢复
+    - id: trust
+      zh: 可信与不夸张
+    - id: accessibility
+      zh: 可访问性
+  zh_CN_length_defaults:
+    primary_button: 8
+    secondary_button: 10
+    transient_feedback: 28
+    inline_error: 34
+    page_title: 18
+    modal_title: 18
+    modal_body: 90

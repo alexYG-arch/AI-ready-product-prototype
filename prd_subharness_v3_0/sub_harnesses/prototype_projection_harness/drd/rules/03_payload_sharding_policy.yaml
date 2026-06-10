@@ -1,0 +1,68 @@
+payload_sharding_policy:
+  id: PAYLOAD-SHARD-001
+  id_zh: Payload 分片策略
+  version: "3.0"
+
+  problem_statement_zh: 单体 approved materialization payload 会随着页面、状态、组件、备注和线数量增长而爆掉，也会重新压扁成目录结构。
+
+  required_structure:
+    root:
+      - manifest.yaml
+      - input/
+      - source_slices/
+      - decisions/
+      - libs/
+      - boards/
+      - flows/
+      - reports/
+
+  manifest_role:
+    rule: index_only
+    rule_zh: manifest 只做索引，不内联所有 payload。
+    required_fields:
+      - run_id
+      - version
+      - source_snapshot_hash
+      - libraries
+      - boards
+      - flows
+      - reports
+      - execution_strategy
+
+  common_libraries:
+    role: shared_primitives_and_rules
+    role_zh: 存放公共原语和规则，不存业务页面实例。
+    files:
+      - surface_primitive_library.yaml
+      - component_primitive_library.yaml
+      - feedback_primitive_library.yaml
+      - transition_operator_library.yaml
+      - annotation_template_library.yaml
+      - visual_line_style_library.yaml
+      - ux_copy_style_library.yaml
+
+  board_shards:
+    role: page_or_surface_local_payload
+    role_zh: 只存单个页面/宿主表面的局部实例化数据。
+    files_per_board:
+      - board_manifest.yaml
+      - frame_packets.yaml
+      - component_instance_packets.yaml
+      - interaction_packets.yaml
+      - annotation_packets.yaml
+      - pen_line_packets.yaml
+      - local_review.yaml
+
+  execution_strategy:
+    board_internal: serial
+    board_internal_zh: 单个画布内部串行渲染
+    independent_boards: parallel_allowed
+    independent_boards_zh: 无依赖画布允许并行
+    cross_board_lines: after_all_boards
+    cross_board_lines_zh: 跨画布线最后统一处理
+
+  forbidden:
+    - one_giant_payload_file
+    - duplicated_source_text_in_every_packet
+    - screens_states_components_as_renderer_payload
+    - embedding_common_libraries_inside_page_shards

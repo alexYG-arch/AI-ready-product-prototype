@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Renderer Skill Pack",
+  "type": "object",
+  "required": [
+    "renderer_skill_pack"
+  ],
+  "properties": {
+    "renderer_skill_pack": {
+      "type": "object",
+      "required": [
+        "version",
+        "skill_id",
+        "authority_role",
+        "rules"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "skill_id": {
+          "type": "string"
+        },
+        "authority_role": {
+          "enum": [
+            "advisory_renderer_influence"
+          ]
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "applicability": {
+          "type": "object"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "rule_id",
+              "hook",
+              "recommendation"
+            ],
+            "properties": {
+              "rule_id": {
+                "type": "string"
+              },
+              "hook": {
+                "type": "string"
+              },
+              "recommendation": {
+                "type": "object"
+              },
+              "confidence": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

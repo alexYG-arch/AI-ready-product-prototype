@@ -1,0 +1,64 @@
+figma_projection_rules:
+  version: "2.1"
+  projection_role: "runtime_to_figma_interactive_projection"
+  renderer_stage_plan: "rules/renderer_stage_plan.yaml"
+
+  projection_order:
+    - validate_completed_runtime
+    - validate_uxwriter_copy_catalog
+    - resolve_renderer_skill_pack
+    - create_layout_route_blueprint
+    - create_canvas_skeleton_and_reserved_zones
+    - render_pages_by_sequence_group
+    - fill_components_patterns_and_copy
+    - create_interaction_comments
+    - create_real_prototype_reactions
+    - create_visual_pen_line_flow_map
+    - validate_projection_and_maps
+
+  managed_node_policy:
+    managed_by_harness: true
+    designer_owned_supported: true
+    generated_draft_supported: true
+    never_recreate_designer_owned_node_without_review: true
+
+  frame_policy:
+    ordinary_page: "top_level_screen_state_frame"
+    screen_level_state: "separate_frame_in_state_stack"
+    component_level_state: "component_variant_or_interactive_component"
+    dynamic_minor_state: "figma_variable_or_conditional_when_supported"
+    overlay: "overlay_frame_in_overlay_lane"
+
+  skeleton_first_policy:
+    full_framework_created_before_details: true
+    reserve_interaction_spec_area: true
+    reserve_comment_anchor_space: true
+    reserve_route_corridors: true
+    sequence_groups_rendered_incrementally: true
+
+  interaction_explanation:
+    preferred_surface: "figma_comment"
+    secondary_surface: "interaction_spec_panel"
+    tertiary_surface: "flow_map_edge_label"
+    comment_policy_file: "rules/figma_comment_annotation_policy.yaml"
+
+  line_policy:
+    real_behavior: "figma_reactions"
+    documentation_lines: "pen_or_line_nodes_after_layout_route_plan"
+    line_policy_file: "rules/pen_line_routing_rules.yaml"
+    layout_coupling_file: "rules/layout_routing_coupling_rules.yaml"
+
+  metadata_required_on_managed_nodes:
+    - managed_by
+    - semantic_id
+    - runtime_hash
+    - source_refs
+    - override_policy
+    - render_stage
+
+  output_maps:
+    figma_sync_map: "io/output/figma-sync-map.yaml"
+    figma_interaction_map: "io/output/figma-interaction-map.yaml"
+    figma_comment_map: "io/output/figma-comment-map.yaml"
+    layout_route_plan: "io/output/layout_route_plan.yaml"
+    visual_flow_line_map: "io/output/visual_flow_line_map.yaml"

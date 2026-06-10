@@ -1,0 +1,69 @@
+package:
+  id: prototype_harness_drd_codex_package
+  id_zh: 原型 Harness DRD Codex 优化规则包
+  version: '3.0'
+  created_for: codex
+  package_role: executable_rules_package
+  package_role_zh: 可执行规则包
+  based_on:
+  - PROTOTYPE_HARNESS_STAGE_RULES_DETAILED.md
+  canonical_entrypoints:
+  - codex/CODEX_EXECUTION_PROMPT.md
+  - rules/prototype_harness_drd_complete_rules.yaml
+  rules_files:
+  - rules/00_language_and_comment_policy.yaml
+  - rules/01_harness_contract.yaml
+  - rules/02_drd_pipeline_stage_plan.yaml
+  - rules/03_payload_sharding_policy.yaml
+  - rules/04_source_slice_policy.yaml
+  - rules/05_host_surface_inference_rules.yaml
+  - rules/06_surface_morphology_rules.yaml
+  - rules/07_drd_board_layout_rules.yaml
+  - rules/08_materialization_packet_rules.yaml
+  - rules/09_component_primitive_library_policy.yaml
+  - rules/10_component_resolution_rules.yaml
+  - rules/11_feedback_surface_rules.yaml
+  - rules/12_annotation_rules.yaml
+  - rules/13_pen_line_logic_rules.yaml
+  - rules/14_runtime_validation_policy.yaml
+  - rules/15_projection_review_report_rules.yaml
+  - rules/16_renderer_skill_hook_policy.yaml
+  - rules/17_reverse_sync_policy.yaml
+  - rules/18_validators.yaml
+  - rules/19_negative_acceptance_rules.yaml
+  - rules/20_codex_execution_protocol.yaml
+  - rules/prototype_harness_drd_complete_rules.yaml
+  library_files:
+  - libs/surface_primitive_library.yaml
+  - libs/component_primitive_library.yaml
+  - libs/feedback_primitive_library.yaml
+  - libs/transition_operator_library.yaml
+  - libs/annotation_template_library.yaml
+  - libs/visual_line_style_library.yaml
+  - libs/ux_copy_style_library.yaml
+  schema_files:
+  - schemas/run_manifest.schema.yaml
+  - schemas/materialization_manifest.schema.yaml
+  - schemas/source_slice.schema.yaml
+  - schemas/surface_decision.schema.yaml
+  - schemas/board_manifest.schema.yaml
+  - schemas/frame_packet.schema.yaml
+  - schemas/component_instance_packet.schema.yaml
+  - schemas/interaction_packet.schema.yaml
+  - schemas/annotation_packet.schema.yaml
+  - schemas/pen_line_packet.schema.yaml
+  - schemas/projection_report.schema.yaml
+  example_files:
+  - examples/run_manifest.sample.yaml
+  - examples/materialization_manifest.sample.yaml
+  - examples/source_slices/SLICE-SCR-AI-TOOLBAR.sample.yaml
+  - examples/boards/SCR-AI-TOOLBAR/board_manifest.sample.yaml
+  - examples/boards/SCR-AI-TOOLBAR/frame_packets.sample.yaml
+  - examples/boards/SCR-AI-TOOLBAR/component_instance_packets.sample.yaml
+  - examples/boards/SCR-AI-TOOLBAR/interaction_packets.sample.yaml
+  - examples/boards/SCR-AI-TOOLBAR/annotation_packets.sample.yaml
+  - examples/boards/SCR-AI-TOOLBAR/pen_line_packets.sample.yaml
+  - examples/jsonc/commented_payload_example.jsonc
+  validation:
+    script: scripts/validate_rules.py
+    expected_result: PASS

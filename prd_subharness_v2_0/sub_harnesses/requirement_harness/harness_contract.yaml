@@ -1,0 +1,27 @@
+harness_contract:
+  id: "requirement_harness"
+  name: "Requirement Harness"
+  version: "1.0"
+  owns: "需求模式、C-EARS、语义槽、fit criteria、验收、verification、gaps。"
+  not_owns: "页面视觉、PRD.md 完整投影、发布计划。"
+  required_outputs:
+    - "patch_report"
+    - "change_patch"
+    - "impact_analysis"
+  authority_boundary:
+    llm_can_generate: "candidate"
+    validator_can_block: true
+    human_review_required_for_high_risk: true
+  run_lifecycle:
+    human_review_stage:
+      required: true
+      review_artifacts:
+        - "run_manifest"
+        - "candidate_outputs"
+        - "validator_report"
+        - "impact_analysis"
+        - "review_decision"
+      approval_required_before:
+        - "candidate_to_confirmed"
+        - "write_instance_product_spec"
+        - "close_open_question"

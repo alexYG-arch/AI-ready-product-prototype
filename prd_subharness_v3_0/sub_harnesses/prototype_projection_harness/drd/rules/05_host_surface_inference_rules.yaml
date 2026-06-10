@@ -1,0 +1,102 @@
+host_surface_inference_rules:
+  id: SURF-001
+  id_zh: 宿主表面推理规则
+  version: "3.0"
+
+  purpose_zh: 在布局、组件、反馈和 Pen 线之前，先判断功能运行在哪种宿主表面中。
+
+  inference_method:
+    use_numeric_scoring: false
+    use_numeric_scoring_zh: 不使用数字评分
+    steps:
+      - extract_surface_evidence
+      - apply_hard_constraints
+      - enumerate_feasible_surfaces
+      - reject_invalid_surfaces
+      - select_surface_with_rationale
+      - write_surface_decision
+
+  surface_types:
+    - surface_type: app_page
+      surface_type_zh: 应用页面
+      default_artifact: figma_frame
+      typical_operators: [navigate, replace_page, push_detail]
+    - surface_type: dialog_modal
+      surface_type_zh: 阻断式弹窗
+      default_artifact: overlay_frame
+      blocking_default: true
+      typical_operators: [open_overlay, close_overlay, confirm_then_continue]
+    - surface_type: transient_feedback
+      surface_type_zh: 短暂反馈，例如 toast/snackbar
+      default_artifact: overlay_or_inline_feedback
+      blocking_default: false
+      typical_operators: [show_temporarily, auto_dismiss]
+    - surface_type: notification_surface
+      surface_type_zh: 通知表面，例如系统通知、站内通知、banner
+      default_artifact: notification_card_or_banner
+      typical_operators: [appear, dismiss, tap_to_open_target]
+    - surface_type: attached_panel
+      surface_type_zh: 依附面板
+      default_artifact: attached_panel_frame
+      typical_operators: [expand_from_anchor, collapse_to_anchor, replace_panel_content]
+    - surface_type: anchored_popover
+      surface_type_zh: 锚定 Popover
+      default_artifact: anchored_overlay
+      typical_operators: [open_near_source, dismiss_on_outside_or_action]
+    - surface_type: system_handoff
+      surface_type_zh: 系统交接，例如权限、相册、文件选择器
+      default_artifact: handoff_placeholder_or_system_frame
+      typical_operators: [handoff_to_system, return_with_result, return_cancelled]
+    - surface_type: embedded_widget
+      surface_type_zh: 嵌入式小组件或插件区域
+      default_artifact: embedded_surface_frame
+      typical_operators: [expand_in_place, swap_widget_state, open_host_context_action]
+    - surface_type: assistant_panel
+      surface_type_zh: AI 助手面板/工具面板
+      default_artifact: assistant_panel_frame
+      typical_operators: [open_panel, expand_result, collapse_panel, pin_or_dock]
+
+  evidence_terms:
+    app_page:
+      zh: [页面, 详情页, 列表页, 设置页, 首页]
+    dialog_modal:
+      zh: [弹窗, 确认, 二次确认, 阻断, 是否继续]
+    transient_feedback:
+      zh: [toast, 提示, 轻提示, 已复制, 保存成功]
+    notification_surface:
+      zh: [通知, 通知栏, banner, 推送, 站内信]
+    attached_panel:
+      zh: [依附, 工具栏, 键盘, 输入法, 扩展区, 侧边栏, 抽屉]
+    anchored_popover:
+      zh: [气泡, 浮层说明, 锚定提示, tooltip, popover]
+    system_handoff:
+      zh: [权限, 相册, 文件选择, 分享面板, 系统设置, 外部打开]
+    embedded_widget:
+      zh: [插件, 小组件, 扩展, 嵌入, widget]
+    assistant_panel:
+      zh: [AI助手, AI面板, 智能工具, 侧边助手]
+
+  decision_record:
+    required_fields:
+      - decision_id
+      - source_refs
+      - evidence
+      - hard_constraints
+      - feasible_surfaces
+      - rejected_surfaces
+      - selected
+      - rationale_zh
+
+  generic_constraints:
+    - constraint_id: SURFACE-HC-001
+      rule: feature_must_remain_attached_to_declared_host_context
+      rule_zh: 功能必须保持在 PRD 声明的宿主上下文内
+    - constraint_id: SURFACE-HC-002
+      rule: realization_must_not_change_surface_type_without_source_evidence
+      rule_zh: 没有来源证据时，不得擅自改变宿主表面类型
+    - constraint_id: SURFACE-HC-003
+      rule: blocking_semantics_must_match_surface
+      rule_zh: 阻断语义必须和表面类型匹配
+    - constraint_id: SURFACE-HC-004
+      rule: feedback_persistence_must_be_declared
+      rule_zh: 反馈的持续时间或消失方式必须声明

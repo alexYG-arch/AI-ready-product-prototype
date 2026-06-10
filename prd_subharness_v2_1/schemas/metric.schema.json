@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-ready Metric",
+  "type": "object",
+  "required": ["id", "name", "state", "definition", "baseline", "target", "ai_reasoning_rule"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "label_cn": { "type": "string" },
+    "state": {
+      "enum": ["measurable_now", "needs_instrumentation", "proxy_only", "qualitative_prelaunch", "blocked"]
+    },
+    "definition": { "type": "string" },
+    "baseline": { "type": ["object", "string", "number", "null"] },
+    "target": { "type": ["object", "string", "number", "null"] },
+    "data_source": { "type": "object" },
+    "required_before": { "type": "string" },
+    "owner": { "type": "string" },
+    "proxy_metrics": { "type": "array" },
+    "guardrails": { "type": "array" },
+    "ai_reasoning_rule": { "type": "string" }
+  }
+}

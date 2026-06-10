@@ -1,0 +1,24 @@
+transition_operator_library:
+  version: "3.0"
+  name_zh: 转换操作符库
+  operators:
+    - id: navigate
+      zh: 导航
+    - id: open_overlay
+      zh: 打开覆盖层
+    - id: close_overlay
+      zh: 关闭覆盖层
+    - id: show_temporarily
+      zh: 短暂显示
+    - id: expand_from_anchor
+      zh: 从锚点展开
+    - id: collapse_to_anchor
+      zh: 折叠回锚点
+    - id: replace_region_content
+      zh: 替换区域内容
+    - id: handoff_to_system
+      zh: 交接到系统能力
+    - id: return_with_result
+      zh: 带结果返回
+    - id: no_op_annotation_only
+      zh: 不执行动作，仅说明

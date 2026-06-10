@@ -1,0 +1,93 @@
+runtime_generation_rules:
+  version: "2.0"
+
+  generation_pipeline:
+    - step: "load_structured_facts"
+      inputs:
+        - "requirements.yaml"
+        - "screens.yaml"
+        - "metrics.yaml"
+        - "events.yaml"
+        - "traceability.md"
+    - step: "load_design_adapters"
+      inputs:
+        - "component-binding-map.yaml"
+        - "design-semantic-library.json"
+    - step: "derive_flows"
+      rule: "从 journey / requirements / screen transitions 推导 flow，不从 PRD.md 推导。"
+    - step: "derive_screen_states"
+      rule: "使用 screen_state_harness 的状态推理链和 required_state_dimensions。"
+    - step: "derive_interaction_graph"
+      rule: "每个用户操作、系统事件、自动延时、overlay 行为都必须成为 edge。"
+    - step: "bind_components"
+      rule: "按 component_binding_policy 解析 semantic component。"
+    - step: "record_gaps"
+      rule: "缺失信息进入 prototype_gaps，不得脑补。"
+    - step: "write_runtime"
+      output: "product-spec/prototype.runtime.json"
+
+  screen_state_derivation:
+    reasoning_chain:
+      - "Feature"
+      - "Task"
+      - "Journey Step"
+      - "Decision Point"
+      - "Interaction"
+      - "Trigger"
+      - "System Operation"
+      - "Outcome"
+      - "State"
+      - "Recovery"
+      - "Acceptance/Event"
+    required_dimensions:
+      - "data_state"
+      - "network_state"
+      - "permission_state"
+      - "input_state"
+      - "request_lifecycle"
+      - "consistency_state"
+      - "recovery_state"
+      - "platform_device_state"
+
+  interaction_generation:
+    every_interaction_must_have:
+      - "interaction_id"
+      - "edge_id"
+      - "source.screen_id_or_overlay_id"
+      - "source.component_id_or_hotspot_id"
+      - "trigger"
+      - "guard_or_explicit_no_guard"
+      - "ordered_actions"
+      - "destination_or_state_effect"
+      - "analytics_events_or_explicit_none"
+      - "source_refs"
+    forbidden_shortcuts:
+      - "点击按钮跳下一页 without guard/action/source_refs"
+      - "screen_to_screen edge without state_id"
+      - "destination omitted because obvious"
+
+  action_order_rules:
+    - "SET_VARIABLE before CONDITIONAL if condition uses updated value is forbidden; condition must read prior state."
+    - "SET_VARIABLE should normally precede NAVIGATE when destination depends on new state."
+    - "OPEN_OVERLAY before NAVIGATE is allowed only if delay or same-frame feedback is intended."
+    - "CLOSE_OVERLAY before NAVIGATE should be explicit for modal confirm paths."
+
+  fallback_rules:
+    unsupported_guard_expression:
+      preferred: "split_into_explicit_state_frames"
+      fallback: "emit_gap"
+    missing_destination_state:
+      action: "block_edge_projection"
+    missing_analytics_event:
+      action: "allow_with_explicit_none_unless_requirement_mentions_tracking"
+
+  runtime_hash_policy:
+    hash_inputs:
+      - "requirements.yaml"
+      - "screens.yaml"
+      - "metrics.yaml"
+      - "events.yaml"
+      - "traceability.md"
+      - "component-binding-map.yaml"
+      - "design-semantic-library.json"
+    hash_algorithm: "sha256"

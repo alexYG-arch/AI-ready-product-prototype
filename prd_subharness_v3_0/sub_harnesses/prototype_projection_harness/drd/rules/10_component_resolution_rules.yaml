@@ -1,0 +1,44 @@
+component_resolution_rules:
+  id: COMP-RESOLVE-001
+  id_zh: 组件解析规则
+  version: "3.0"
+
+  principle_zh: 组件解析不负责理解宿主表面；宿主表面、区域、affordance 和 operator 已由 SURF stage 决定。RND-04 只负责把这些语义绑定到组件或低保真原语。
+
+  inputs:
+    - surface_decision
+    - morphology_decision
+    - component_instance_packet
+    - component_primitive_library
+    - project_design_system_map
+
+  matching_keys:
+    - semantic_role
+    - affordance_type
+    - host_surface_type
+    - host_region_role
+    - required_props
+    - state_kind
+    - component_name
+    - variant_properties
+    - component_properties
+
+  component_resolution_priority:
+    - existing_project_component
+    - existing_project_pattern_or_template
+    - seeded_platform_primitive
+    - generated_low_fi_primitive_with_review_note
+
+  required_instance_fields:
+    - instance_id
+    - component_ref
+    - props
+    - host_region
+    - semantic_role
+    - source_slices
+
+  forbidden:
+    - deciding_surface_shape_from_component_availability
+    - replacing_button_with_link_without_review_log
+    - changing_semantic_role_during_component_resolution
+    - dropping_props_when_component_variant_missing

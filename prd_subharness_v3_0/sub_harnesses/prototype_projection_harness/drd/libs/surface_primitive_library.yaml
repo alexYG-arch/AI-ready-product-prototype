@@ -1,0 +1,49 @@
+surface_primitive_library:
+  version: "3.0"
+  name_zh: 宿主表面原语库
+  surfaces:
+    - id: app_page
+      zh: 应用页面
+      default_artifact: figma_frame
+    - id: dialog_modal
+      zh: 阻断式弹窗
+      default_artifact: overlay_frame
+      blocking_default: true
+    - id: transient_feedback
+      zh: 短暂反馈
+      default_artifact: overlay_or_inline_feedback
+    - id: notification_surface
+      zh: 通知表面
+      default_artifact: notification_card_or_banner
+    - id: attached_panel
+      zh: 依附面板
+      default_artifact: attached_panel_frame
+    - id: anchored_popover
+      zh: 锚定浮层
+      default_artifact: anchored_overlay
+    - id: system_handoff
+      zh: 系统交接
+      default_artifact: handoff_placeholder
+    - id: embedded_widget
+      zh: 嵌入式小组件
+      default_artifact: embedded_surface_frame
+    - id: assistant_panel
+      zh: AI 助手面板
+      default_artifact: assistant_panel_frame
+  regions:
+    - id: header_region
+      zh: 头部区域
+    - id: content_region
+      zh: 内容区域
+    - id: action_region
+      zh: 操作区域
+    - id: result_region
+      zh: 结果区域
+    - id: feedback_region
+      zh: 反馈区域
+    - id: attachment_region
+      zh: 依附区域
+    - id: notification_region
+      zh: 通知区域
+    - id: expansion_region
+      zh: 展开区域

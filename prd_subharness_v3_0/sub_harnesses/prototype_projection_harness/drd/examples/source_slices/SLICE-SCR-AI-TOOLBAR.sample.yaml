@@ -1,0 +1,21 @@
+source_slice:
+  slice_id: SLICE-SCR-AI-TOOLBAR
+  source_ref: PRD.md#7:SCR-AI-TOOLBAR
+  source_hash: sha256:sample-toolbar
+  extraction_role: surface_hint
+  extraction_role_zh: 宿主表面提示
+  semantic_targets:
+    - SCR-AI-TOOLBAR
+  render_fields:
+    feature_entries:
+      value:
+        - 话题推荐
+        - 亲密度设置
+        - 关系分析
+      evidence_level: confirmed_fact
+    host_terms:
+      value:
+        - 输入法
+        - 键盘工具栏
+      evidence_level: confirmed_fact
+  excerpt_zh: AI 键盘工具栏包含话题推荐、亲密度设置、关系分析入口。

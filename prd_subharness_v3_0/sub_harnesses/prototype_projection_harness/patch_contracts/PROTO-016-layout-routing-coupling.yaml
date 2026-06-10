@@ -1,0 +1,14 @@
+patch_contract:
+  schema_version: '2.1'
+  id: PROTO-016
+  name: Layout and line routing coupling
+  version: '2.1'
+  summary: Adds route corridors, duplicate-line dedupe, edge bundling and visual pen-line
+    rules.
+  required_outputs:
+  - layout_route_plan.yaml
+  - visual_flow_line_map.yaml
+  blocks_if:
+  - same-source same-trigger duplicate visual lines are emitted
+  - line overlaps exceed budget without bundling
+  owner: prototype_projection_harness

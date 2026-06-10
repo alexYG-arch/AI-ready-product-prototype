@@ -1,0 +1,76 @@
+materialization_packet_rules:
+  id: MATERIALIZE-001
+  id_zh: 物化包规则
+  version: "3.0"
+
+  packet_types:
+    - frame_packet
+    - component_instance_packet
+    - interaction_packet
+    - annotation_packet
+    - pen_line_packet
+    - feedback_packet
+    - review_packet
+
+  frame_packet:
+    required_fields:
+      - packet_id
+      - board_id
+      - semantic_target
+      - host_surface_ref
+      - display_reason
+      - display_reason_zh
+      - source_slices
+      - regions
+      - component_instance_refs
+    forbidden_fields:
+      - confirmed_product_requirement_changes
+      - unsourced_user_visible_copy
+
+  component_instance_packet:
+    required_fields:
+      - instance_id
+      - component_ref
+      - semantic_role
+      - host_region
+      - props
+      - source_slices
+    rule_zh: frame 内必须使用 component instance，不得只引用 component definition。
+
+  interaction_packet:
+    required_fields:
+      - interaction_id
+      - source
+      - trigger
+      - semantic_action
+      - ordered_actions
+      - destination_or_effect
+      - source_slices
+    drd_mode_rule:
+      rendered_as: pen_line_and_annotation
+      rendered_as_zh: 在 DRD 模式中渲染为 Pen 线和备注，不写真实 reaction。
+
+  annotation_packet:
+    required_fields:
+      - annotation_id
+      - anchor
+      - body
+      - linked_interaction_ids
+      - source_slices
+
+  pen_line_packet:
+    required_fields:
+      - line_id
+      - interaction_id
+      - annotation_id
+      - source_anchor
+      - destination_anchor
+      - line_type
+      - label
+      - routing
+
+  forbidden:
+    - screens_states_components_directory_as_renderer_payload
+    - state_name_only_difference
+    - click_copy_submit_modeled_as_state_when_no_visual_state_change
+    - component_definition_reused_as_state_instance

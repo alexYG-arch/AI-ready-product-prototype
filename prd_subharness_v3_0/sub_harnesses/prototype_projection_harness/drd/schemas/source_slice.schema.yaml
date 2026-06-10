@@ -1,0 +1,11 @@
+meta_schema_note: "Lightweight YAML schema for Codex and validator hints, not full JSON Schema."
+meta_schema_note_zh: "轻量 YAML schema，用于 Codex 和 validator 提示，不是完整 JSON Schema。"
+
+required: [slice_id, source_ref, source_hash, extraction_role, semantic_targets, render_fields]
+properties:
+  slice_id: string
+  source_ref: string
+  extraction_role: string
+  semantic_targets: list[string]
+  render_fields: map
+  excerpt_zh: string_optional

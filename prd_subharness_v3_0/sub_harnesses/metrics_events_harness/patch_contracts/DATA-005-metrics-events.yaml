@@ -1,0 +1,16 @@
+patch_contract:
+  patch_id: "DATA-005-metrics-events"
+  title: "DATA-005: 生成指标、埋点和实验候选。"
+  status: "draft"
+  goal:
+    - "DATA-005: 生成指标、埋点和实验候选。"
+  allowed_files:
+    - "product-spec/"
+    - "prd_orchestrator/"
+    - "sub_harnesses/"
+  forbidden_files:
+    - "product-spec/legacy_prd.md"
+  done_when:
+    - "patch_report written"
+    - "change_patch written"
+    - "impact_analysis written"

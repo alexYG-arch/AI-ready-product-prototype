@@ -1,0 +1,14 @@
+fixture_id: "state_list_without_reasoning_chain"
+bad_screen:
+  id: "SCR-BAD-001"
+  name: "登录页"
+  states:
+    - "loading"
+    - "error"
+    - "success"
+  state_reasoning_chains: []
+expected_result: "review_required"
+reason: "只列状态名不等于完成状态推理链；必须有 trigger、operation、outcome、recovery、acceptance/event。"
+validator_targets:
+  - "screen_state_harness_contract_validator"
+  - "screen_state_harness_gap_validator"

@@ -1,0 +1,96 @@
+figma_projection_rules:
+  version: "2.0"
+  purpose: "定义 runtime → Figma frame/node/metadata/flow map 的投射规则。"
+
+  projection_pipeline:
+    - "read prototype.runtime.json"
+    - "read figma-sync-map.yaml"
+    - "read component-binding-map.yaml"
+    - "generate prototype_projection_plan"
+    - "patch existing managed nodes by semantic_id"
+    - "create missing nodes only when allowed"
+    - "write node metadata"
+    - "write interactions as reactions"
+    - "generate Flow Map and Interaction Spec"
+    - "write figma-sync-map.yaml and figma-interaction-map.yaml"
+    - "run validators"
+
+  figma_pages:
+    prototype_page:
+      name: "Prototype"
+      contains:
+        - "screen_state_frames"
+        - "overlays"
+        - "hotspots"
+    flow_map_page:
+      name: "Prototype Flow Map"
+      contains:
+        - "documentation_nodes"
+        - "annotation_arrows"
+        - "edge_labels"
+    interaction_spec_page:
+      name: "Interaction Spec"
+      contains:
+        - "interaction_cards"
+        - "guard_action_event_tables"
+    generated_draft_page:
+      name: "Generated Draft"
+      contains:
+        - "placeholder_components"
+        - "binding_gaps"
+
+  frame_rules:
+    normal_screen:
+      figma_node_type: "FRAME"
+      naming: "{screen_id} / {state_id} / {screen_name}"
+      must_store_metadata: true
+    screen_state:
+      figma_node_type: "FRAME"
+      state_level: "screen"
+      create_explicit_frame_for:
+        - "loading"
+        - "empty"
+        - "error"
+        - "permission_denied"
+        - "submit_failed"
+        - "success"
+        - "processing"
+    overlay:
+      figma_node_type: "FRAME"
+      section: "Overlays"
+      create_for:
+        - "modal"
+        - "toast"
+        - "popover"
+        - "sheet"
+
+  update_policy:
+    never_full_rebuild_by_default: true
+    patch_by_semantic_id: true
+    preserve_designer_visual_overrides: true
+    managed_zones:
+      - "Managed by Harness"
+      - "Generated Draft"
+    designer_owned_zones:
+      - "Designer Owned"
+
+  node_metadata:
+    storage_namespace: "prd_proto"
+    required_keys:
+      - "managed_by"
+      - "semantic_id"
+      - "semantic_type"
+      - "runtime_hash"
+      - "source_refs"
+      - "override_policy"
+    max_payload_policy: "store only ids/hashes/refs; never store full runtime on node"
+
+  naming_rules:
+    screen_frame: "{screen_id} / {state_id} / {screen_name}"
+    overlay_frame: "{overlay_id} / {overlay_type}"
+    hotspot: "HOTSPOT / {interaction_id} / {semantic_role}"
+    interaction_card: "SPEC / {interaction_id}"
+
+  gap_projection:
+    blocker_gap: "create visible gap card and block affected edge/frame"
+    non_blocker_gap: "create gap card in Generated Draft and continue"

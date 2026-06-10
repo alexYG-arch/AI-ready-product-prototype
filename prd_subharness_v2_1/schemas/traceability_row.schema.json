@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-ready Traceability Row",
+  "type": "object",
+  "required": ["goal_id", "requirement_id", "status"],
+  "properties": {
+    "goal_id": { "type": "string" },
+    "requirement_id": { "type": "string" },
+    "screen_id": { "type": "string" },
+    "event_id": { "type": "string" },
+    "acceptance_id": { "type": "string" },
+    "test_id": { "type": "string" },
+    "monitoring_id": { "type": "string" },
+    "status": { "enum": ["covered", "partial", "uncovered", "blocked", "deprecated"] },
+    "reason": { "type": "string" },
+    "owner": { "type": "string" },
+    "required_before": { "type": "string" }
+  }
+}

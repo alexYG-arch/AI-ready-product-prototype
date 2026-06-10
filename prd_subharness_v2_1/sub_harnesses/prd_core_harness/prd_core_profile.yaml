@@ -1,0 +1,54 @@
+prd_core_profile:
+  profile_id: "PRD-CORE-FACTS-1.0"
+  review_status: "approved_by_human_review"
+  intent: "把旧 PRD 或变更请求中的核心产品事实整理为可追溯的背景、问题、目标、范围、非目标、风险和开放问题。"
+
+  core_fact_types:
+    - id: "problem"
+      natural_language: "用户或业务当前遇到的具体问题。"
+      required_review: "问题是否真实、具体、可追溯。"
+    - id: "goal"
+      natural_language: "本功能要达成的用户、业务或质量目标。"
+      required_review: "目标是否可被后续需求、指标或验收承接。"
+    - id: "scope"
+      natural_language: "这次明确要做的范围。"
+      required_review: "范围是否和需求、页面、发布计划一致。"
+    - id: "non_goal"
+      natural_language: "这次明确不做的范围。"
+      required_review: "非目标是否能防止后续误实现。"
+    - id: "risk"
+      natural_language: "会影响产品、上线、合规或用户体验的不确定性。"
+      required_review: "风险是否有 owner 或后续处理路径。"
+    - id: "open_question"
+      natural_language: "当前不能确认但会影响迁移或实现的问题。"
+      required_review: "问题是否足够具体，能分配给人或 harness。"
+
+  rule_mappings:
+    - rule_id: "CORE-SOURCE-001"
+      natural_language: "核心事实必须有来源；没有来源只能作为 open question。"
+      machine_mapping:
+        check_type: "source_required_for_confirmed_core_fact"
+        source_fields:
+          - "source_refs"
+          - "review_decision_ref"
+      human_review_prompt: "这条核心事实从哪里来？能否被 reviewer 独立核对？"
+
+    - rule_id: "CORE-BOUNDARY-002"
+      natural_language: "核心 harness 不批准需求、页面、指标或发布决策，只负责把这些事项路由给对应 harness。"
+      machine_mapping:
+        check_type: "ownership_boundary"
+        forbidden_confirmed_fact_types:
+          - "requirement_acceptance"
+          - "screen_state"
+          - "metric_target"
+          - "release_rollout"
+      human_review_prompt: "这里是否越权替其他 harness 做了事实确认？"
+
+    - rule_id: "CORE-GAP-003"
+      natural_language: "缺少目标用户、范围、成功标准、风险 owner 或关键依赖时必须写入 gap/open question。"
+      machine_mapping:
+        check_type: "missing_core_fact_gap_required"
+        gap_locations:
+          - "product-spec/requirements.yaml#unknowns"
+          - "prd_orchestrator/open_questions/"
+      human_review_prompt: "哪些缺口会阻塞后续首次 PRD 迁移？"

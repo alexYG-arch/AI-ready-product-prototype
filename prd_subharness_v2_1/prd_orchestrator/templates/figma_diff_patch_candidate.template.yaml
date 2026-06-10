@@ -1,0 +1,50 @@
+change_patch_candidate:
+  schema_version: "2.0"
+  patch_id: "FIGMA-DIFF-YYYYMMDD-001"
+  source_channel: "figma_diff"
+  source_artifact:
+    figma_file_key: ""
+    figma_page_id: ""
+    figma_node_ids: []
+    base_runtime_hash: "sha256:"
+    figma_extract_hash: "sha256:"
+    current_prd_runtime_hash: "sha256:"
+    extracted_at: "YYYY-MM-DDTHH:MM:SSZ"
+
+  candidate_status: "candidate_not_approved"
+  human_review_required: true
+
+  semantic_diffs:
+    - diff_id: "FDIFF-001"
+      diff_type: "copy_change | navigation_change | action_chain_change | overlay_added | overlay_removed | state_added | state_removed | component_role_change | analytics_change"
+      classification: "semantic_candidate | high_risk_candidate | conflict"
+      figma_change:
+        node_id: ""
+        before: null
+        after: null
+      inferred_semantic_target:
+        document: "product-spec/screens.yaml"
+        object_id: ""
+        field: ""
+      target_sub_harness_candidate: "screen_state_harness"
+      confidence: "low | medium | high"
+      requires_human_review: true
+      reason: ""
+
+  non_semantic_diffs:
+    - diff_id: "FDIFF-VISUAL-001"
+      diff_type: "layout_only | style_only | annotation_position_only | generated_noise"
+      action: "keep_in_figma_only | ignore_or_record_only"
+      reason: ""
+
+  conflicts:
+    - conflict_id: "FCONFLICT-001"
+      conflict_type: "same_semantic_field_changed_both_sides"
+      semantic_ref: ""
+      base_value: null
+      figma_value: null
+      prd_value: null
+      required_decision: "choose_figma | choose_prd | write_new_value | reject_both"
+
+  open_questions: []
+  forbidden_direct_writes_checked: true

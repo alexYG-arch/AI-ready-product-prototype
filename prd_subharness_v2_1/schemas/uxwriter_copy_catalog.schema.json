@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UX Writer Copy Catalog",
+  "type": "object",
+  "required": [
+    "uxwriter_copy_catalog"
+  ],
+  "properties": {
+    "uxwriter_copy_catalog": {
+      "type": "object",
+      "required": [
+        "version",
+        "owner",
+        "authority_role",
+        "locale",
+        "copy_items"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "authority_role": {
+          "type": "string"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "copy_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "copy_id",
+              "semantic_role",
+              "screen_id",
+              "state_id",
+              "original_copy_ref",
+              "final_copy",
+              "intent",
+              "source_refs"
+            ],
+            "properties": {
+              "copy_id": {
+                "type": "string"
+              },
+              "semantic_role": {
+                "type": "string"
+              },
+              "screen_id": {
+                "type": "string"
+              },
+              "state_id": {
+                "type": "string"
+              },
+              "component_id": {
+                "type": "string"
+              },
+              "original_copy_ref": {
+                "type": "string"
+              },
+              "final_copy": {
+                "type": "string"
+              },
+              "intent": {
+                "type": "string"
+              },
+              "rewrite_reason": {
+                "type": "string"
+              },
+              "source_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "validation": {
+                "type": "object"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

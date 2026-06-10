@@ -1,0 +1,25 @@
+feedback_primitive_library:
+  version: "3.0"
+  name_zh: 反馈原语库
+  primitives:
+    - id: FB-INLINE
+      zh: 内联反馈
+      surface_type: inline_feedback
+      blocking: false
+    - id: FB-TRANSIENT
+      zh: 短暂提示
+      surface_type: transient_feedback
+      blocking: false
+      dismiss_required: true
+    - id: FB-DIALOG
+      zh: 阻断式弹窗反馈
+      surface_type: dialog_modal
+      blocking: true
+    - id: FB-NOTIFICATION
+      zh: 通知反馈
+      surface_type: notification_surface
+      persistence_required: true
+    - id: FB-ANCHOR-POPOVER
+      zh: 锚定说明反馈
+      surface_type: anchored_popover
+      blocking: semi_blocking

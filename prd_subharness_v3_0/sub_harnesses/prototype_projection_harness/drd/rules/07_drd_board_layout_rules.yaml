@@ -1,0 +1,68 @@
+drd_board_layout_rules:
+  id: DRD-BOARD-001
+  id_zh: DRD 画布布局规则
+  version: "3.0"
+
+  board_modes:
+    - mode: state_logic_board
+      mode_zh: 状态逻辑画布
+    - mode: surface_state_board
+      mode_zh: 宿主表面状态画布
+    - mode: flow_overview_board
+      mode_zh: 流程总览画布
+
+  necessary_state_policy:
+    default_rule: render_only_necessary_states
+    default_rule_zh: 只渲染必要状态
+    show_state_when:
+      - condition: prd_declared_state
+        condition_zh: PRD 明确声明该状态
+      - condition: interaction_destination
+        condition_zh: 有交互线指向该状态
+      - condition: acceptance_criteria_required
+        condition_zh: 验收标准要求展示
+      - condition: risk_or_failure_path
+        condition_zh: 关键失败、恢复、权限、支付、隐私、删除等路径需要说明
+      - condition: surface_morphology_change
+        condition_zh: 宿主表面形态发生变化
+      - condition: copy_or_feedback_required
+        condition_zh: 需要说明文案、反馈或错误提示
+      - condition: reviewer_attention_required
+        condition_zh: 需要评审者重点确认
+    hide_or_collapse_state_when:
+      - condition: visually_identical_to_base
+        action: collapse_to_annotation
+        action_zh: 收敛为备注说明
+      - condition: interaction_only_event
+        action: represent_as_pen_line
+        action_zh: 用 Pen 线表达
+      - condition: minor_component_internal_state
+        action: represent_as_component_annotation
+        action_zh: 用组件备注表达
+      - condition: not_applicable
+        action: omit_with_reason
+        action_zh: 不展示，但记录原因
+
+  board_layout_defaults:
+    frame_width: 390
+    frame_height: 844
+    frame_gap_x: 360
+    frame_gap_y: 160
+    state_gap_y: 140
+    board_gap_x: 560
+    board_gap_y: 520
+    annotation_lane_width: 300
+    route_corridor_width: 180
+    line_spacing: 20
+    edge_label_gap: 8
+
+  route_corridor_rules:
+    reserve_before_render: true
+    crossings_through_frames_forbidden: true
+    max_crossings_per_edge: 2
+    if_density_exceeds_budget: [merge, bundle, collapse_to_gateway, draw_primary_only]
+
+  product_canvas_vs_audit_canvas:
+    product_canvas_only_contains_product_projection: true
+    audit_artifacts_separate: true
+    audit_artifacts_zh: harness audit、memory、candidate review 只能进入本地记录、projection report、hidden review page 或 audit page。

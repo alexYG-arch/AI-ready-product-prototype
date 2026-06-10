@@ -1,0 +1,13 @@
+run_manifest:
+  run_id: RUN-SAMPLE-001
+  version: "3.0"
+  mode: DRD_MODE
+  mode_zh: 设计评审文档模式
+  input:
+    prd_fact_bundle: input/prd_fact_bundle.yaml
+    source_snapshot_hash: sha256:sample
+  artifacts:
+    source_slice_index: source_slices/slice_index.yaml
+    materialization_manifest: manifest.yaml
+    surface_decisions: decisions/surface_decisions.yaml
+    projection_report: reports/projection_report.yaml
