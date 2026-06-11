@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Figma Projection Plan",
+  "type": "object",
+  "required": [
+    "plan_version",
+    "runtime_hash",
+    "operations"
+  ],
+  "properties": {
+    "plan_version": {
+      "type": "string"
+    },
+    "runtime_hash": {
+      "type": "string"
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "op_id",
+          "operation",
+          "semantic_id"
+        ],
+        "properties": {
+          "op_id": {
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "create_frame",
+              "patch_frame",
+              "create_component_instance",
+              "patch_component_instance",
+              "create_reaction",
+              "patch_reaction",
+              "create_annotation",
+              "delete_generated_node",
+              "preserve_designer_owned_node",
+              "create_comment",
+              "patch_comment",
+              "create_flow_line",
+              "patch_flow_line",
+              "create_route_corridor",
+              "create_interaction_spec_panel",
+              "create_canvas_skeleton",
+              "create_state_stack_marker"
+            ]
+          },
+          "semantic_id": {
+            "type": "string"
+          },
+          "figma_node_id": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          },
+          "source_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "projection_gaps": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "authority": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

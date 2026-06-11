@@ -1,0 +1,76 @@
+local_materialization_patch_rules:
+  id: LOCAL_MATERIALIZATION_PATCH_RULES_V3_1
+  id_zh: 局部物化修补规则 v3.1
+  purpose_zh: >
+    根据 Logic Sidecar Audit 对 board shards、frame packets、sidecar cards、annotation stubs、hotspots 和 badges 做局部修补。
+    默认不回写 PRD。
+
+  patch_scope_allowed:
+    - board_frame_packets
+    - component_instance_packets
+    - interaction_hotspot_map
+    - annotation_stub_map
+    - logic_sidecar_card_map
+    - anchor_badge_map
+    - leader_line_map
+    - projection_review_log
+
+  patch_scope_forbidden:
+    - prd_fact_bundle
+    - requirements_yaml
+    - screens_yaml
+    - metrics_yaml
+    - events_yaml
+    - PRD_md
+
+  deductive_rules:
+    - rule_id: PATCH_DED_001
+      rule_name_zh: 审计发现驱动局部修补
+      if:
+        audit_finding_patch_required: true
+      then:
+        create_local_patch: true
+        patch_must_reference_audit_finding: true
+
+    - rule_id: PATCH_DED_002
+      rule_name_zh: 缺边界状态时补 frame 和 sidecar
+      if:
+        finding_type: missing_boundary_state
+      then:
+        allowed_ops:
+          - add_frame_packet
+          - add_logic_sidecar_card
+          - add_anchor_badge
+          - add_annotation_stub
+
+    - rule_id: PATCH_DED_003
+      rule_name_zh: 缺热点时补 hotspot 和说明
+      if:
+        finding_type: missing_hotspot
+      then:
+        allowed_ops:
+          - add_hotspot_packet
+          - add_annotation_stub
+          - add_logic_sidecar_card
+
+    - rule_id: PATCH_DED_004
+      rule_name_zh: 语义缺陷才生成 PRD candidate
+      if:
+        finding_type: semantic_defect_in_prd
+      then:
+        create_semantic_defect_candidate: true
+        do_not_patch_prd_directly: true
+      otherwise:
+        writes_prd: false
+
+  output_contract:
+    local_materialization_patch:
+      required_fields:
+        - patch_id
+        - patch_id_zh
+        - source_audit_finding
+        - patch_scope
+        - operations
+        - writes_prd
+        - source_refs
+        - validator_results

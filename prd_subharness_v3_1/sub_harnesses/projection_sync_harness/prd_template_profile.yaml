@@ -1,0 +1,51 @@
+prd_template_profile:
+  profile_id: "AI_READY_PRD_FULL_TEMPLATE_V1"
+  required_sections:
+    - "## 1. TL;DR"
+    - "## 2. 背景与问题"
+    - "## 3. 用户与场景"
+    - "## 4. 目标与指标"
+    - "## 5. Scope / Non-goals"
+    - "## 6. 体验方案摘要"
+    - "## 7. 页面语义说明"
+    - "## 8. 功能需求"
+    - "## 9. 非功能需求"
+    - "## 10. 数据与实验"
+    - "## 11. 验收标准"
+    - "## 12. 发布计划"
+    - "## 13. 风险、依赖、开放问题"
+    - "## 14. 变更记录"
+
+  substance_rules:
+    - id: "NO_SECTION_TITLE_ONLY"
+      description: "章节不得只有标题或只有“由 YAML 投影”。"
+      severity: "major"
+    - id: "TABLE_MUST_HAVE_CONTENT_OR_NA"
+      description: "关键表格必须有有效行或 not_applicable reason。"
+      severity: "major"
+
+  rule_mappings:
+    - rule_id: "PROJ-TEMPLATE-001"
+      natural_language: "PRD.md 必须包含 14 个规定章节。"
+      machine_mapping:
+        check_type: "required_sections_present"
+        required_sections_from: "prd_template_profile.required_sections"
+      human_review_prompt: "PRD.md 的读者是否能看到完整 PRD 结构？"
+
+    - rule_id: "PROJ-SOURCE-002"
+      natural_language: "PRD.md 只能表达 YAML、旧 PRD 或 review decision 中已有事实，不能反向创造 confirmed fact。"
+      machine_mapping:
+        check_type: "projection_source_trace_required"
+        map: "sub_harnesses/projection_sync_harness/prd_section_projection_map.yaml"
+      human_review_prompt: "抽查 PRD.md 的关键事实，是否都能回到结构化来源？"
+
+    - rule_id: "PROJ-SUBSTANCE-003"
+      natural_language: "PRD.md 不能保留模板占位符或只有标题的章节；缺信息时要写 gap 或 not_applicable reason。"
+      machine_mapping:
+        check_type: "placeholder_and_title_only_scan"
+        blocked_markers:
+          - "待同步"
+          - "由 `requirements.yaml` 投影"
+          - "由 `screens.yaml` 投影"
+          - "[用一句话说明"
+      human_review_prompt: "哪些章节还像模板，而不是可读的产品说明？"

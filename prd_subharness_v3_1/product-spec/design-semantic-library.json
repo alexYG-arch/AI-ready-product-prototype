@@ -1,0 +1,130 @@
+{
+  "semantic_component_library_version": "3.1",
+  "purpose": "Fallback semantic library when an existing Figma component or pattern cannot be resolved.",
+  "design_system_adapters": [
+    {
+      "adapter_id": "SDS_MONOCHROME_ADAPTER_V3_1",
+      "adapter_ref": "sub_harnesses/prototype_projection_harness/adapters/design_systems/sds_monochrome_adapter.yaml",
+      "source_snapshot_ref": "sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds.SOURCE.md",
+      "color_policy": "black_white_gray_only",
+      "enabled": true
+    }
+  ],
+  "components": [
+    {
+      "semantic_key": "primitive.button",
+      "semantic_role": "button",
+      "required_props": [
+        "label",
+        "state"
+      ],
+      "supported_states": [
+        "default",
+        "disabled",
+        "loading",
+        "pressed"
+      ],
+      "fallback_blueprint": {
+        "type": "generated_component",
+        "layout": "auto_layout_horizontal",
+        "text_slot": "Label"
+      }
+    },
+    {
+      "semantic_key": "primitive.input",
+      "semantic_role": "input",
+      "required_props": [
+        "label",
+        "placeholder",
+        "state"
+      ],
+      "supported_states": [
+        "empty",
+        "focused",
+        "filled",
+        "error",
+        "disabled"
+      ],
+      "fallback_blueprint": {
+        "type": "generated_component",
+        "layout": "label_field_message"
+      }
+    },
+    {
+      "semantic_key": "primitive.toast",
+      "semantic_role": "toast",
+      "required_props": [
+        "message",
+        "intent"
+      ],
+      "supported_states": [
+        "info",
+        "success",
+        "warning",
+        "error"
+      ],
+      "fallback_blueprint": {
+        "type": "generated_overlay",
+        "default_position": "bottom_center",
+        "auto_dismiss_ms": 2500
+      }
+    },
+    {
+      "semantic_key": "primitive.modal",
+      "semantic_role": "modal",
+      "required_props": [
+        "title",
+        "body",
+        "primary_action",
+        "secondary_action"
+      ],
+      "fallback_blueprint": {
+        "type": "generated_overlay",
+        "blocking": true,
+        "default_position": "center"
+      }
+    }
+  ],
+  "patterns": [
+    {
+      "pattern_id": "form.basic_submit",
+      "semantic_role": "form",
+      "required_slots": [
+        "input_group",
+        "submit_button",
+        "feedback"
+      ],
+      "state_coverage": [
+        "ready",
+        "input_invalid",
+        "submitting",
+        "submit_failed",
+        "success"
+      ],
+      "fallback_composition": [
+        "primitive.input",
+        "primitive.button",
+        "primitive.toast"
+      ]
+    },
+    {
+      "pattern_id": "modal.confirmation",
+      "semantic_role": "confirmation_modal",
+      "required_slots": [
+        "title",
+        "body",
+        "primary_action",
+        "secondary_action"
+      ],
+      "state_coverage": [
+        "open",
+        "confirmed",
+        "cancelled"
+      ],
+      "fallback_composition": [
+        "primitive.modal",
+        "primitive.button"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+logic_sidecar_audit_rules:
+  id: LOGIC_SIDECAR_AUDIT_RULES_V3_1
+  id_zh: 逻辑侧车审计规则 v3.1
+  purpose_zh: >
+    旁路审计 Composition Plan 是否真实暴露了 PRD 规则和使用链路细节。
+    审计结果进入 sidecar、report、local patch，不进入产品主 UI。
+
+  audit_basis:
+    - design_kernel_constraints
+    - screen_role_obligations
+    - composition_plan
+    - interaction_hotspot_map
+    - annotation_stub_map
+    - logic_sidecar_card_map
+
+  deductive_audit_questions:
+    - question_id: AUD_SURFACE_001
+      question_zh: 有外部或宿主表面义务时，是否展示了该表面或抽象占位？
+      fail_generates: missing_surface_patch
+
+    - question_id: AUD_BOUNDARY_001
+      question_zh: 有 min/max 约束时，是否展示了最小非法、最小合法、最大合法、最大非法边界？
+      fail_generates: missing_boundary_state_patch
+
+    - question_id: AUD_TIMING_001
+      question_zh: 可在当前表面修正的错误，是否在当前表面或确认前反馈？
+      fail_generates: misplaced_feedback_patch
+
+    - question_id: AUD_CONTROL_001
+      question_zh: 约束影响确认/提交时，是否展示了控件可用和不可用状态？
+      fail_generates: missing_control_state_patch
+
+    - question_id: AUD_RETURN_001
+      question_zh: 系统/外部表面是否展示了取消、返回成功、返回失败或权限拒绝？
+      fail_generates: missing_return_path_patch
+
+    - question_id: AUD_EXPLANATION_001
+      question_zh: 每个复杂交互是否有 Logic Sidecar Card，而不是只依赖 Pen 线？
+      fail_generates: missing_sidecar_card_patch
+
+  severity_rules:
+    - severity: blocker
+      severity_zh: 阻塞
+      when_zh: PRD 约束完全没有在使用链路中暴露，或反馈时机明显错误。
+    - severity: major
+      severity_zh: 重要
+      when_zh: 边界状态、控件状态、权限路径、恢复路径部分缺失。
+    - severity: minor
+      severity_zh: 次要
+      when_zh: 说明密度、排序、折叠摘要可改进但不影响逻辑理解。
+
+  output_contract:
+    audit_finding:
+      required_fields:
+        - finding_id
+        - finding_zh
+        - severity
+        - related_kernel_contract
+        - related_obligation_ids
+        - affected_frames_or_cards
+        - patch_required
+        - patch_recommendation

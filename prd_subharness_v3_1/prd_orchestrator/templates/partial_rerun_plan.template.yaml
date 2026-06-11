@@ -1,0 +1,10 @@
+partial_rerun_plan:
+  plan_id: ""
+  source_patch_id: ""
+  plan_status: "candidate | approved | blocked"
+  rerun_sub_harnesses: []
+  skipped_sub_harnesses: []
+  invalidated_artifacts: []
+  reused_artifacts: []
+  human_approval_required: false
+  blockers: []

@@ -1,0 +1,50 @@
+inductive_support_rules:
+  id: INDUCTIVE_SUPPORT_RULES_V3_1
+  id_zh: 归纳辅助规则 v3.1
+  purpose_zh: >
+    演绎规则优先。归纳逻辑只用于发现可能遗漏、提出候选、排序审计问题和建议折叠策略。
+    归纳结果默认不可直接进入产品画布，必须经 Design Kernel 或 Local Patch 约束。
+
+  allowed_inductive_sources:
+    - source: previous_projection_reports
+      source_zh: 历史投射报告
+    - source: accepted_local_patch_patterns
+      source_zh: 已接受的局部修补模式
+    - source: renderer_skill_pack
+      source_zh: 渲染器技能包
+    - source: design_system_usage_statistics
+      source_zh: 设计系统使用统计
+    - source: human_review_notes
+      source_zh: 人工评审备注
+
+  allowed_inductive_outputs:
+    - output: suspected_missing_obligation
+      output_zh: 疑似遗漏义务
+    - output: candidate_sidecar_card_grouping
+      output_zh: 候选侧车卡片分组
+    - output: layout_density_hint
+      output_zh: 布局密度建议
+    - output: likely_external_surface
+      output_zh: 可能的外部表面
+    - output: candidate_collapse_strategy
+      output_zh: 候选折叠策略
+
+  guardrails:
+    - id: IND_GUARD_001
+      rule_zh: 归纳输出必须标记 candidate，不得自动成为 confirmed fact。
+    - id: IND_GUARD_002
+      rule_zh: 归纳输出若影响产品行为，必须转为 review item 或 semantic defect candidate。
+    - id: IND_GUARD_003
+      rule_zh: 归纳输出若只影响展示、分组、侧车布局，可进入 local materialization patch。
+    - id: IND_GUARD_004
+      rule_zh: 归纳输出不得覆盖演绎规则和 validator。
+
+  confidence_policy:
+    confidence_levels:
+      - low
+      - medium
+      - high
+    high_confidence_still_requires:
+      - source_refs_or_pattern_refs
+      - validator_pass
+      - trace_record

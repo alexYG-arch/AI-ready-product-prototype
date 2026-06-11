@@ -1,0 +1,14 @@
+local_materialization_patch:
+  version: "3.1"
+  mode: DRD_MODE
+  patches:
+    - patch_id: PATCH-BAD-WRITES-PRD
+      source_audit_finding: AUD-001
+      patch_scope:
+        - requirements_yaml
+      operations:
+        - operation_type: edit_prd_fact
+          target: product-spec/requirements.yaml
+      writes_prd: true
+      source_refs:
+        - PRD.md#upload-image-rule

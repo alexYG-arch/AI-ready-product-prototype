@@ -1,0 +1,123 @@
+validators:
+  id: DRD_DEDUCTIVE_VALIDATORS_V3_1
+  id_zh: DRD 演绎升级验证器 v3.1
+
+  screen_role_obligation:
+    - id: ROLE_VAL_001
+      severity: blocker
+      rule_zh: 每个 screen role obligation 必须有 source_refs 和 inference_basis_zh。
+    - id: ROLE_VAL_002
+      severity: blocker
+      rule_zh: 有 min/max 约束时必须生成 constraint_obligation、control_state_obligation、feedback_obligation。
+    - id: ROLE_VAL_003
+      severity: blocker
+      rule_zh: 外部或宿主表面任务必须生成 surface_obligation 和 return_obligation。
+    - id: ROLE_VAL_004
+      severity: major
+      rule_zh: 纯交互动作不得生成独立状态 frame，除非存在可见 surface change。
+
+  design_kernel:
+    - id: DK_VAL_001
+      severity: blocker
+      rule_zh: 每个 constraint_contract 必须声明 earliest_fix_surface 和 feedback_timing。
+    - id: DK_VAL_002
+      severity: blocker
+      rule_zh: feedback_timing 不得晚于 earliest_fix_surface。
+    - id: DK_VAL_003
+      severity: major
+      rule_zh: 有系统交接时必须声明 entry、cancel、return_with_result、return_with_error_or_denied。
+    - id: DK_VAL_004
+      severity: major
+      rule_zh: forbidden_realizations 不得为空。
+
+  composition:
+    - id: COMP_VAL_001
+      severity: blocker
+      rule_zh: Design Kernel 要求的必要状态必须有 frame、sidecar card 或折叠摘要。
+    - id: COMP_VAL_002
+      severity: blocker
+      rule_zh: 系统或外部表面不能被压成普通按钮结果。
+    - id: COMP_VAL_003
+      severity: major
+      rule_zh: 审计/说明内容不得混入产品 UI frame。
+    - id: COMP_VAL_004
+      severity: major
+      rule_zh: 边界值状态不得全部折叠；至少保留非法低值、合法低值、合法高值、非法高值。
+
+  hotspot:
+    - id: HOT_VAL_001
+      severity: blocker
+      rule_zh: 每个 hotspot 必须绑定 source frame 和 source component/region。
+    - id: HOT_VAL_002
+      severity: major
+      rule_zh: 禁用控件如果用户可能尝试点击，必须有 annotation stub 或 sidecar card。
+    - id: HOT_VAL_003
+      severity: blocker
+      rule_zh: 约束变化点必须有 hotspot、anchor badge 或 folded summary。
+
+  logic_sidecar_audit:
+    - id: AUD_VAL_001
+      severity: blocker
+      rule_zh: 每个 Design Kernel constraint 必须有审计问题。
+    - id: AUD_VAL_002
+      severity: blocker
+      rule_zh: blocker finding 必须生成 local patch recommendation。
+    - id: AUD_VAL_003
+      severity: major
+      rule_zh: 发现约束反馈位置错误时必须标记 misplaced_feedback。
+
+  local_patch:
+    - id: PATCH_VAL_001
+      severity: blocker
+      rule_zh: local patch 默认 writes_prd 必须为 false。
+    - id: PATCH_VAL_002
+      severity: blocker
+      rule_zh: patch operation 必须引用 source_audit_finding。
+    - id: PATCH_VAL_003
+      severity: blocker
+      rule_zh: patch 不得直接修改 PRD fact store。
+    - id: PATCH_VAL_004
+      severity: major
+      rule_zh: patch 新增 frame/card/hotspot 必须有 source_refs 或 audit_refs。
+
+  annotation_sidecar:
+    - id: SIDECAR_VAL_001
+      severity: blocker
+      rule_zh: 复杂交互、约束逻辑、系统交接、权限门、错误恢复、边界状态必须有 Logic Sidecar Card。
+    - id: SIDECAR_VAL_002
+      severity: blocker
+      rule_zh: 每个 Logic Sidecar Card 必须有 Anchor Badge。
+    - id: SIDECAR_VAL_003
+      severity: major
+      rule_zh: 每个 Annotation Stub 必须引用 sidecar_card_id。
+    - id: SIDECAR_VAL_004
+      severity: major
+      rule_zh: Logic Sidecar Card 不得作为 Figma Dev Mode annotation 的替代。
+
+  pen_line:
+    - id: PEN_VAL_001
+      severity: blocker
+      rule_zh: Pen line 不得作为真实交互行为。
+    - id: PEN_VAL_002
+      severity: major
+      rule_zh: 复杂逻辑不得只用 Pen line 表达，必须进入 sidecar card。
+    - id: PEN_VAL_003
+      severity: major
+      rule_zh: 同源同触发不得画多条独立 Pen line。
+    - id: PEN_VAL_004
+      severity: minor
+      rule_zh: 过长 leader line 必须降级为编号匹配。
+
+  skill:
+    - id: SKILL_VAL_001
+      severity: blocker
+      rule_zh: Skill 不得改变 confirmed requirement 或 acceptance criteria。
+    - id: SKILL_VAL_002
+      severity: blocker
+      rule_zh: Skill 不得绕过 validator。
+    - id: SKILL_VAL_003
+      severity: major
+      rule_zh: Skill influence 必须记录 trace。
+    - id: SKILL_VAL_004
+      severity: major
+      rule_zh: Skill 应提供抽象方法论，避免写死具体业务模板。

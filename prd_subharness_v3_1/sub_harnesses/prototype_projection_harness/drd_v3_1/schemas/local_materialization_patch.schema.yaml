@@ -1,0 +1,9 @@
+schema:
+  id: local_materialization_patch_schema_v3_1
+  id_zh: local_materialization_patch 模式 v3.1
+  type: object
+  note_zh: 这是 Codex 可读的轻量 YAML schema；正式实现可转换为 JSON Schema。
+  required_common_fields:
+    - id
+    - source_refs
+    - description_zh

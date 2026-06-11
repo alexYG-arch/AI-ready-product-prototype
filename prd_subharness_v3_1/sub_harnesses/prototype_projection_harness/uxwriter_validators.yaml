@@ -1,0 +1,115 @@
+uxwriter_validators:
+  version: "2.1"
+  scope: "uxwriter-copy-catalog.yaml and prototype.runtime.json.copy_catalog"
+
+  validators:
+    - id: "UXW-VAL-001"
+      name: "Every user-visible text has copy_id, locale, semantic role and context refs"
+      severity: "blocker"
+      machine_check: true
+    - id: "UXW-VAL-002"
+      name: "Every rewrite preserves original_copy_ref and rewrite_reason"
+      severity: "blocker"
+      machine_check: true
+    - id: "UXW-VAL-003"
+      name: "Primary CTA labels are specific and result-oriented"
+      severity: "warning_or_blocker_for_critical_paths"
+      machine_check: "heuristic"
+    - id: "UXW-VAL-004"
+      name: "No unexplained jargon, acronyms, or restricted internal terms"
+      severity: "warning"
+      machine_check: "requires_glossary"
+    - id: "UXW-VAL-005"
+      name: "Copy length fits component and locale constraints"
+      severity: "warning"
+      machine_check: true
+    - id: "UXW-VAL-006"
+      name: "Error copy includes problem/context and recovery when recoverable"
+      severity: "blocker_for_error_states"
+      machine_check: "heuristic"
+    - id: "UXW-VAL-007"
+      name: "Error copy avoids blame, shame, and generic system failure wording"
+      severity: "warning_or_blocker_for_core_flow"
+      machine_check: "dictionary"
+    - id: "UXW-VAL-008"
+      name: "Terminology is consistent with glossary and prior same-role copy"
+      severity: "warning"
+      machine_check: true
+    - id: "UXW-VAL-009"
+      name: "Tone matches state severity and brand profile"
+      severity: "review_required"
+      machine_check: "heuristic"
+    - id: "UXW-VAL-010"
+      name: "Empty state copy explains context and offers a next step when actionable"
+      severity: "warning"
+      machine_check: "heuristic"
+    - id: "UXW-VAL-011"
+      name: "Toast/snackbar copy is brief and outcome-focused"
+      severity: "warning"
+      machine_check: true
+    - id: "UXW-VAL-012"
+      name: "Destructive or irreversible copy names object, consequence and cancel path"
+      severity: "blocker"
+      machine_check: "heuristic_plus_human_review"
+    - id: "UXW-VAL-013"
+      name: "Accessibility: icon-only controls and abbreviations have accessible labels or explanations"
+      severity: "blocker_for_accessibility"
+      machine_check: "requires_node_metadata"
+    - id: "UXW-VAL-014"
+      name: "Localization: no unsupported idioms, puns, gendered terms, or hard-coded date/time assumptions"
+      severity: "warning"
+      machine_check: "dictionary_plus_review"
+    - id: "UXW-VAL-015"
+      name: "Complex copy has plain-language summary or progressive disclosure plan"
+      severity: "warning_or_blocker_for_core_flow"
+      machine_check: "heuristic"
+    - id: "UXW-VAL-016"
+      name: "No overpromising, misleading certainty, or hidden limitation"
+      severity: "blocker_for_payment_privacy_core_flow"
+      machine_check: "heuristic_plus_review"
+    - id: "UXW-VAL-017"
+      name: "Headings frontload task keyword or user goal"
+      severity: "warning"
+      machine_check: "heuristic"
+    - id: "UXW-VAL-018"
+      name: "Warmth does not become excessive personality, humor, or emotional manipulation"
+      severity: "review_required"
+      machine_check: "heuristic"
+
+  machine_heuristics:
+    zh-CN:
+      max_chars:
+        primary_button: 8
+        secondary_button: 10
+        toast: 28
+        inline_error: 34
+        page_title: 18
+        modal_body: 90
+      vague_cta_terms:
+        - "确定"
+        - "提交"
+        - "完成"
+        - "继续"
+      generic_error_terms:
+        - "系统异常"
+        - "未知错误"
+        - "操作失败"
+        - "出错了"
+      blame_terms:
+        - "你错了"
+        - "非法"
+        - "无效操作"
+      warmth_limits:
+        disallow_excessive_emoji: true
+        disallow_jokes_in_error_or_payment: true
+
+  report:
+    output_path: "io/output/uxwriter_validation_report.yaml"
+    include:
+      - copy_id
+      - severity
+      - failed_dimension
+      - current_copy
+      - suggested_fix
+      - source_refs
+      - needs_human_review

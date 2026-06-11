@@ -1,0 +1,74 @@
+renderer_skill_hook_policy:
+  version: "2.1"
+  purpose: >-
+    Reserve a skill hook for later injection of personal experience, domain heuristics, team patterns, and prototype
+    implementation preferences. Skill packs influence renderer choices but never override PRD facts or human approval.
+
+  contract:
+    schema: "schemas/renderer_skill_pack.schema.json"
+    sample: "examples/renderer-skill-pack.sample.yaml"
+    input_path: "io/input/renderer_skill_pack.yaml"
+    output_trace_path: "io/output/renderer_skill_influence_trace.yaml"
+
+  allowed_influence_areas:
+    - layout_density
+    - screen_grouping
+    - component_pattern_selection
+    - interaction_explanation_style
+    - flow_map_line_style
+    - uxwriter_tone_preferences
+    - empty_state_pattern_preference
+    - onboarding_or_guidance_pattern_preference
+    - accessibility_heuristics
+
+  forbidden_influence_areas:
+    - create_confirmed_requirement
+    - remove_prd_requirement
+    - change_acceptance_criteria
+    - bypass_validator
+    - approve_figma_semantic_diff
+    - treat_personal_experience_as_fact
+
+  precedence_order:
+    - hard_safety_and_accessibility_rules
+    - prd_fact_bundle
+    - component_binding_policy
+    - uxwriter_validators
+    - renderer_skill_pack
+    - aesthetic_default
+
+  conflict_policy:
+    skill_vs_prd_fact: "prd_fact_wins_and_trace_conflict"
+    skill_vs_validator: "validator_wins_and_blocks_or_warns"
+    skill_vs_design_system: "design_system_wins_unless_skill_requests_fallback_and_gap"
+    multiple_skill_conflict: "higher_priority_then_more_specific_then_human_review"
+
+  traceability_required:
+    - skill_id
+    - rule_id
+    - affected_runtime_object
+    - before_decision
+    - after_decision
+    - reason
+    - confidence
+    - validator_result
+
+  plugin_points:
+    before_layout_route_blueprint:
+      allowed_outputs:
+        - grouping_hint
+        - density_hint
+        - corridor_priority_hint
+    before_component_resolution:
+      allowed_outputs:
+        - preferred_pattern_key
+        - fallback_component_preference
+    before_copy_finalization:
+      allowed_outputs:
+        - tone_preference
+        - words_to_avoid
+        - preferred_phrase_examples
+    before_visual_flow_lines:
+      allowed_outputs:
+        - line_simplification_preference
+        - flow_map_label_style

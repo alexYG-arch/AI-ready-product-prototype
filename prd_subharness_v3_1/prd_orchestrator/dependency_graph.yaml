@@ -1,0 +1,126 @@
+dependency_graph:
+  version: "3.1"
+  default_edges:
+    - from_type: "structured_source_baseline"
+      to_document: "runs/<run-id>/prd_orchestrator/source_extraction/sub_harness_inputs/*.yaml"
+      relation: "creates_sub_harness_input_slices"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/requirements.yaml"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/screens.yaml"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/metrics.yaml"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/events.yaml"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "structured_source_baseline"
+      to_document: "product-spec/release-plan.md"
+      relation: "feeds_candidate_extraction_after_review"
+
+    - from_type: "requirement"
+      to_document: "product-spec/PRD.md"
+      relation: "projects_to_prd"
+
+    - from_type: "requirement"
+      to_document: "product-spec/screens.yaml"
+      relation: "may_affect_screen"
+
+    - from_type: "requirement"
+      to_document: "product-spec/traceability.md"
+      relation: "requires_trace"
+
+    - from_type: "screen"
+      to_document: "product-spec/traceability.md"
+      relation: "requires_trace"
+
+    - from_type: "metric"
+      to_document: "product-spec/events.yaml"
+      relation: "requires_event"
+
+    - from_type: "metric"
+      to_document: "product-spec/traceability.md"
+      relation: "requires_trace"
+
+    - from_type: "release"
+      to_document: "product-spec/PRD.md"
+      relation: "projects_to_prd"
+
+    - from_type: "requirement"
+      to_document: "product-spec/prototype.runtime.base.json"
+      relation: "feeds_base_runtime_direct_projection"
+
+    - from_type: "prototype_runtime_base"
+      to_document: "product-spec/prototype.runtime.json"
+      relation: "feeds_reasoning_completion_runtime"
+
+    - from_type: "prototype_runtime"
+      to_document: "sub_harnesses/prototype_projection_harness/examples/uxwriter-copy-catalog.sample.yaml"
+      relation: "feeds_uxwriter_copy_projection_contract"
+
+    - from_type: "prototype_runtime"
+      to_document: "sub_harnesses/prototype_projection_harness/examples/layout-route-plan.sample.yaml"
+      relation: "feeds_layout_route_plan_contract"
+
+    - from_type: "prototype_runtime"
+      to_document: "sub_harnesses/prototype_projection_harness/examples/figma-comment-map.yaml"
+      relation: "feeds_figma_comment_annotation_contract"
+
+    - from_type: "requirement"
+      to_document: "product-spec/prototype.runtime.json"
+      relation: "may_affect_prototype_runtime"
+
+    - from_type: "screen"
+      to_document: "product-spec/prototype.runtime.json"
+      relation: "projects_to_prototype_runtime"
+
+    - from_type: "state"
+      to_document: "product-spec/prototype.runtime.json"
+      relation: "projects_to_runtime_state"
+
+    - from_type: "metric"
+      to_document: "product-spec/prototype.runtime.json"
+      relation: "may_annotate_runtime_interaction"
+
+    - from_type: "event"
+      to_document: "product-spec/figma-interaction-map.yaml"
+      relation: "annotates_interaction_edge"
+
+    - from_type: "prototype_runtime"
+      to_document: "product-spec/figma-sync-map.yaml"
+      relation: "binds_semantic_nodes_to_figma_nodes"
+
+    - from_type: "prototype_runtime"
+      to_document: "product-spec/figma-interaction-map.yaml"
+      relation: "projects_interaction_graph_to_figma_reactions"
+
+    - from_type: "figma_diff"
+      to_document: "prd_orchestrator/change_patch_candidates"
+      relation: "must_be_routed_as_candidate_not_fact"
+
+    - from_type: "source_prd_sub_harness_input_slice"
+      to_document: "runs/<run-id>/io/output/screen_role_obligations.yaml"
+      relation: "feeds_drd_screen_role_obligation_validation"
+
+    - from_type: "screen_role_obligations"
+      to_document: "runs/<run-id>/io/output/design_kernel.yaml"
+      relation: "feeds_drd_design_kernel_validation"
+
+    - from_type: "design_kernel"
+      to_document: "runs/<run-id>/io/output/logic_sidecar_card_map.yaml"
+      relation: "feeds_drd_sidecar_documentation_validation"
+
+    - from_type: "logic_sidecar_audit"
+      to_document: "runs/<run-id>/io/output/local_materialization_patch.yaml"
+      relation: "creates_projection_only_patch_candidate"
+
+    - from_type: "sds_monochrome_adapter"
+      to_document: "product-spec/component-binding-map.yaml"
+      relation: "binds_semantic_components_to_sds_monochrome_components"

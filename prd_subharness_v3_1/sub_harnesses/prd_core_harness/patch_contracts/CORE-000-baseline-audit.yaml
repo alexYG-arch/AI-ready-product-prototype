@@ -1,0 +1,17 @@
+patch_contract:
+  patch_id: "CORE-000-baseline-audit"
+  title: "CORE-000 baseline audit: 只盘点旧 PRD，不改旧 PRD。"
+  status: "draft"
+  goal:
+    - "CORE-000 baseline audit: 只盘点旧 PRD，不改旧 PRD。"
+  allowed_files:
+    - "product-spec/"
+    - "prd_orchestrator/"
+    - "sub_harnesses/"
+  forbidden_files:
+    - "product-spec/legacy_prd.md"
+  done_when:
+    - "patch_report written"
+    - "core_fact_candidates written"
+    - "human_review_report written"
+    - "impact_analysis written"

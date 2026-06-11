@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DRD v3.1 Screen Role Obligations",
+  "type": "object",
+  "required": ["screen_role_obligations"],
+  "properties": {
+    "screen_role_obligations": {
+      "type": "object",
+      "required": ["version", "mode", "source_refs", "obligations"],
+      "properties": {
+        "version": { "const": "3.1" },
+        "mode": { "const": "DRD_MODE" },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "obligations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["obligation_id", "obligation_type", "source_refs", "inference_basis_zh"],
+            "properties": {
+              "obligation_id": { "type": "string", "minLength": 1 },
+              "obligation_type": { "type": "string", "minLength": 1 },
+              "obligation_zh": { "type": "string" },
+              "derived_from_primitives": { "type": "object" },
+              "source_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "inference_basis_zh": { "type": "string", "minLength": 1 },
+              "display_requirement": { "type": "string" },
+              "materialization_target": { "type": "string" },
+              "review_status": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,16 @@
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+project_doc_max_bytes = 65536
+project_doc_fallback_filenames = ["AGENTS.md"]
+
+[profiles.readonly]
+sandbox_mode = "read-only"
+approval_policy = "never"
+
+[profiles.prd_patch]
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[profiles.review_only]
+sandbox_mode = "read-only"
+approval_policy = "never"

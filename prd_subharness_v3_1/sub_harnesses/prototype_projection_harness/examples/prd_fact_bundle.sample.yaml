@@ -1,0 +1,36 @@
+prd_fact_bundle:
+  version: "2.1"
+  owner: "prd_orchestrator"
+  authority_role: "structured_prd_fact_input"
+  source_snapshot:
+    requirements_hash: "sha256:sample"
+    screens_hash: "sha256:sample"
+    metrics_hash: ""
+    events_hash: ""
+    traceability_hash: ""
+    component_binding_hash: "sha256:sample"
+    design_semantic_library_hash: "sha256:sample"
+  facts:
+    requirements:
+      - id: "REQ-AUTH-001"
+        title: "登录验证码校验"
+        source_refs:
+          - "legacy_prd.md#auth"
+    screens:
+      - screen_id: "SCREEN-AUTH-LOGIN"
+        screen_name: "登录页"
+        source_refs:
+          - "REQ-AUTH-001"
+    metrics: []
+    events:
+      - event_id: "EVT-AUTH-SUBMIT-CLICK"
+        source_refs:
+          - "REQ-AUTH-001"
+    traceability:
+      - source_id: "REQ-AUTH-001"
+        target_id: "SCREEN-AUTH-LOGIN"
+    component_bindings:
+      - semantic_key: "button.primary.submit"
+        source_refs:
+          - "REQ-AUTH-001"
+    design_semantic_library: {}

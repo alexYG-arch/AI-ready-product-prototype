@@ -1,0 +1,37 @@
+sidecar_card_template_library:
+  id: SIDECAR_CARD_TEMPLATE_LIBRARY_V3_1
+  templates:
+    - template_id: SC-TPL-CONSTRAINT
+      template_id_zh: 约束说明卡模板
+      required_sections:
+        - rule_zh
+        - current_state_zh
+        - valid_condition_zh
+        - invalid_condition_zh
+        - control_state_zh
+        - feedback_timing_zh
+        - source_refs
+    - template_id: SC-TPL-SYSTEM-HANDOFF
+      template_id_zh: 系统交接说明卡模板
+      required_sections:
+        - entry_zh
+        - system_surface_zh
+        - permission_or_access_zh
+        - cancel_path_zh
+        - return_path_zh
+        - source_refs
+    - template_id: SC-TPL-DISABLED-CONTROL
+      template_id_zh: 置灰控件说明卡模板
+      required_sections:
+        - disabled_reason_zh
+        - how_to_enable_zh
+        - related_constraint_zh
+        - feedback_zh
+        - source_refs
+    - template_id: SC-TPL-RECOVERY
+      template_id_zh: 恢复路径说明卡模板
+      required_sections:
+        - failure_reason_zh
+        - user_options_zh
+        - retry_or_cancel_zh
+        - source_refs

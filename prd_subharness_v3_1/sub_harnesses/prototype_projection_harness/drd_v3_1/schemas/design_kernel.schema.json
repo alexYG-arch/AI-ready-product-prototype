@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DRD v3.1 Design Kernel",
+  "type": "object",
+  "required": ["design_kernel"],
+  "properties": {
+    "design_kernel": {
+      "type": "object",
+      "required": [
+        "version",
+        "mode",
+        "source_refs",
+        "task_contract",
+        "surface_contract",
+        "constraint_contracts",
+        "control_contracts",
+        "feedback_contracts",
+        "forbidden_realizations"
+      ],
+      "properties": {
+        "version": { "const": "3.1" },
+        "mode": { "const": "DRD_MODE" },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "task_contract": {
+          "type": "object",
+          "required": ["task_id", "action", "object", "source_refs"],
+          "properties": {
+            "task_id": { "type": "string", "minLength": 1 },
+            "task_name_zh": { "type": "string" },
+            "user_goal_zh": { "type": "string" },
+            "action": { "type": "string", "minLength": 1 },
+            "object": { "type": "string", "minLength": 1 },
+            "source_refs": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          },
+          "additionalProperties": true
+        },
+        "surface_contract": {
+          "type": "object",
+          "required": ["surface_type", "entry_surface", "return_surface", "forbidden_realizations"],
+          "properties": {
+            "surface_type": { "type": "string", "minLength": 1 },
+            "surface_type_zh": { "type": "string" },
+            "entry_surface": { "type": "string", "minLength": 1 },
+            "return_surface": { "type": "string", "minLength": 1 },
+            "forbidden_realizations": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          },
+          "additionalProperties": true
+        },
+        "constraint_contracts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "constraint_id",
+              "applies_at",
+              "earliest_fix_surface",
+              "feedback_timing",
+              "valid_condition",
+              "invalid_condition"
+            ],
+            "properties": {
+              "constraint_id": { "type": "string", "minLength": 1 },
+              "constraint_zh": { "type": "string" },
+              "applies_at": { "type": "string", "minLength": 1 },
+              "earliest_fix_surface": { "type": "string", "minLength": 1 },
+              "feedback_timing": { "type": "string", "minLength": 1 },
+              "valid_condition": { "type": "string", "minLength": 1 },
+              "invalid_condition": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": true
+          }
+        },
+        "control_contracts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["control_id", "affected_by_constraints", "required_states"],
+            "properties": {
+              "control_id": { "type": "string", "minLength": 1 },
+              "control_zh": { "type": "string" },
+              "affected_by_constraints": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "required_states": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "feedback_contracts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["feedback_id", "severity", "timing", "surface", "anchor"],
+            "properties": {
+              "feedback_id": { "type": "string", "minLength": 1 },
+              "feedback_zh": { "type": "string" },
+              "severity": { "type": "string", "minLength": 1 },
+              "timing": { "type": "string", "minLength": 1 },
+              "surface": { "type": "string", "minLength": 1 },
+              "anchor": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": true
+          }
+        },
+        "forbidden_realizations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

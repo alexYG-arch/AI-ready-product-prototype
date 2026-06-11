@@ -1,0 +1,13 @@
+logic_sidecar_card_map:
+  version: "3.1"
+  mode: DRD_MODE
+  board_id: BOARD-BAD
+  cards:
+    - card_id: SC-BAD
+      title_zh: 缺少锚点
+      trigger_zh: 点击确认
+      guard_zh: 条件不满足
+      action_summary_zh: 缺少 anchor_badge_id，必须阻断。
+      feedback_timing_zh: before_confirm
+      source_refs:
+        - PRD.md#bad

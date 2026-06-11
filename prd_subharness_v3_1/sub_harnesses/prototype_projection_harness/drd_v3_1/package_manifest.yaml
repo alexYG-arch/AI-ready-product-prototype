@@ -1,0 +1,58 @@
+package:
+  id: prototype_harness_drd_deductive_upgrade_v3_1
+  name_zh: 原型 Harness DRD 演绎推理升级包 v3.1
+  version: "3.1"
+  compatibility:
+    base_harness: prototype_projection_harness
+    base_stage_rules: "2.1"
+    mode: DRD_MODE
+    mode_zh: 设计评审文档模式
+  files:
+    rules:
+      - rules/00_stage_plan.yaml
+      - rules/01_screen_role_obligation_rules.yaml
+      - rules/02_design_kernel_rules.yaml
+      - rules/03_composition_generation_rules.yaml
+      - rules/04_interaction_hotspot_rules.yaml
+      - rules/05_logic_sidecar_audit_rules.yaml
+      - rules/06_local_materialization_patch_rules.yaml
+      - rules/07_annotation_stub_sidecar_rules.yaml
+      - rules/08_pen_line_deemphasis_rules.yaml
+      - rules/09_skill_methodology_hook_rules.yaml
+      - rules/10_inductive_support_rules.yaml
+      - rules/11_validators.yaml
+      - rules/12_complete_deductive_rules.yaml
+    profile:
+      - profile.yaml
+    libs:
+      - libs/deductive_method_library.yaml
+      - libs/sidecar_card_template_library.yaml
+      - libs/obligation_primitive_library.yaml
+    examples:
+      - examples/image_upload_3_5_walkthrough.yaml
+      - examples/sidecar_cards_sample.yaml
+      - examples/skill_pack_methodology_sample.yaml
+    executable_schemas:
+      - schemas/screen_role_obligations.schema.json
+      - schemas/design_kernel.schema.json
+      - schemas/logic_sidecar_card_map.schema.json
+      - schemas/local_materialization_patch.schema.json
+    sample_artifacts:
+      - examples/screen_role_obligations.sample.yaml
+      - examples/design_kernel.sample.yaml
+      - examples/logic_sidecar_card_map.sample.yaml
+      - examples/local_materialization_patch.sample.yaml
+    negative_examples:
+      - examples/negative/screen_role_obligations.missing_source_refs.yaml
+      - examples/negative/logic_sidecar_card_map.missing_anchor_badge.yaml
+      - examples/negative/logic_sidecar_card_map.annotation_stub_missing_sidecar.yaml
+      - examples/negative/local_materialization_patch.writes_prd_true.yaml
+    adapters:
+      - ../adapters/design_systems/sds_monochrome_adapter.yaml
+      - ../adapters/design_systems/figma-sds.SOURCE.md
+    codex:
+      - codex/CODEX_UPGRADE_PROMPT.md
+    migration:
+      - migration/MIGRATE_FROM_2_1_TO_3_1.md
+    scripts:
+      - scripts/validate_yaml.py

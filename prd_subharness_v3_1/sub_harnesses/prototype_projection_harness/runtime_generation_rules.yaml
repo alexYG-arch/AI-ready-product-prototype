@@ -1,0 +1,85 @@
+runtime_generation_rules:
+  version: "2.1"
+  summary: >-
+    Runtime generation is a two-pass stage: first create a direct base runtime from the PRD fact bundle,
+    then complete logic, state, interaction branches and copy candidates with explicit provenance.
+
+  authority:
+    input_authority: "prd_fact_bundle"
+    generated_runtime_role: "derived_projection_intermediate"
+    final_runtime_must_not_be_used_as_prd_fact_source: true
+    figma_layer_names_must_not_be_used_as_fact_source: true
+
+  allowed_sources:
+    - prd_fact_bundle.facts.requirements
+    - prd_fact_bundle.facts.screens
+    - prd_fact_bundle.facts.metrics
+    - prd_fact_bundle.facts.events
+    - prd_fact_bundle.facts.traceability
+    - component-binding-map.yaml
+    - design-semantic-library.json
+    - renderer_skill_pack.yaml
+
+  forbidden_sources:
+    - PRD.md narrative projection
+    - arbitrary Figma layer names
+    - unreviewed Figma comments
+    - designer-only visual annotations
+
+  generation_lineage_required: true
+  base_runtime_artifact_required: true
+  reasoning_report_required: true
+
+  id_rules:
+    stable_semantic_ids_required: true
+    figma_node_id_is_never_semantic_id: true
+    prefixes:
+      flow: "FLOW-"
+      screen: "SCREEN-"
+      state: "ST-"
+      component: "CMP-"
+      interaction: "INT-"
+      edge: "EDGE-"
+      overlay: "OVERLAY-"
+      variable: "VAR-"
+      copy: "COPY-"
+      comment: "CMT-"
+      route: "ROUTE-"
+
+  state_rules:
+    screen_level_business_states_use_frames: true
+    component_internal_states_use_variants: true
+    dynamic_minor_states_may_use_variables: true
+    ambiguous_state_must_generate_gap: true
+
+  interaction_rules:
+    edge_is_first_class_runtime_object: true
+    every_edge_must_have_source_refs: true
+    every_edge_must_have_ordered_actions: true
+    same_source_same_trigger_duplicate_policy: "merge_as_conditional_or_block"
+    canonical_interaction_policy: >-
+      If the same semantic interaction appears in multiple states with the same trigger and same outcome,
+      create one canonical interaction_id and bind it to multiple state source nodes instead of duplicating
+      interaction explanations and visual lines.
+
+  uxwriter_integration:
+    copy_candidates_created_before_uxwriter_stage: true
+    uxwriter_stage_updates_copy_catalog_not_prd_facts: true
+    copy_ids_required_for_user_visible_text: true
+    rewritten_copy_requires_original_copy_ref: true
+
+  output_sections:
+    required:
+      - prototype_runtime_version
+      - authority
+      - source_snapshot
+      - generation_lineage
+      - reasoning_completion
+      - flows
+      - screens
+      - overlays
+      - variables
+      - component_bindings
+      - copy_catalog
+      - interaction_graph
+      - prototype_gaps

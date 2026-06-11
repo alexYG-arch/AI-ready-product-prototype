@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DRD v3.1 Logic Sidecar Card Map",
+  "type": "object",
+  "required": ["logic_sidecar_card_map"],
+  "properties": {
+    "logic_sidecar_card_map": {
+      "type": "object",
+      "required": ["board_id", "cards"],
+      "properties": {
+        "version": { "type": "string" },
+        "mode": { "type": "string" },
+        "board_id": { "type": "string", "minLength": 1 },
+        "board_id_zh": { "type": "string" },
+        "cards": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "card_id",
+              "anchor_badge_id",
+              "title_zh",
+              "trigger_zh",
+              "guard_zh",
+              "action_summary_zh",
+              "feedback_timing_zh",
+              "source_refs"
+            ],
+            "properties": {
+              "card_id": { "type": "string", "minLength": 1 },
+              "card_id_zh": { "type": "string" },
+              "column": { "type": "string" },
+              "anchor_badge_id": { "type": "string", "minLength": 1 },
+              "title_zh": { "type": "string", "minLength": 1 },
+              "trigger_zh": { "type": "string", "minLength": 1 },
+              "guard_zh": { "type": "string", "minLength": 1 },
+              "action_summary_zh": { "type": "string", "minLength": 1 },
+              "feedback_timing_zh": { "type": "string", "minLength": 1 },
+              "source_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "audit_refs": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "annotation_stubs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "annotation_id",
+              "target_node_or_region",
+              "interaction_or_state_id",
+              "sidecar_card_id",
+              "short_summary_zh",
+              "source_refs"
+            ],
+            "properties": {
+              "annotation_id": { "type": "string", "minLength": 1 },
+              "target_node_or_region": { "type": "string", "minLength": 1 },
+              "interaction_or_state_id": { "type": "string", "minLength": 1 },
+              "sidecar_card_id": { "type": "string", "minLength": 1 },
+              "short_summary_zh": { "type": "string", "minLength": 1, "maxLength": 80 },
+              "source_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

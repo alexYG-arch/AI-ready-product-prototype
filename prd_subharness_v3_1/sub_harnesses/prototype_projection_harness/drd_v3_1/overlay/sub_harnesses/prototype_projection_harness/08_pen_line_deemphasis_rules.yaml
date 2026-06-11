@@ -1,0 +1,68 @@
+pen_line_deemphasis_rules:
+  id: PEN_LINE_DEEMPHASIS_RULES_V3_1
+  id_zh: Pen 线降级规则 v3.1
+  purpose_zh: >
+    DRD 模式中，Pen 线不再承担完整交互逻辑。复杂逻辑进入 Logic Sidecar Card，画布只保留锚点短引导线和少量主流程概览线。
+
+  default_policy:
+    draw_full_flow_lines: false
+    draw_full_flow_lines_zh: 默认不画全量流程线
+    use_sidecar_for_logic: true
+    use_sidecar_for_logic_zh: 使用侧车卡片承载完整逻辑
+
+  allowed_line_types:
+    - type: anchor_leader_line
+      type_zh: 锚点短引导线
+      purpose_zh: 从组件编号连接到侧车卡片，只表达归属。
+    - type: primary_flow_overview
+      type_zh: 主流程概览线
+      purpose_zh: 只展示最高层级主链路。
+    - type: system_handoff_line
+      type_zh: 系统交接线
+      purpose_zh: 表达进入外部或系统表面。
+    - type: board_gateway_line
+      type_zh: 画布网关线
+      purpose_zh: 表达跨 board 的关系。
+
+  forbidden_line_types:
+    - type: every_interaction_line
+      type_zh: 每条交互都画线
+    - type: dense_conditional_spaghetti
+      type_zh: 密集条件分支乱线
+    - type: long_cross_board_component_to_component_line
+      type_zh: 跨画布组件到组件长线
+
+  deductive_rules:
+    - rule_id: PEN_DED_001
+      rule_name_zh: 复杂交互转入侧车卡片
+      if:
+        interaction_complexity: high
+      then:
+        use_logic_sidecar_card: true
+        suppress_full_pen_line: true
+
+    - rule_id: PEN_DED_002
+      rule_name_zh: 同源同触发不得多线
+      if:
+        same_source_same_trigger_count_greater_than: 1
+      then:
+        collapse_to_sidecar_conditional_summary: true
+        draw_full_lines: false
+
+    - rule_id: PEN_DED_003
+      rule_name_zh: 长线降级为编号对应
+      if:
+        leader_line_length_px_greater_than: 320
+      then:
+        remove_physical_line: true
+        keep_anchor_badge_pairing: true
+
+  validators:
+    - id: PEN_001
+      rule_zh: Pen 线不得被解释为真实交互。
+    - id: PEN_002
+      rule_zh: 复杂条件逻辑不得只依赖 Pen 线表达。
+    - id: PEN_003
+      rule_zh: 同源同触发不得画多条独立线。
+    - id: PEN_004
+      rule_zh: 短引导线过长必须降级为编号匹配。

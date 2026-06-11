@@ -1,0 +1,12 @@
+patch_contract:
+  schema_version: '2.1'
+  id: PROTO-017
+  name: Renderer skill hook
+  version: '2.1'
+  summary: Reserves advisory skill pack hook for personal/team prototype heuristics.
+  required_outputs:
+  - renderer_skill_influence_trace.yaml when skill pack is provided
+  blocks_if:
+  - skill pack changes confirmed product facts
+  - skill influence is not traceable
+  owner: prototype_projection_harness

@@ -1,0 +1,199 @@
+{
+  "prototype_runtime_version": "1.2",
+  "authority": {
+    "role": "derived_projection_intermediate",
+    "forbidden_as_fact_source": true,
+    "owner": "prototype_projection_harness"
+  },
+  "source_snapshot": {
+    "requirements_hash": "sha256:sample",
+    "screens_hash": "sha256:sample",
+    "metrics_hash": "",
+    "events_hash": "",
+    "traceability_hash": "",
+    "component_binding_hash": "",
+    "design_semantic_library_hash": ""
+  },
+  "generation_lineage": {
+    "pass_1": {
+      "name": "base_runtime_from_prd",
+      "output": "prototype.runtime.base.json",
+      "source": "prd_fact_bundle",
+      "hash": "sha256:base-sample"
+    },
+    "pass_2": {
+      "name": "logic_state_interaction_completion",
+      "output": "prototype.runtime.json",
+      "hash": "sha256:completed-sample"
+    }
+  },
+  "reasoning_completion": {
+    "inferred_states": [
+      {
+        "state_id": "ST-AUTH-INPUT-INVALID",
+        "confidence": "high",
+        "inference_basis": [
+          "REQ-AUTH-001 acceptance: invalid OTP shows error"
+        ],
+        "source_refs": [
+          "REQ-AUTH-001"
+        ]
+      }
+    ],
+    "inferred_interactions": [
+      {
+        "interaction_id": "INT-AUTH-SUBMIT",
+        "confidence": "high",
+        "inference_basis": [
+          "submit action declared in screen facts"
+        ],
+        "source_refs": [
+          "REQ-AUTH-001",
+          "SCREEN-AUTH-LOGIN"
+        ]
+      }
+    ],
+    "blocked_inferences": []
+  },
+  "flows": [
+    {
+      "flow_id": "FLOW-AUTH",
+      "name": "Auth",
+      "entry_screen_id": "SCREEN-AUTH-LOGIN",
+      "source_refs": [
+        "REQ-AUTH-001"
+      ]
+    }
+  ],
+  "screens": [
+    {
+      "screen_id": "SCREEN-AUTH-LOGIN",
+      "screen_name": "登录页",
+      "states": [
+        {
+          "state_id": "ST-READY",
+          "state_kind": "ready",
+          "dimensions": {
+            "data_state": "not_applicable",
+            "network_state": "available",
+            "permission_state": "not_applicable",
+            "input_state": "partial",
+            "request_lifecycle": "idle",
+            "consistency_state": "consistent",
+            "recovery_state": "not_applicable",
+            "platform_device_state": "default",
+            "empty_state": "not_applicable",
+            "error_state": "none",
+            "loading_state": "none",
+            "success_state": "none"
+          },
+          "source_refs": [
+            "SCREEN-AUTH-LOGIN",
+            "REQ-AUTH-001"
+          ]
+        }
+      ]
+    }
+  ],
+  "overlays": [
+    {
+      "overlay_id": "TOAST-AUTH-VALIDATION-ERROR",
+      "overlay_type": "toast",
+      "blocking": false,
+      "auto_dismiss_ms": 2500,
+      "source_refs": [
+        "SCREEN-AUTH-LOGIN"
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "variable_id": "VAR-AUTH-FORM-VALID",
+      "type": "boolean",
+      "default": false
+    }
+  ],
+  "component_bindings": [
+    {
+      "component_instance_id": "CMP-AUTH-SUBMIT",
+      "semantic_role": "button.primary.submit",
+      "binding_key": "Button/Primary",
+      "source_refs": [
+        "REQ-AUTH-001"
+      ]
+    }
+  ],
+  "copy_catalog": [
+    {
+      "copy_id": "COPY-AUTH-SUBMIT",
+      "semantic_role": "button.primary.submit",
+      "final_copy": "登录",
+      "source_refs": [
+        "REQ-AUTH-001"
+      ]
+    }
+  ],
+  "interaction_graph": {
+    "nodes": [
+      {
+        "node_id": "SCREEN-AUTH-LOGIN/ST-READY",
+        "node_type": "screen_state",
+        "screen_id": "SCREEN-AUTH-LOGIN",
+        "state_id": "ST-READY"
+      }
+    ],
+    "edges": [
+      {
+        "edge_id": "EDGE-AUTH-SUBMIT",
+        "interaction_id": "INT-AUTH-SUBMIT",
+        "source": {
+          "screen_id": "SCREEN-AUTH-LOGIN",
+          "state_id": "ST-READY",
+          "component_id": "CMP-AUTH-SUBMIT"
+        },
+        "trigger": {
+          "type": "ON_CLICK",
+          "device_label": "On tap"
+        },
+        "guard": {
+          "expression": "VAR-AUTH-FORM-VALID == true"
+        },
+        "actions": [
+          {
+            "order": 1,
+            "type": "NAVIGATE",
+            "destination": {
+              "screen_id": "SCREEN-HOME",
+              "state_id": "ST-DEFAULT"
+            }
+          }
+        ],
+        "else_actions": [
+          {
+            "order": 1,
+            "type": "OPEN_OVERLAY",
+            "destination": {
+              "overlay_id": "TOAST-AUTH-VALIDATION-ERROR"
+            }
+          }
+        ],
+        "analytics": {
+          "events": [
+            "EVT-AUTH-SUBMIT-CLICK"
+          ]
+        },
+        "source_refs": [
+          "REQ-AUTH-001",
+          "SCREEN-AUTH-LOGIN"
+        ],
+        "annotation": {
+          "label": "点击登录；表单有效进入首页，否则显示校验 toast。",
+          "comment_required": true
+        }
+      }
+    ]
+  },
+  "prototype_gaps": [],
+  "layout_route_plan_ref": "io/output/layout_route_plan.yaml",
+  "figma_comment_map_ref": "io/output/figma-comment-map.yaml"
+}

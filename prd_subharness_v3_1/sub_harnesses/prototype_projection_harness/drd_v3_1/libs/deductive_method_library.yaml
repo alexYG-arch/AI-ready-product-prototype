@@ -1,0 +1,18 @@
+deductive_method_library:
+  id: DEDUCTIVE_METHOD_LIBRARY_V3_1
+  methods:
+    - method_id: obligation_calculus
+      method_id_zh: 义务演算
+      description_zh: 从动作、对象、约束、宿主表面、提交控件、反馈时机推导必须展示和说明的义务。
+    - method_id: boundary_value_analysis
+      method_id_zh: 边界值分析
+      description_zh: 对上下限约束展示最小非法、最小合法、最大合法、最大非法。
+    - method_id: earliest_fix_point_analysis
+      method_id_zh: 最早可修正点分析
+      description_zh: 将反馈放到用户最早能理解并修正的位置。
+    - method_id: system_handoff_expansion
+      method_id_zh: 系统交接展开
+      description_zh: 将系统选择器、权限页、支付、分享等外部表面展开为可审查链路。
+    - method_id: sidecar_documentation_split
+      method_id_zh: 侧车文档拆分
+      description_zh: 节点 annotation 只留短桩，完整逻辑进入侧车卡片。

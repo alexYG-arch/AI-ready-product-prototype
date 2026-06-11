@@ -1,0 +1,241 @@
+uxwriter_stage_rules:
+  version: "2.1"
+  stage_id: "UXW-01"
+  purpose: >-
+    Optimize user-facing prototype copy before Figma rendering. The stage improves clarity, task guidance,
+    warmth, consistency, and accessibility without changing product facts.
+
+  research_sources:
+    - id: "SRC-NNG-UXW-2024"
+      title: "NN/g: Content Strategy vs. UX Writing"
+      url: "https://www.nngroup.com/articles/content-strategy-vs-ux-writing/"
+      used_for:
+        - "UX writing guides people through an experience."
+        - "Content strategy provides standards, workflow and quality tracking."
+    - id: "SRC-NNG-ERROR-2023"
+      title: "NN/g: Error-Message Guidelines"
+      url: "https://www.nngroup.com/articles/error-message-guidelines/"
+      used_for:
+        - "Error messages should be visible, constructive, and respectful of user effort."
+        - "Error copy should help users recognize, diagnose and recover."
+    - id: "SRC-MATERIAL-UXW-2026"
+      title: "Material Design: Intro to UX Writing"
+      url: "https://codelabs.developers.google.com/codelabs/material-communication-guidance"
+      used_for:
+        - "Clear and concise writing improves UX quality."
+        - "UI text should support user journeys and be tested for comprehension."
+    - id: "SRC-ONS-PLAIN-LANGUAGE"
+      title: "ONS Service Manual: Plain language"
+      url: "https://service-manual.ons.gov.uk/content/writing-for-users/plain-language"
+      used_for:
+        - "Plain language means clear language users can understand."
+        - "Use short sentences, simple structures, and task-focused headings."
+    - id: "SRC-AU-STYLE-MANUAL"
+      title: "Australian Government Style Manual: Plain language and word choice"
+      url: "https://www.stylemanual.gov.au/writing-and-designing-content/clear-language-and-writing-style/plain-language-and-word-choice"
+      used_for:
+        - "Use everyday words, explain unusual terms, avoid double negatives and unclear abbreviations."
+    - id: "SRC-MICROSOFT-STYLE"
+      title: "Microsoft Writing Style Guide"
+      url: "https://learn.microsoft.com/en-us/style-guide/welcome/"
+      used_for:
+        - "Voice should be warm and relaxed, crisp and clear, and helpful."
+    - id: "SRC-WCAG-315"
+      title: "W3C WCAG 2.2 Understanding SC 3.1.5 Reading Level"
+      url: "https://www.w3.org/WAI/WCAG22/Understanding/reading-level.html"
+      used_for:
+        - "Complex text should have a simplified version or supplemental explanation."
+        - "Short common words and short sentences usually reduce reading difficulty."
+    - id: "SRC-GOVUK-WRITING"
+      title: "GOV.UK writing principles"
+      url: "https://www.ethnicity-facts-figures.service.gov.uk/style-guide/principles/"
+      used_for:
+        - "Write clearly and concisely, avoid ambiguity, and define terms."
+
+  input:
+    runtime_copy_candidates: "prototype.runtime.json.copy_candidates"
+    context:
+      - screen_purpose
+      - state_kind
+      - component_semantic_role
+      - user_goal
+      - error_or_recovery_context
+      - locale
+      - brand_voice_profile
+      - renderer_skill_pack.optional_tone_hints
+
+  output:
+    copy_catalog_path: "io/output/uxwriter-copy-catalog.yaml"
+    runtime_update_path: "io/output/prototype.runtime.json.copy_catalog"
+
+  authority:
+    uxwriter_stage_may_rewrite_user_visible_copy: true
+    uxwriter_stage_may_not_change_product_behavior: true
+    uxwriter_stage_may_emit_prd_patch_candidate_for_missing_copy_intent: true
+    original_copy_ref_required: true
+    rewrite_reason_required: true
+    locale_required: true
+
+  copy_dimensions:
+    - id: "UXD-01-usability-task-fit"
+      name: "可用性 / 任务匹配"
+      rule: "文案必须帮助用户完成当前任务，而不是解释系统内部实现。"
+      checks:
+        - "copy.intent is not empty"
+        - "copy references user goal or next step"
+    - id: "UXD-02-readability"
+      name: "可读性"
+      rule: "使用常用词、短句和清晰结构；复杂信息要拆分或提供辅助说明。"
+      checks:
+        - "no unexplained jargon"
+        - "long copy has plain_summary"
+    - id: "UXD-03-cognitive-load"
+      name: "降低理解成本"
+      rule: "一个 UI 文案只承担一个主要信息点；错误、风险或下一步要前置。"
+      checks:
+        - "one_primary_message_per_copy"
+        - "frontload_action_or_status"
+    - id: "UXD-04-consistency"
+      name: "统一性"
+      rule: "同一概念、同一动作、同一状态使用同一术语和句式。"
+      checks:
+        - "terms_exist_in_glossary"
+        - "same_semantic_role_uses_same_label_pattern"
+    - id: "UXD-05-warmth-humanity"
+      name: "温暖感 / 减少人机冰冷感"
+      rule: "语气要自然、尊重和有帮助；避免机器式、责备式或命令式表达。"
+      checks:
+        - "no_blame_words"
+        - "tone in allowed_tone_by_context"
+    - id: "UXD-06-actionability"
+      name: "行动明确"
+      rule: "按钮、链接、错误恢复和空状态必须告诉用户能做什么。"
+      checks:
+        - "cta_uses_verb_or_result_phrase"
+        - "error_has_recovery_action_when_recoverable"
+    - id: "UXD-07-contextuality"
+      name: "上下文相关"
+      rule: "文案要贴合页面状态、用户输入、权限、网络或业务结果。"
+      checks:
+        - "copy_context_refs include screen_id and state_id"
+    - id: "UXD-08-error-recovery"
+      name: "错误恢复"
+      rule: "错误信息说明发生了什么、影响什么、用户如何恢复；避免把责任推给用户。"
+      checks:
+        - "error_copy includes problem_or_state"
+        - "error_copy includes recovery when available"
+    - id: "UXD-09-trust-truthfulness"
+      name: "可信 / 不夸张"
+      rule: "不得夸大承诺、隐藏限制或使用误导性确定语。"
+      checks:
+        - "no_overpromise_terms"
+        - "uncertain_process_uses_accurate_status"
+    - id: "UXD-10-accessibility"
+      name: "可访问性"
+      rule: "避免只依赖颜色、图标或位置表达；缩写和非常用词需要解释。"
+      checks:
+        - "acronyms_expanded_on_first_use"
+        - "icon_only_control_has_accessible_label"
+    - id: "UXD-11-localization"
+      name: "本地化友好"
+      rule: "避免俚语、双关、地域梗、性别化和不易翻译的缩写。"
+      checks:
+        - "no_idioms_unless_allowed"
+        - "gendered_terms_allowed_only_when_required"
+    - id: "UXD-12-scannability"
+      name: "扫读友好"
+      rule: "标题和段首要前置信息；评审原型中长说明必须可扫读。"
+      checks:
+        - "heading_frontloads_task_keyword"
+        - "long_body_uses_steps_or_segments"
+    - id: "UXD-13-progressive-disclosure"
+      name: "渐进披露"
+      rule: "复杂解释不塞进按钮或 toast；用详情链接、辅助说明或弹窗分层。"
+      checks:
+        - "cta_max_one_action"
+        - "toast_not_used_for_complex_instruction"
+    - id: "UXD-14-button-specificity"
+      name: "按钮结果明确"
+      rule: "按钮文案描述选择后的结果；避免孤立的 OK、提交、确定，除非上下文完全明确。"
+      checks:
+        - "primary_button_has_specific_result"
+    - id: "UXD-15-empty-state-usefulness"
+      name: "空状态有用性"
+      rule: "空状态说明为什么为空、用户下一步能做什么、是否需要等待或授权。"
+      checks:
+        - "empty_state_has_reason_or_context"
+        - "empty_state_has_next_step_when_actionable"
+    - id: "UXD-16-feedback-brevity"
+      name: "反馈短而完整"
+      rule: "toast/snackbar 反馈要短，但必须表达结果；必要时提供下一步。"
+      checks:
+        - "toast_copy_within_locale_length_limit"
+        - "toast_mentions_outcome"
+    - id: "UXD-17-destructive-clarity"
+      name: "危险/不可逆动作清晰"
+      rule: "删除、取消、退出等动作要明确对象、后果和安全退出路径。"
+      checks:
+        - "destructive_confirm_has_object"
+        - "destructive_modal_has_cancel_copy"
+    - id: "UXD-18-emotional-calibration"
+      name: "情绪校准"
+      rule: "成功、等待、失败、空状态和权限请求的语气要匹配场景，不装可爱，也不冷冰冰。"
+      checks:
+        - "tone_matches_state_severity"
+    - id: "UXD-19-terminology-governance"
+      name: "术语治理"
+      rule: "业务术语、产品名、状态名必须来自 glossary 或复制为 open question。"
+      checks:
+        - "new_terms_generate_review_item"
+    - id: "UXD-20-data-and-privacy-sensitivity"
+      name: "数据/隐私敏感"
+      rule: "涉及权限、隐私、支付、身份、数据删除时，文案必须说明目的和影响。"
+      checks:
+        - "privacy_permission_copy_has_purpose"
+
+  locale_defaults:
+    zh-CN:
+      max_chars:
+        primary_button: 8
+        secondary_button: 10
+        toast: 28
+        inline_error: 34
+        page_title: 18
+        empty_state_title: 16
+        empty_state_body: 60
+        modal_title: 18
+        modal_body: 90
+      avoid_words:
+        blame:
+          - "你错了"
+          - "无效操作"
+          - "非法"
+          - "失败了，请重试" # too generic; must explain or recover
+        robotic:
+          - "系统异常"
+          - "发生未知错误"
+          - "请稍后"
+        vague_cta:
+          - "提交"
+          - "确定"
+          - "处理"
+          - "完成"
+      preferred_patterns:
+        retry_error: "没保存成功。检查网络后再试一次。"
+        permission_request: "允许访问 {permission}，用于 {purpose}。"
+        empty_state: "还没有{object}。{next_action}"
+        destructive_confirm: "删除{object}后无法恢复。"
+
+  review_policy:
+    machine_fix_allowed_for:
+      - length
+      - obvious_jargon_replacement
+      - punctuation_consistency
+      - duplicate_label_consistency
+    human_review_required_for:
+      - legal_or_policy_copy
+      - payment_or_privacy_copy
+      - destructive_action_copy
+      - health_or_safety_sensitive_copy
+      - brand_voice_exception
+      - low_confidence_rewrite

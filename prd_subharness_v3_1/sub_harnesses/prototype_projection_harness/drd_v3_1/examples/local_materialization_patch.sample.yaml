@@ -1,0 +1,33 @@
+local_materialization_patch:
+  version: "3.1"
+  mode: DRD_MODE
+  patches:
+    - patch_id: PATCH-MISSING-BOUNDARY-STATES
+      patch_id_zh: 补齐图片数量边界状态
+      source_audit_finding: AUD-BOUNDARY-001
+      patch_scope:
+        - board_frame_packets
+        - logic_sidecar_card_map
+        - anchor_badge_map
+      operations:
+        - operation_type: add_frame_packet
+          target: FR-PICKER-SELECT-1
+          description_zh: 补充选择 1 张的非法低值状态。
+          source_refs:
+            - PRD.md#upload-image-rule
+        - operation_type: add_frame_packet
+          target: FR-PICKER-SELECT-6
+          description_zh: 补充尝试选择第 6 张的非法高值状态。
+          source_refs:
+            - PRD.md#upload-image-rule
+        - operation_type: add_logic_sidecar_card
+          target: SC-COUNT-LOW
+          description_zh: 补充低于下限时的确认置灰说明。
+          source_refs:
+            - PRD.md#upload-image-rule
+      writes_prd: false
+      source_refs:
+        - PRD.md#upload-image-rule
+      validator_results:
+        - validator_id: PATCH_VAL_001
+          passed: true

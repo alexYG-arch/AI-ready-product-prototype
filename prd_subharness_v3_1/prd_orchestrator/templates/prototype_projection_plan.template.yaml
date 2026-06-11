@@ -1,0 +1,37 @@
+prototype_projection_plan:
+  schema_version: "2.0"
+  plan_id: "PROTO-PROJ-YYYYMMDD-001"
+  source_runtime_hash: "sha256:"
+  target_artifact: "figma"
+
+  pages:
+    - figma_page_name: "Prototype / Main"
+      sections:
+        - section_id: "FLOW-*"
+          frames_to_create_or_patch: []
+
+  node_patches:
+    - semantic_id: "SCREEN-* | ST-* | CMP-* | OVERLAY-*"
+      action: "create | patch | skip | preserve_designer_owned | mark_gap"
+      figma_node_id: ""
+      metadata:
+        managed_by: "prototype_projection_harness"
+        runtime_hash: "sha256:"
+        source_refs: []
+
+  reaction_patches:
+    - edge_id: "EDGE-*"
+      interaction_id: "INT-*"
+      action: "create | patch | skip | mark_gap"
+      source_node_id: ""
+      destination_node_id: ""
+      trigger: ""
+      actions: []
+
+  annotation_patches:
+    - interaction_id: "INT-*"
+      action: "create_or_patch_interaction_spec_card"
+      target_page: "Interaction Spec"
+
+  blockers: []
+  warnings: []

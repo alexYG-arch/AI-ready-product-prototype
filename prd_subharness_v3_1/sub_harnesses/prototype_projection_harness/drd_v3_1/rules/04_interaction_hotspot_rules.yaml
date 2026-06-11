@@ -1,0 +1,81 @@
+interaction_hotspot_rules:
+  id: INTERACTION_HOTSPOT_RULES_V3_1
+  id_zh: 交互热点规则 v3.1
+  purpose_zh: >
+    从 Design Kernel 和 Composition Plan 中提取真正影响使用链路的交互锚点。
+    热点不是为了生成可点击原型，而是为了明确说明逻辑、条件、控件状态和侧车卡片锚点。
+
+  hotspot_sources:
+    - source: commit_control
+      source_zh: 确认/提交/保存/下一步等提交控件
+    - source: selection_item
+      source_zh: 图片、文件、联系人、优惠券、日期等选择项
+    - source: disabled_control
+      source_zh: 置灰但用户可能尝试点击的控件
+    - source: system_permission_action
+      source_zh: 权限允许、拒绝、受限授权
+    - source: cancel_or_back
+      source_zh: 取消、返回、关闭
+    - source: recovery_action
+      source_zh: 重试、重新选择、撤销、重新授权
+    - source: local_feedback_anchor
+      source_zh: 局部错误、强提醒、说明锚点
+
+  deductive_rules:
+    - rule_id: HOT_DED_001
+      rule_name_zh: 控件状态变化生成热点
+      if:
+        control_state_obligation_exists: true
+      then:
+        generate_hotspot_for_control: true
+        require_annotation_or_sidecar: true
+      explanation_zh: 确认按钮置灰/可用不是纯视觉状态，必须有锚点说明。
+
+    - rule_id: HOT_DED_002
+      rule_name_zh: 边界选择生成热点
+      if:
+        boundary_state_generated: true
+      then:
+        generate_hotspots_for:
+          - invalid_low_selection
+          - valid_min_selection
+          - valid_max_selection
+          - invalid_high_attempt
+      explanation_zh: 边界状态必须能说明用户如何到达、为什么可用或不可用。
+
+    - rule_id: HOT_DED_003
+      rule_name_zh: 系统交接生成入口和返回热点
+      if:
+        surface_type: system_handoff
+      then:
+        generate_hotspots_for:
+          - open_handoff_surface
+          - cancel_handoff
+          - return_with_result
+          - return_with_error_or_denied
+
+    - rule_id: HOT_DED_004
+      rule_name_zh: 禁用控件必须解释
+      if:
+        control_state: disabled
+        user_may_attempt_action: true
+      then:
+        require_sidecar_card: true
+        require_anchor_badge: true
+        feedback_timing_required: true
+      explanation_zh: 置灰按钮不能只依赖视觉表达，必须解释原因和如何修正。
+
+  output_contract:
+    interaction_hotspot:
+      required_fields:
+        - hotspot_id
+        - hotspot_id_zh
+        - source_frame
+        - source_component_or_region
+        - trigger
+        - trigger_zh
+        - semantic_action
+        - semantic_action_zh
+        - related_obligation_ids
+        - source_refs
+        - sidecar_card_required

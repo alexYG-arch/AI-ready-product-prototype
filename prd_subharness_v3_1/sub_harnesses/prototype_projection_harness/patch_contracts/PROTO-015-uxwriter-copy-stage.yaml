@@ -1,0 +1,14 @@
+patch_contract:
+  schema_version: '2.1'
+  id: PROTO-015
+  name: UX writer copy optimization stage
+  version: '2.1'
+  summary: Adds research-grounded UX writing rules, copy catalog, and validators.
+  required_outputs:
+  - uxwriter-copy-catalog.yaml
+  - uxwriter_validation_report.yaml
+  blocks_if:
+  - critical CTA is vague
+  - recoverable error lacks recovery copy
+  - destructive action lacks consequence/cancel copy
+  owner: prototype_projection_harness

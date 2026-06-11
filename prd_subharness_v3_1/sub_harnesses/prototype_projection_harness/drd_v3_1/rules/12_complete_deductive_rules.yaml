@@ -1,0 +1,47 @@
+prototype_harness_drd_deductive_complete_rules:
+  id: COMPLETE_DEDUCTIVE_RULES_V3_1
+  id_zh: 原型 Harness DRD 演绎推理完整规则 v3.1
+  load_order:
+    - file: rules/00_stage_plan.yaml
+      role_zh: 阶段计划
+    - file: rules/01_screen_role_obligation_rules.yaml
+      role_zh: 屏幕角色义务演算
+    - file: rules/02_design_kernel_rules.yaml
+      role_zh: 设计内核构建
+    - file: rules/03_composition_generation_rules.yaml
+      role_zh: 构图生成
+    - file: rules/04_interaction_hotspot_rules.yaml
+      role_zh: 交互热点
+    - file: rules/05_logic_sidecar_audit_rules.yaml
+      role_zh: 逻辑侧车审计
+    - file: rules/06_local_materialization_patch_rules.yaml
+      role_zh: 局部物化修补
+    - file: rules/07_annotation_stub_sidecar_rules.yaml
+      role_zh: 备注短桩与逻辑侧车卡片
+    - file: rules/08_pen_line_deemphasis_rules.yaml
+      role_zh: Pen 线降级
+    - file: rules/09_skill_methodology_hook_rules.yaml
+      role_zh: 方法论型技能钩子
+    - file: rules/10_inductive_support_rules.yaml
+      role_zh: 归纳辅助
+    - file: rules/11_validators.yaml
+      role_zh: 验证器
+
+  core_contract_zh: >
+    PRD 仍是事实源；演绎规则从 PRD source slices 推导 screen role obligations；
+    Design Kernel 把义务转成设计契约；Composition 生成必要状态画布；Hotspots 标定关键锚点；
+    Logic Sidecar Audit 检查遗漏；Local Patch 修补投射层；Annotation Stub 只做节点短说明；
+    Logic Sidecar Card 承载完整逻辑；Pen 线只保留短引导线或主流程概览线。
+
+  execution_summary:
+    - step_zh: 加载 PRD source slices 和 fact bundle。
+    - step_zh: 运行宿主表面推理。
+    - step_zh: 运行 Screen Role Obligation 演绎。
+    - step_zh: 生成 Design Kernel。
+    - step_zh: 生成 Composition Plan 和 board shards。
+    - step_zh: 提取 Interaction Hotspots。
+    - step_zh: 执行 Logic Sidecar Audit。
+    - step_zh: 对投射层执行 Local Materialization Patch。
+    - step_zh: 生成 Annotation Stub、Logic Sidecar Cards、Anchor Badges。
+    - step_zh: 默认不画全量 Pen 线，不写真实 reactions。
+    - step_zh: 输出 Projection Report。

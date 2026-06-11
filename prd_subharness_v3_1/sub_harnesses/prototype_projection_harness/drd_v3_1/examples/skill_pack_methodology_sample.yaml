@@ -1,0 +1,19 @@
+renderer_skill_pack:
+  skill_id: SKILL-GENERIC-USAGE-CHAIN-METHODS
+  skill_id_zh: 通用使用链路方法论技能包
+  role: advisory
+  role_zh: 建议性
+  methods:
+    - method_id: boundary_value_analysis
+      method_id_zh: 边界值分析
+      guidance_zh: 对任何上下限规则，检查最小非法、最小合法、最大合法、最大非法。
+    - method_id: earliest_fix_point_analysis
+      method_id_zh: 最早可修正点分析
+      guidance_zh: 如果用户仍能在当前表面修正错误，提示必须前置。
+    - method_id: external_surface_expansion
+      method_id_zh: 外部表面展开
+      guidance_zh: 系统选择器、权限页、支付、分享、文件选择不能被压缩为单一成功/失败。
+  forbidden_zh:
+    - 不写死具体业务场景。
+    - 不新增 confirmed fact。
+    - 不绕过 validator。

@@ -1,0 +1,9 @@
+screen_role_obligations:
+  version: "3.1"
+  mode: DRD_MODE
+  source_refs:
+    - PRD.md#upload-image-rule
+  obligations:
+    - obligation_id: OBL-BAD
+      obligation_type: constraint_obligation
+      inference_basis_zh: 缺少 source_refs，必须阻断。

@@ -1,0 +1,109 @@
+renderer_stage_plan:
+  version: "2.1"
+  principle: >-
+    Rendering must not start by drawing detailed pages. It first creates the full canvas skeleton, reserved
+    interaction explanation/comment zones, sequence grouping, and routing corridors. Page content, comments,
+    real Figma reactions and visual pen lines are then written in deterministic stages.
+
+  stages:
+    - id: "RND-00-input-freeze"
+      name: "Input freeze and hash"
+      goal: "Freeze completed runtime, UX copy catalog, component bindings, and skill pack influences."
+      outputs:
+        - "io/state/render_input.lock.yaml"
+      blocks_if:
+        - "runtime validation fails"
+        - "uxwriter validation fails"
+
+    - id: "RND-01-layout-route-blueprint"
+      name: "Global layout and route blueprint"
+      goal: >-
+        Compute page groups, sequence rows, state stacks, overlay lanes, comment anchor zones, interaction spec zones,
+        and route corridors before writing any detailed frame.
+      outputs:
+        - "io/output/layout_route_plan.yaml"
+      includes:
+        - flow_grouping
+        - screen_sequence_order
+        - screen_state_stack_layout
+        - overlay_lane_layout
+        - interaction_comment_anchor_plan
+        - routing_corridor_plan
+        - line_density_budget
+
+    - id: "RND-02-canvas-skeleton"
+      name: "Full canvas skeleton"
+      goal: >-
+        Create all sections, flow containers, empty screen frames, state frames, overlay frames, interaction spec panels,
+        comment zones and route lanes as placeholders.
+      operations:
+        - create_figma_page_or_section
+        - create_flow_section
+        - create_screen_frame_placeholder
+        - create_state_frame_placeholder
+        - create_overlay_placeholder
+        - create_interaction_spec_placeholder
+        - reserve_route_corridor_nodes
+      outputs:
+        - "io/output/figma_projection_plan.stage_02_skeleton.yaml"
+
+    - id: "RND-03-sequence-group-page-render"
+      name: "Page rendering by sequence group"
+      goal: >-
+        Render page details group by group, not randomly. A group may be a full journey step, a screen cluster,
+        or a state sequence.
+      sequence_group_policy:
+        preferred_order:
+          - happy_path_primary_sequence
+          - blocking_modals
+          - error_and_recovery_states
+          - empty_loading_permission_states
+          - secondary_branches
+      outputs:
+        - "io/output/figma_projection_plan.stage_03_pages.yaml"
+
+    - id: "RND-04-component-and-pattern-fill"
+      name: "Component and pattern fill"
+      goal: "Resolve design-system components, variants, slots and fallback primitives inside each rendered frame."
+      outputs:
+        - "io/output/component_binding_resolution_report.yaml"
+
+    - id: "RND-05-copy-application"
+      name: "UX writer copy application"
+      goal: "Apply optimized copy_catalog entries to UI text layers, with original_copy_ref preserved."
+      outputs:
+        - "io/output/copy_application_report.yaml"
+
+    - id: "RND-06-interaction-comments"
+      name: "Figma interaction comments"
+      goal: >-
+        Create Figma comments anchored near the source component or region for every interaction that needs explanation.
+        Comments carry trigger, guard, actions, outcome, event, state effect and source refs.
+      outputs:
+        - "io/output/figma-comment-map.yaml"
+
+    - id: "RND-07-prototype-reactions"
+      name: "Real clickable prototype reactions"
+      goal: >-
+        Write node.reactions for click/tap/navigation/overlay/variant/conditional behavior. These are the real Figma
+        prototype links; visual lines are not used for click behavior.
+      outputs:
+        - "io/output/figma-interaction-map.yaml"
+
+    - id: "RND-08-visual-flow-lines"
+      name: "Visual pen-line flow documentation"
+      goal: >-
+        Draw documentation-only pen/line routes on Flow Map and optional design canvas lanes. Routes must follow
+        the layout_route_plan and never become the authority for interaction logic.
+      outputs:
+        - "io/output/visual_flow_line_map.yaml"
+
+    - id: "RND-09-final-validation"
+      name: "Final validation and report"
+      goal: "Validate runtime, copy, comments, reactions, route density, duplicate trigger policy and reverse-sync maps."
+      outputs:
+        - "io/output/prototype_projection_report.yaml"
+
+  renderer_order_is_strict: true
+  renderer_may_not_add_missing_product_logic: true
+  renderer_may_emit_gaps_or_patch_candidates: true

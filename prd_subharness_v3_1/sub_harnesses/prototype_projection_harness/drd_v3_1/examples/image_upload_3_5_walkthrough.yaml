@@ -1,0 +1,99 @@
+example:
+  id: EXAMPLE_IMAGE_UPLOAD_3_5
+  id_zh: 上传 3-5 张图片演绎示例
+  prd_fact:
+    fact_id: PRD-RULE-IMAGE-UPLOAD-COUNT
+    text_zh: 上传图片不得小于 3 张，不得大于 5 张。
+    source_refs:
+      - PRD.md#upload-image-rule
+
+  extracted_primitives:
+    action: select_and_upload
+    action_zh: 选择并上传
+    object: images
+    object_zh: 图片
+    constraints:
+      - type: min_count
+        value: 3
+        constraint_zh: 至少 3 张
+      - type: max_count
+        value: 5
+        constraint_zh: 最多 5 张
+    likely_surface: system_handoff
+    likely_surface_zh: 系统相册选择器
+    commit_control: picker_confirm_button
+    commit_control_zh: 选择器确认按钮
+
+  derived_obligations:
+    - obligation_id: OBL-PICKER-SURFACE
+      obligation_type: surface_obligation
+      obligation_zh: 必须展示系统相册选择器或抽象占位
+    - obligation_id: OBL-COUNT-BOUNDARY
+      obligation_type: constraint_obligation
+      obligation_zh: 必须展示 1、3、5、6 张边界状态
+    - obligation_id: OBL-CONFIRM-STATE
+      obligation_type: control_state_obligation
+      obligation_zh: 必须展示确认按钮置灰/可用状态
+    - obligation_id: OBL-BEFORE-CONFIRM-HINT
+      obligation_type: feedback_obligation
+      obligation_zh: 数量不足或超限必须在确认前强提醒
+    - obligation_id: OBL-RETURN-ASSETS
+      obligation_type: return_obligation
+      obligation_zh: 合法选择后带图片返回业务页
+    - obligation_id: OBL-UPLOAD-ASYNC
+      obligation_type: async_obligation
+      obligation_zh: 返回后如果执行上传，必须展示处理中和失败恢复
+
+  design_kernel:
+    kernel_id: DK-IMAGE-UPLOAD-3-5
+    kernel_id_zh: 图片上传 3-5 张设计内核
+    constraints:
+      - constraint_id: C-MIN-3
+        constraint_zh: 至少选择 3 张
+        earliest_fix_surface: photo_picker
+        earliest_fix_surface_zh: 相册选择器
+        feedback_timing: before_confirm
+      - constraint_id: C-MAX-5
+        constraint_zh: 最多选择 5 张
+        earliest_fix_surface: photo_picker
+        earliest_fix_surface_zh: 相册选择器
+        feedback_timing: on_select_or_before_confirm
+    forbidden_realizations:
+      - forbidden_zh: 只画上传入口和成功/失败提示
+      - forbidden_zh: 等返回业务页后才提示选择数量不符合
+
+  generated_frames:
+    - frame_id: FR-UPLOAD-ENTRY
+      frame_name_zh: 上传入口
+    - frame_id: FR-PICKER-PERMISSION
+      frame_name_zh: 相册权限/系统交接
+    - frame_id: FR-PICKER-SELECT-1
+      frame_name_zh: 选择 1 张，确认置灰并强提醒
+    - frame_id: FR-PICKER-SELECT-3
+      frame_name_zh: 选择 3 张，确认可用
+    - frame_id: FR-PICKER-SELECT-5
+      frame_name_zh: 选择 5 张，确认可用并达到上限
+    - frame_id: FR-PICKER-SELECT-6
+      frame_name_zh: 尝试第 6 张，阻止或强提醒
+    - frame_id: FR-UPLOAD-PROCESSING
+      frame_name_zh: 返回后上传处理中
+    - frame_id: FR-UPLOAD-FAILURE-RECOVERY
+      frame_name_zh: 上传失败与重试
+
+  sidecar_cards:
+    - card_id: SC-COUNT-LOW
+      title_zh: 选择 1 张时确认按钮置灰
+      body_zh:
+        - 规则：至少选择 3 张。
+        - 当前：已选 1 张，低于最小数量。
+        - 处理：确认按钮置灰，强提醒至少还需选择 2 张。
+        - 时机：before_confirm，不应返回业务页后再提示。
+      anchor_badge: "③"
+    - card_id: SC-COUNT-HIGH
+      title_zh: 尝试选择第 6 张时阻止
+      body_zh:
+        - 规则：最多选择 5 张。
+        - 当前：已选 5 张后继续选择。
+        - 处理：阻止第 6 张或立即强提醒。
+        - 时机：on_select 或 before_confirm。
+      anchor_badge: "④"

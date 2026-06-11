@@ -1,0 +1,78 @@
+sds_monochrome_adapter:
+  version: "3.1"
+  adapter_id: SDS_MONOCHROME_ADAPTER_V3_1
+  owner: prototype_projection_harness
+  authority_role: design_system_projection_adapter
+  source_design_system:
+    name: Figma Simple Design System
+    local_path: sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds
+    source_record: sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds.SOURCE.md
+    figma_config: sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds/figma.config.json
+    commit: be440d804c525a0d5654900161988edbe9754575
+  activation:
+    enabled: true
+    used_by:
+      - product-spec/component-binding-map.yaml
+      - product-spec/design-semantic-library.json
+      - sub_harnesses/prototype_projection_harness/drd_v3_1/profile.yaml
+    first_phase_behavior: validate_adapter_binding_only
+    renderer_materialization_deferred: true
+  monochrome_policy:
+    required: true
+    allowed_color_mode: black_white_gray_only
+    allowed_values:
+      - "#000000"
+      - "#111111"
+      - "#1E1E1E"
+      - "#2C2C2C"
+      - "#383838"
+      - "#444444"
+      - "#757575"
+      - "#B3B3B3"
+      - "#D9D9D9"
+      - "#E6E6E6"
+      - "#F5F5F5"
+      - "#FFFFFF"
+    semantic_state_encoding:
+      danger: grayscale_contrast_icon_label
+      warning: grayscale_contrast_icon_label
+      success: grayscale_contrast_icon_label
+      selected: grayscale_border_weight_badge
+      focus: grayscale_outline
+      disabled: grayscale_opacity_and_text
+  figma_document:
+    file_key: J0KLPKXiONDRssXD1AX9Oi
+    node_url_source: figma.config.json codeConnect.documentUrlSubstitutions
+  semantic_component_bindings:
+    - semantic_key: primitive.button
+      sds_key: "<FIGMA_BUTTONS_BUTTON>"
+      sds_source: src/ui/primitives/Button
+      component_name: Button
+      monochrome_variant_policy: map_intent_to_grayscale
+    - semantic_key: primitive.input
+      sds_key: "<FIGMA_INPUTS_INPUT_FIELD>"
+      sds_source: src/ui/primitives/Input
+      component_name: Input Field
+      monochrome_variant_policy: map_state_to_grayscale
+    - semantic_key: primitive.modal
+      sds_key: "<FIGMA_DIALOG_DIALOG>"
+      sds_source: src/ui/primitives/Dialog
+      component_name: Dialog
+      monochrome_variant_policy: map_overlay_to_grayscale
+    - semantic_key: primitive.toast
+      sds_key: "<FIGMA_NOTIFICATION_NOTIFICATION>"
+      sds_source: src/ui/primitives/Notification
+      component_name: Notification
+      monochrome_variant_policy: map_intent_to_grayscale
+  validation:
+    must_exist:
+      - sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds/figma.config.json
+      - sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds/src/ui/primitives/Button
+      - sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds/src/ui/primitives/Input
+      - sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds/src/ui/primitives/Dialog
+      - sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds/src/ui/primitives/Notification
+    required_document_url_substitutions:
+      - "<FIGMA_BUTTONS_BUTTON>"
+      - "<FIGMA_INPUTS_INPUT_FIELD>"
+      - "<FIGMA_DIALOG_DIALOG>"
+      - "<FIGMA_NOTIFICATION_NOTIFICATION>"

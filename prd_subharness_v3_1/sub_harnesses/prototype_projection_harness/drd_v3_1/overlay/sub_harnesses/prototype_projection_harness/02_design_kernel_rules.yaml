@@ -1,0 +1,127 @@
+design_kernel_rules:
+  id: DESIGN_KERNEL_RULES_V3_1
+  id_zh: 设计内核规则 v3.1
+  purpose_zh: >
+    把 Screen Role Obligation（屏幕角色义务）转成最小可执行设计契约。
+    Design Kernel 不是模板；它定义任务、约束、控件、反馈时机、禁止实现和审计问题。
+
+  kernel_inputs:
+    - prd_source_slices
+    - screen_role_obligations
+    - host_surface_decisions
+    - skill_influence_trace
+
+  kernel_sections:
+    - section: task_contract
+      section_zh: 任务契约
+      required_fields:
+        - task_id
+        - task_name_zh
+        - user_goal_zh
+        - action
+        - object
+        - source_refs
+    - section: surface_contract
+      section_zh: 宿主表面契约
+      required_fields:
+        - surface_type
+        - surface_type_zh
+        - entry_surface
+        - return_surface
+        - forbidden_realizations
+    - section: constraint_contract
+      section_zh: 约束契约
+      required_fields:
+        - constraint_id
+        - constraint_zh
+        - applies_at
+        - applies_at_zh
+        - earliest_fix_surface
+        - feedback_timing
+        - valid_condition
+        - invalid_condition
+    - section: control_contract
+      section_zh: 控件契约
+      required_fields:
+        - control_id
+        - control_zh
+        - affected_by_constraints
+        - required_states
+    - section: feedback_contract
+      section_zh: 反馈契约
+      required_fields:
+        - feedback_id
+        - feedback_zh
+        - severity
+        - timing
+        - surface
+        - anchor
+    - section: audit_contract
+      section_zh: 审计契约
+      required_fields:
+        - audit_questions
+        - blocking_checks
+        - local_patch_policy
+
+  deductive_rules:
+    - rule_id: DK_DED_001
+      rule_name_zh: 义务到设计内核契约
+      if:
+        obligation_exists: true
+      then:
+        map_obligation_to_kernel_section: true
+      mapping:
+        surface_obligation: surface_contract
+        constraint_obligation: constraint_contract
+        control_state_obligation: control_contract
+        feedback_obligation: feedback_contract
+        return_obligation: surface_contract
+        async_obligation: task_contract
+        recovery_obligation: feedback_contract
+
+    - rule_id: DK_DED_002
+      rule_name_zh: 约束必须指定最早修正表面
+      if:
+        kernel_section: constraint_contract
+      then:
+        require_fields:
+          - earliest_fix_surface
+          - feedback_timing
+          - invalid_condition
+          - valid_condition
+      blocks_if_zh: 约束没有最早可修正位置，或反馈时机晚于可修正位置。
+
+    - rule_id: DK_DED_003
+      rule_name_zh: 反馈时机不能晚于最早可修正表面
+      if:
+        earliest_fix_surface_exists: true
+      then:
+        feedback_timing_must_not_be_later_than_earliest_fix_surface: true
+      examples_zh:
+        - 选择 1 张图片低于下限，应在相册选择器内 before_confirm 提醒。
+        - 表单必填错误应在字段附近或提交前提醒，不应仅提交后 toast。
+
+    - rule_id: DK_DED_004
+      rule_name_zh: 禁止实现必须显式声明
+      if:
+        kernel_has_constraints_or_external_surface: true
+      then:
+        require_forbidden_realizations: true
+      examples_zh:
+        - 禁止把系统选择器压成成功/失败 toast。
+        - 禁止把可前置校验的错误延迟到返回后。
+
+  kernel_output_schema:
+    design_kernel:
+      required_fields:
+        - kernel_id
+        - kernel_id_zh
+        - source_refs
+        - task_contract
+        - surface_contract
+        - constraint_contracts
+        - control_contracts
+        - feedback_contracts
+        - forbidden_realizations
+        - audit_questions
+        - skill_influence_refs

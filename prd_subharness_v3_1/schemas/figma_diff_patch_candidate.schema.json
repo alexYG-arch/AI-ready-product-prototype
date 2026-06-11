@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Figma Diff Patch Candidate",
+  "type": "object",
+  "required": [
+    "change_patch_candidate"
+  ],
+  "properties": {
+    "change_patch_candidate": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "patch_id",
+        "source_channel",
+        "candidate_status",
+        "human_review_required"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string"
+        },
+        "patch_id": {
+          "type": "string"
+        },
+        "source_channel": {
+          "const": "figma_diff"
+        },
+        "candidate_status": {
+          "type": "string"
+        },
+        "human_review_required": {
+          "type": "boolean"
+        },
+        "semantic_diffs": {
+          "type": "array"
+        },
+        "non_semantic_diffs": {
+          "type": "array"
+        },
+        "conflicts": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}

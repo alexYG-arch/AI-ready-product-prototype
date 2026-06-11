@@ -1,0 +1,162 @@
+cears_quality_profile:
+  profile_id: "C-EARS+RQV-1.0"
+  syntax_pass_not_equal_quality_pass: true
+
+  vague_terms:
+    - "快速"
+    - "稳定"
+    - "友好"
+    - "智能"
+    - "合理"
+    - "尽快"
+    - "尽量"
+    - "优化"
+    - "提升"
+    - "完善"
+    - "加强"
+    - "支持"
+    - "适配"
+    - "正常"
+    - "异常"
+    - "灵活"
+    - "易用"
+    - "流畅"
+    - "准确"
+
+  p0_p1_must_have:
+    - source_refs
+    - pattern_id
+    - cn_ears
+    - semantic_slots
+    - acceptance
+    - verification
+    - quality_profile
+    - quantification_review
+
+  blockers:
+    - "confirmed_without_source_ref"
+    - "unknown_as_confirmed"
+    - "cears_without_requirement_record"
+    - "p0_p1_missing_acceptance"
+    - "p0_p1_missing_quantification_review"
+    - "numeric_target_invented"
+    - "quantified_number_without_source"
+
+  requirement_record_after_cears:
+    required_before_quality_gate: true
+    natural_language: "C-EARS 渲染后必须形成 requirement_candidate 或 requirement record，承载 id、优先级、来源、证据状态、语义槽、gaps 和后续验收/数值化审核。"
+    target_collections:
+      - "requirement_candidates"
+      - "requirements"
+    required_fields:
+      - "id"
+      - "title"
+      - "priority"
+      - "evidence_status"
+      - "source_refs"
+      - "pattern_id"
+      - "cn_ears"
+      - "semantic_slots"
+      - "gaps"
+    allowed_evidence_status:
+      - "confirmed"
+      - "derived"
+      - "candidate"
+      - "assumed"
+      - "missing"
+    state_rules:
+      - id: "REQ-RECORD-STATE-001"
+        natural_language: "LLM 生成默认只能进入 candidate/derived/assumed，不能直接进入 confirmed。"
+        machine_mapping:
+          check_type: "llm_output_not_confirmed_without_review"
+      - id: "REQ-RECORD-SOURCE-002"
+        natural_language: "confirmed record 必须有 source_refs 或 review_decision_ref。"
+        machine_mapping:
+          check_type: "confirmed_record_source_required"
+      - id: "REQ-RECORD-GAP-003"
+        natural_language: "缺少必填槽、来源、验收或数值化信息时必须写入 gaps，而不是留空。"
+        machine_mapping:
+          check_type: "missing_req_record_fields_to_gaps"
+
+  quantification_after_cears:
+    required_for_statuses:
+      - "confirmed"
+      - "approved"
+    allowed_decisions:
+      - "quantified"
+      - "not_quantifiable_yet"
+      - "not_applicable"
+    quantified_required_fields:
+      - "scale"
+      - "meter"
+      - "baseline"
+      - "target"
+      - "tolerance"
+      - "measurement_window"
+      - "verification_method"
+      - "source_refs"
+    not_quantifiable_yet_required_fields:
+      - "missing_baseline_or_meter"
+      - "owner_candidate"
+      - "required_before"
+      - "temporary_fit_criteria"
+    not_applicable_required_fields:
+      - "reason"
+      - "reviewer"
+    audit_rules:
+      - id: "QUANT-SOURCE-001"
+        natural_language: "baseline、target、tolerance 和 measurement_window 必须有来源，不能由 LLM 自行估计。"
+        machine_mapping:
+          check_type: "quantified_numbers_require_source"
+      - id: "QUANT-FIT-002"
+        natural_language: "数值化结果必须能转成 fit criteria，并能被 verification_method 验证。"
+        machine_mapping:
+          check_type: "quantification_to_fit_criteria_trace"
+      - id: "QUANT-NOT-APPLICABLE-003"
+        natural_language: "如果需求不适合数值化，必须写明原因和 reviewer，不能简单跳过。"
+        machine_mapping:
+          check_type: "not_applicable_requires_reason_and_reviewer"
+
+  rule_mappings:
+    - rule_id: "REQ-PATTERN-001"
+      natural_language: "每条需求必须选择一个 pattern，并填满该 pattern 的 required_slots；否则只是未完成候选。"
+      machine_mapping:
+        check_type: "pattern_required_slots"
+        registry: "sub_harnesses/requirement_harness/requirement_pattern_registry.yaml"
+      human_review_prompt: "这条需求的 pattern 是否合适，语义槽是否足够让工程和 QA 理解？"
+
+    - rule_id: "REQ-SOURCE-002"
+      natural_language: "confirmed 需求必须有 source_refs；LLM 产出的内容默认只能是 candidate。"
+      machine_mapping:
+        check_type: "source_required_for_confirmed"
+        confirmed_statuses:
+          - "confirmed"
+          - "approved"
+      human_review_prompt: "这条需求是否有旧 PRD、变更请求或 review decision 支撑？"
+
+    - rule_id: "REQ-QUALITY-003"
+      natural_language: "C-EARS 句式通过不等于质量通过；P0/P1 必须有验收、验证和质量画像。"
+      machine_mapping:
+        check_type: "p0_p1_quality_gate"
+        required_fields: "p0_p1_must_have"
+      human_review_prompt: "这条需求是否真的可验收、可测试、可判断完成？"
+
+    - rule_id: "REQ-NUMERIC-004"
+      natural_language: "不能凭空生成数值目标；没有 baseline 时 target 必须是 TBD_AFTER_BASELINE。"
+      machine_mapping:
+        check_type: "numeric_target_source_required"
+      human_review_prompt: "这里的数字来自哪里？如果没有 baseline，是否被正确标为待定？"
+
+    - rule_id: "REQ-QUANT-005"
+      natural_language: "C-EARS 后必须进行数值化审核：能量化则生成 fit criteria，不能量化则给出 not_quantifiable_yet 或 not_applicable 的可审原因。"
+      machine_mapping:
+        check_type: "quantification_after_cears_required"
+        rules_from: "cears_quality_profile.quantification_after_cears"
+      human_review_prompt: "这条需求完成 C-EARS 后，是否已经明确量化决策、数值来源和验证方法？"
+
+    - rule_id: "REQ-RECORD-006"
+      natural_language: "C-EARS 后必须进入 REQ 结构化记录环节，形成 requirement_candidate 或 requirement record 后，才能继续验收、验证和数值化审核。"
+      machine_mapping:
+        check_type: "requirement_record_after_cears_required"
+        rules_from: "cears_quality_profile.requirement_record_after_cears"
+      human_review_prompt: "这条 C-EARS 是否已经落成 id、priority、evidence_status、source_refs、semantic_slots、gaps 完整的 REQ 记录？"

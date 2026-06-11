@@ -1,0 +1,197 @@
+screen_role_obligation_rules:
+  id: SCREEN_ROLE_OBLIGATION_RULES_V3_1
+  id_zh: 屏幕角色义务演算规则 v3.1
+  rule_style: deductive_first_inductive_assisted
+  rule_style_zh: 以演绎推理为主，归纳经验辅助
+
+  principle_zh: >
+    Screen Role 不从固定角色列表中选择，而是从 PRD 事实推导画面必须承担的义务。
+    角色名称只是义务组合的可读标签。
+
+  input_primitives:
+    - primitive: action
+      primitive_zh: 用户动作
+      extraction_zh: 从动词中抽取，例如上传、选择、提交、删除、支付、授权、复制、生成、重试、取消。
+    - primitive: object
+      primitive_zh: 动作对象
+      extraction_zh: 从名词中抽取，例如图片、文件、联系人、优惠券、金额、时间范围、权限、通知。
+    - primitive: constraint
+      primitive_zh: 约束
+      extraction_zh: 从规则中抽取，例如 min_count、max_count、required、format、permission_required、membership_required。
+    - primitive: host_surface
+      primitive_zh: 宿主表面
+      extraction_zh: 从上下文中抽取，例如 app_page、dialog_modal、system_handoff、attached_panel、notification_surface。
+    - primitive: commit_control
+      primitive_zh: 提交控件
+      extraction_zh: 确认、提交、保存、下一步、发送、完成等控件。
+    - primitive: feedback_timing
+      primitive_zh: 反馈时机
+      extraction_zh: on_select、before_confirm、after_return、after_submit、after_async_failure。
+    - primitive: recovery_affordance
+      primitive_zh: 恢复方式
+      extraction_zh: 继续选择、取消、返回、重试、撤销、重新授权、修改输入。
+
+  obligation_vectors:
+    - obligation: surface_obligation
+      obligation_zh: 宿主表面义务
+      question_zh: 这个任务是否必须在系统、外部、宿主、嵌入或依附表面上完成？
+    - obligation: object_visibility_obligation
+      obligation_zh: 对象可见义务
+      question_zh: 用户操作的对象是否必须被展示或选择？
+    - obligation: constraint_obligation
+      obligation_zh: 约束展示义务
+      question_zh: 约束是否影响用户能否继续？是否必须展示边界？
+    - obligation: control_state_obligation
+      obligation_zh: 控件状态义务
+      question_zh: 约束是否改变确认/提交/继续按钮的可用性？
+    - obligation: feedback_obligation
+      obligation_zh: 反馈义务
+      question_zh: 错误、提示或强提醒应发生在哪个最早可修正位置？
+    - obligation: return_obligation
+      obligation_zh: 返回义务
+      question_zh: 外部表面是否有取消、返回成功、返回失败或权限拒绝路径？
+    - obligation: async_obligation
+      obligation_zh: 异步义务
+      question_zh: 是否存在上传、保存、支付、生成、分析等异步过程？
+    - obligation: recovery_obligation
+      obligation_zh: 恢复义务
+      question_zh: 失败或不满足约束时用户如何修正或恢复？
+
+  deductive_rules:
+    - rule_id: ROLE_DED_001
+      rule_name_zh: 动作对象生成宿主表面义务
+      if:
+        action_requires_external_or_host_surface: true
+      then:
+        emit_obligations:
+          - surface_obligation
+          - return_obligation
+        emit_roles_by_obligation:
+          - system_or_host_surface_state
+          - cancelled_or_returned_state
+      explanation_zh: 选择图片、文件、联系人、支付、分享等任务不能只画业务入口和成功失败，必须展开外部或宿主表面。
+
+    - rule_id: ROLE_DED_002
+      rule_name_zh: 约束生成边界义务
+      if:
+        has_constraint_any:
+          - min_count
+          - max_count
+          - min_value
+          - max_value
+          - max_size
+          - date_range_limit
+          - format
+          - required
+      then:
+        emit_obligations:
+          - constraint_obligation
+          - control_state_obligation
+          - feedback_obligation
+        required_boundary_strategy: boundary_value_analysis
+      explanation_zh: 有上下限或格式约束时，必须展示边界值和越界值，不得只展示成功/失败。
+
+    - rule_id: ROLE_DED_003
+      rule_name_zh: 最早可修正点决定反馈位置
+      if:
+        user_can_fix_error_on_current_surface: true
+      then:
+        feedback_timing_must_be_one_of:
+          - on_select
+          - before_confirm
+          - before_submit
+        forbidden_feedback_timing:
+          - after_return_when_current_surface_fixable
+          - after_submit_when_pre_submit_fixable
+      explanation_zh: 如果用户仍在选择器或表单中可以修正错误，提示必须前置，不得等返回后或提交后才提示。
+
+    - rule_id: ROLE_DED_004
+      rule_name_zh: 约束影响提交控件时必须展示控件状态
+      if:
+        constraint_controls_commit_eligibility: true
+      then:
+        emit_obligations:
+          - control_state_obligation
+        required_control_states:
+          - disabled_or_blocked_for_invalid
+          - enabled_for_valid
+      explanation_zh: 选择不足或超限时必须展示确认按钮置灰、不可提交或阻止继续选择。
+
+    - rule_id: ROLE_DED_005
+      rule_name_zh: 系统交接生成取消与返回义务
+      if:
+        host_surface_type: system_handoff
+      then:
+        emit_obligations:
+          - return_obligation
+        required_paths:
+          - cancelled
+          - returned_with_result
+          - returned_with_error_or_denied
+      explanation_zh: 系统选择器、权限页、支付、分享等外部表面必须展示取消与返回路径。
+
+    - rule_id: ROLE_DED_006
+      rule_name_zh: 异步动作生成处理与恢复义务
+      if:
+        action_is_async: true
+      then:
+        emit_obligations:
+          - async_obligation
+          - recovery_obligation
+        required_states:
+          - processing
+          - success_or_result
+          - failure
+          - retry_or_recovery
+      explanation_zh: 上传、生成、支付、保存等异步动作不能只画成功，需要处理中、失败和恢复。
+
+    - rule_id: ROLE_DED_007
+      rule_name_zh: 纯交互动作不得伪装成屏幕状态
+      if:
+        visible_surface_change: false
+        action_is_pure_event: true
+      then:
+        represent_as:
+          - interaction_hotspot
+          - annotation_stub
+          - logic_sidecar_card
+        forbid_new_state_frame: true
+      explanation_zh: 点击、复制、提交、取消等动作如果不导致可见状态变化，不应生成独立页面状态。
+
+  boundary_value_strategy:
+    strategy_id: boundary_value_analysis
+    strategy_id_zh: 边界值分析
+    for_min_max_count:
+      required_points:
+        - point: empty_or_zero
+          point_zh: 0 或未选择
+        - point: min_minus_one
+          point_zh: 最小非法值
+        - point: min
+          point_zh: 最小合法值
+        - point: max
+          point_zh: 最大合法值
+        - point: max_plus_one
+          point_zh: 最大非法值
+      collapse_policy_zh: 如果画布密度过高，可折叠非关键中间值，但不得折叠 min_minus_one、min、max、max_plus_one。
+
+  output_contract:
+    screen_role_obligation:
+      required_fields:
+        - obligation_id
+        - obligation_type
+        - obligation_zh
+        - derived_from_primitives
+        - source_refs
+        - inference_basis_zh
+        - display_requirement
+        - materialization_target
+        - review_status
+    screen_role_chain:
+      required_fields:
+        - chain_id
+        - source_refs
+        - roles
+        - obligations
+        - collapsed_interaction_events
+        - unresolved_gaps

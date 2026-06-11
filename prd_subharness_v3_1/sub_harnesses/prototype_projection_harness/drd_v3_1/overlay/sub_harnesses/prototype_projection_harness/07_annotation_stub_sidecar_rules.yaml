@@ -1,0 +1,99 @@
+annotation_stub_sidecar_rules:
+  id: ANNOTATION_STUB_SIDECAR_RULES_V3_1
+  id_zh: 备注短桩与逻辑侧车卡片规则 v3.1
+  purpose_zh: >
+    解决 Figma Dev Mode annotation 无法作为左右两列完整说明卡的问题。
+    Annotation Stub 挂在节点上；Logic Sidecar Card 放在页面集左右两列；Anchor Badge 建立对应关系。
+
+  authority_model:
+    figma_dev_mode_annotation:
+      role: annotation_stub
+      role_zh: 节点级备注短桩
+      stored_on_node: true
+      complete_logic_allowed: false
+    logic_sidecar_card:
+      role: full_logic_documentation
+      role_zh: 完整逻辑说明卡
+      stored_as_canvas_card: true
+      belongs_to_product_ui: false
+    anchor_badge:
+      role: node_to_sidecar_link
+      role_zh: 组件到侧车卡片的编号锚点
+    leader_line:
+      role: optional_short_affiliation_line
+      role_zh: 可选短引导线，只表达归属
+
+  annotation_stub_rules:
+    max_body_length_chars_zh: 80
+    required_fields:
+      - annotation_id
+      - target_node_or_region
+      - interaction_or_state_id
+      - sidecar_card_id
+      - short_summary_zh
+      - source_refs
+    forbidden_zh:
+      - 把完整条件分支写进 annotation stub
+      - 用 annotation stub 替代 sidecar card
+      - 把 sidecar card 当作 Dev Mode annotation
+
+  logic_sidecar_card_rules:
+    required_for:
+      - complex_interaction
+      - constraint_logic
+      - system_handoff
+      - permission_gate
+      - error_recovery
+      - boundary_state
+      - disabled_control_explanation
+    required_fields:
+      - card_id
+      - card_id_zh
+      - belongs_to_board
+      - anchor_badge_id
+      - title_zh
+      - trigger_zh
+      - guard_zh
+      - action_summary_zh
+      - feedback_timing_zh
+      - source_refs
+      - audit_refs
+    placement:
+      allowed_columns:
+        - left_sidecar_column
+        - right_sidecar_column
+      forbidden_zh:
+        - 放入产品 frame 内部
+        - 覆盖产品 UI
+        - 替代真实节点 annotation stub
+
+  anchor_badge_rules:
+    required: true
+    placement_zh: 放在目标组件或 region 外侧 8-12px，不能覆盖产品内容。
+    required_fields:
+      - badge_id
+      - display_index
+      - target_frame
+      - target_component_or_region
+      - sidecar_card_id
+      - source_refs
+
+  leader_line_rules:
+    default_enabled: true
+    purpose_zh: 只表达锚点与侧车卡片的归属，不表达产品跳转。
+    max_length_px: 320
+    if_longer_than_max_zh: 取消实体线，仅保留相同编号匹配。
+    forbidden_zh:
+      - 跨多个 board 的长线
+      - 穿过产品 frame 内容
+      - 表达完整业务流程逻辑
+
+  validators:
+    - id: SIDECAR_001
+      rule_zh: 每个复杂交互必须有 sidecar card。
+    - id: SIDECAR_002
+      rule_zh: 每个 sidecar card 必须有 anchor badge。
+    - id: SIDECAR_003
+      rule_zh: 每个 annotation stub 必须引用 sidecar_card_id。
+    - id: SIDECAR_004
+      rule_zh: sidecar card 不得被当作 Figma Dev Mode annotation。

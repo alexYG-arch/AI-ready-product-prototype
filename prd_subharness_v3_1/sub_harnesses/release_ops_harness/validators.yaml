@@ -1,0 +1,81 @@
+validator_spec_version: "1.0"
+review_status: "approved_by_human_review"
+intent: "确保发布、灰度、监控、回滚、运营和客服准备度可审、可执行、可回退，同时不替需求或指标 harness 做事实批准。"
+
+validators:
+  - id: "release_ops_harness_contract_validator"
+    severity: "blocker"
+    natural_language: "Release Ops 只能维护发布计划、灰度、监控、回滚、运营和客服准备；不能改写需求语义、页面状态或埋点口径。"
+    applies_to:
+      documents:
+        - "product-spec/release-plan.md"
+      owned_fields:
+        - "rollout_strategy"
+        - "monitoring"
+        - "rollback_conditions"
+        - "ops_readiness"
+        - "faq_or_support_notes"
+    machine_rule:
+      check_type: "release_ops_shape_and_boundary"
+      required_release_fields:
+        - "rollout_strategy"
+        - "monitoring"
+        - "rollback_conditions"
+        - "ops_readiness"
+        - "faq_or_support_notes"
+      pass_when:
+        - "Release plan includes required_release_fields or explicit not_applicable reasons."
+        - "GA, rollback condition, and support message changes are marked human_review_required."
+      fail_when:
+        - "Release patch changes requirement behavior, screen state, or event definition."
+        - "Release plan has rollout without monitoring or rollback conditions."
+    human_review:
+      reviewer_prompt: "上线后如何发现问题、谁响应、什么条件下回滚、客服如何解释？"
+      evidence:
+        - "release-plan.md"
+        - "monitoring"
+        - "rollback conditions"
+
+  - id: "release_ops_harness_source_ref_validator"
+    severity: "blocker"
+    natural_language: "发布条件、灰度阶段、回滚条件和客服口径必须来自需求、风险评估、人工 review 或运营决策。"
+    applies_to:
+      documents:
+        - "product-spec/release-plan.md"
+        - "prd_orchestrator/review_decisions/"
+    machine_rule:
+      check_type: "release_source_reference_required"
+      pass_when:
+        - "High-risk release decisions include source_refs or review_decision refs."
+        - "Customer-facing support messages are marked for human review."
+      fail_when:
+        - "GA release or rollback condition has no source/reviewer."
+        - "Customer support message is generated as final copy without review."
+    human_review:
+      reviewer_prompt: "发布策略是否已经由负责人确认，还是只是候选计划？"
+      evidence:
+        - "source_refs"
+        - "review_decisions"
+        - "owner"
+
+  - id: "release_ops_harness_gap_validator"
+    severity: "major"
+    natural_language: "如果发布计划缺少负责人、监控指标、回滚条件、客服 FAQ 或运营准备，需要显式写 gap。"
+    applies_to:
+      documents:
+        - "product-spec/release-plan.md"
+        - "sub_harnesses/release_ops_harness/release_ops_profile.yaml"
+    machine_rule:
+      check_type: "release_gap_capture"
+      pass_when:
+        - "Missing release fields are captured as release gaps or open questions."
+        - "Each gap has owner_candidate and required_before when known."
+      fail_when:
+        - "Release plan is empty or placeholder-only with no gap."
+        - "Rollout proceeds while rollback or monitoring is missing."
+    human_review:
+      reviewer_prompt: "哪些上线前必须补齐的信息还没定？谁负责？什么时候前必须定？"
+      evidence:
+        - "release gaps"
+        - "open_questions"
+        - "required_before"

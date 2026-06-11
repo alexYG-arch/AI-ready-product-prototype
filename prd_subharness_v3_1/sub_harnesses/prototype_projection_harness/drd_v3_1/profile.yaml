@@ -1,0 +1,39 @@
+drd_v3_1_profile:
+  version: "3.1"
+  mode: DRD_MODE
+  mode_zh: 设计评审文档模式
+  authority_role: projection_validation_rules
+  rules_entrypoint: rules/12_complete_deductive_rules.yaml
+  package_manifest: package_manifest.yaml
+  default_behavior:
+    write_real_figma_reactions: false
+    draw_full_pen_lines: false
+    use_annotation_stub: true
+    use_logic_sidecar_cards: true
+    local_materialization_patches_write_prd: false
+  design_system_dependency:
+    adapter_id: SDS_MONOCHROME_ADAPTER_V3_1
+    adapter_ref: ../adapters/design_systems/sds_monochrome_adapter.yaml
+    source_snapshot_ref: ../adapters/design_systems/figma-sds.SOURCE.md
+    required_for_component_binding_validation: true
+    renderer_materialization_deferred: true
+  first_phase_scope:
+    - rules_archive
+    - executable_schemas
+    - sample_artifacts
+    - read_only_cli_validators
+  explicitly_deferred:
+    - role_to_patch_artifact_generation
+    - figma_canvas_rendering
+    - figma_reaction_writing
+    - prd_fact_store_migration
+  schema_entrypoints:
+    screen_role_obligations: schemas/screen_role_obligations.schema.json
+    design_kernel: schemas/design_kernel.schema.json
+    logic_sidecar_card_map: schemas/logic_sidecar_card_map.schema.json
+    local_materialization_patch: schemas/local_materialization_patch.schema.json
+  sample_artifacts:
+    screen_role_obligations: examples/screen_role_obligations.sample.yaml
+    design_kernel: examples/design_kernel.sample.yaml
+    logic_sidecar_card_map: examples/logic_sidecar_card_map.sample.yaml
+    local_materialization_patch: examples/local_materialization_patch.sample.yaml

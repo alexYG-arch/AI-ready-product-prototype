@@ -1,0 +1,27 @@
+patch_contract:
+  schema_version: "2.1"
+  id: "PROTO-010"
+  name: "Figma Diff Ingest"
+  owner: "prototype_projection_harness"
+  input_documents:
+    - "product-spec/figma-sync-map.yaml"
+    - "product-spec/figma-interaction-map.yaml"
+    - "product-spec/prototype.runtime.json"
+    - "prd_orchestrator/patch_control_v2.yaml"
+  output_documents:
+    - "prd_orchestrator/figma_diff_reports/FIGMA-DIFF-*.yaml"
+    - "prd_orchestrator/change_patch_candidates/FIGMA-DIFF-*.candidate.yaml"
+  forbidden_output_documents:
+    - "product-spec/requirements.yaml"
+    - "product-spec/screens.yaml"
+    - "product-spec/metrics.yaml"
+    - "product-spec/events.yaml"
+    - "product-spec/PRD.md"
+  rules:
+    - "Classify diff as visual_only / semantic_candidate / high_risk_candidate / conflict."
+    - "Run three-way diff before creating semantic candidate."
+    - "Route candidate through prd_orchestrator."
+  validators:
+    - "PROTO-FIGMA-003"
+    - "PROTO-FIGMA-004"
+  human_review_required: true

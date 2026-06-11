@@ -1,0 +1,98 @@
+composition_generation_rules:
+  id: COMPOSITION_GENERATION_RULES_V3_1
+  id_zh: 构图生成规则 v3.1
+  purpose_zh: >
+    基于 Design Kernel 生成 DRD 画布、必要状态、系统/宿主表面、侧车列和折叠摘要。
+    构图不是模板套用，而是将设计内核中的义务物化为可审查的画布结构。
+
+  input_artifacts:
+    - design_kernel.yaml
+    - screen_role_obligations.yaml
+    - materialization_manifest.yaml
+    - primitive_libraries
+    - optional_skill_pack
+
+  output_artifacts:
+    - composition_plan.yaml
+    - board_frame_packets.yaml
+    - sidecar_layout_plan.yaml
+    - collapsed_state_summary.yaml
+
+  deductive_rules:
+    - rule_id: COMP_DED_001
+      rule_name_zh: 必要状态由义务生成
+      if:
+        obligation_requires_visual_evidence: true
+      then:
+        generate_frame_or_sidecar_card: true
+      explanation_zh: 只有 PRD、约束、系统交接、反馈、风险或审计需要的状态才生成画布元素。
+
+    - rule_id: COMP_DED_002
+      rule_name_zh: 约束边界生成边界状态组
+      if:
+        constraint_contract_has_min_max: true
+      then:
+        generate_boundary_state_group: true
+        include:
+          - invalid_low
+          - valid_min
+          - valid_max
+          - invalid_high
+      explanation_zh: 不生成所有可能值，只生成边界和越界值。
+
+    - rule_id: COMP_DED_003
+      rule_name_zh: 系统交接生成子表面组
+      if:
+        surface_type: system_handoff
+      then:
+        generate_surface_group: system_or_external_surface
+        include_states:
+          - entry
+          - permission_or_access
+          - selection_or_operation
+          - cancel
+          - return_with_result
+      explanation_zh: 外部/系统表面必须在 DRD 中可见或有明确占位。
+
+    - rule_id: COMP_DED_004
+      rule_name_zh: 复杂逻辑进入侧车卡片
+      if:
+        explanation_complexity: high
+      then:
+        generate_logic_sidecar_card: true
+        use_annotation_stub_only: true
+      explanation_zh: 复杂交互说明不写进产品 UI，也不全部塞进节点 annotation。
+
+    - rule_id: COMP_DED_005
+      rule_name_zh: 纯交互事件折叠为热点与侧车说明
+      if:
+        pure_interaction_event: true
+        visible_state_delta: false
+      then:
+        collapse_to:
+          - interaction_hotspot
+          - annotation_stub
+          - logic_sidecar_card
+      explanation_zh: 点击、复制、确认等动作本身不是状态，除非有可见状态差异。
+
+  board_layout_principles:
+    - principle_id: BOARD_001
+      principle_zh: 一个使用链路可以生成一个 usage_chain_board，而不一定等同于一个页面。
+    - principle_id: BOARD_002
+      principle_zh: 产品 UI 区域、系统表面区域、逻辑侧车列、审计报告区域必须分离。
+    - principle_id: BOARD_003
+      principle_zh: 左右侧车列用于解释逻辑，不属于产品 UI。
+    - principle_id: BOARD_004
+      principle_zh: Anchor Badge 放在组件或 region 附近，Logic Sidecar Card 放在左右侧列。
+
+  output_contract:
+    composition_plan:
+      required_fields:
+        - plan_id
+        - plan_id_zh
+        - source_kernel
+        - board_groups
+        - frame_packets
+        - sidecar_columns
+        - collapsed_items
+        - display_reasons

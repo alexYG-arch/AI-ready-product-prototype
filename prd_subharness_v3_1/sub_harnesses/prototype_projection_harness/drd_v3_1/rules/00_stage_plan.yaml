@@ -1,0 +1,90 @@
+stage_plan:
+  id: DRD_DEDUCTIVE_STAGE_PLAN_V3_1
+  id_zh: DRD 演绎推理阶段计划 v3.1
+  mode: DRD_MODE
+  mode_zh: 设计评审文档模式
+  principle_zh: >
+    先用 PRD source slices 推导使用链路义务，再生成必要状态、侧车说明卡、锚点编号和局部修补。
+    不默认生成可点击原型，不默认画全量 Pen 流程线。
+
+  inserted_stages:
+    - stage_id: ROLE-01
+      name: Screen Role Obligation Inference
+      name_zh: 屏幕角色义务推理
+      insert_after: SURF-02
+      insert_before: DK-01
+      output:
+        - screen_role_obligations.yaml
+        - screen_role_chain.yaml
+        - role_inference_report.yaml
+
+    - stage_id: DK-01
+      name: Design Kernel Build
+      name_zh: 设计内核构建
+      insert_after: ROLE-01
+      output:
+        - design_kernel.yaml
+        - kernel_constraint_report.yaml
+
+    - stage_id: COMP-01
+      name: Composition Generation
+      name_zh: 构图生成
+      insert_after: DK-01
+      output:
+        - composition_plan.yaml
+        - board_frame_packets.yaml
+        - sidecar_layout_plan.yaml
+
+    - stage_id: HOT-01
+      name: Interaction Hotspot Extraction
+      name_zh: 交互热点提取
+      insert_after: COMP-01
+      output:
+        - interaction_hotspot_map.yaml
+        - hotspot_annotation_requirements.yaml
+
+    - stage_id: AUD-01
+      name: Logic Sidecar Audit
+      name_zh: 逻辑侧车审计
+      insert_after: HOT-01
+      output:
+        - logic_sidecar_audit.yaml
+        - audit_findings.yaml
+        - local_patch_recommendations.yaml
+
+    - stage_id: PATCH-01
+      name: Local Materialization Patch
+      name_zh: 局部物化修补
+      insert_after: AUD-01
+      output:
+        - local_materialization_patch.yaml
+        - patched_board_shards
+        - patch_trace.yaml
+
+    - stage_id: RND-06B
+      name: Logic Sidecar Cards
+      name_zh: 逻辑侧车卡片
+      insert_after: RND-06
+      output:
+        - logic_sidecar_card_map.yaml
+        - annotation_stub_map.yaml
+        - anchor_badge_map.yaml
+
+    - stage_id: RND-08A
+      name: Anchor Badge And Leader Line Render
+      name_zh: 锚点编号与短引导线渲染
+      replace_stage: RND-08
+      output:
+        - anchor_leader_line_map.yaml
+        - optional_flow_overview_map.yaml
+
+  skipped_by_default:
+    - stage_id: RND-07
+      name_zh: 真实 Figma 点击交互写入
+      reason_zh: DRD 模式先生成设计评审文档，不默认生成可点击原型。
+
+  authority_boundaries:
+    prd_fact_source_zh: PRD / fact bundle 是事实源。
+    runtime_role_zh: runtime 只做 validation、gap、candidate、review evidence。
+    materialization_role_zh: board/page shards 和 sidecar cards 是投射物化层，不是 PRD 事实。
+    local_patch_role_zh: 局部修补只修补投射层，不回写 PRD。

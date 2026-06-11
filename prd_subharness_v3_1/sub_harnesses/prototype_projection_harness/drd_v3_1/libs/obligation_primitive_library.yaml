@@ -1,0 +1,19 @@
+obligation_primitive_library:
+  id: OBLIGATION_PRIMITIVE_LIBRARY_V3_1
+  obligations:
+    - obligation: surface_obligation
+      obligation_zh: 宿主表面义务
+    - obligation: object_visibility_obligation
+      obligation_zh: 对象可见义务
+    - obligation: constraint_obligation
+      obligation_zh: 约束展示义务
+    - obligation: control_state_obligation
+      obligation_zh: 控件状态义务
+    - obligation: feedback_obligation
+      obligation_zh: 反馈义务
+    - obligation: return_obligation
+      obligation_zh: 返回义务
+    - obligation: async_obligation
+      obligation_zh: 异步义务
+    - obligation: recovery_obligation
+      obligation_zh: 恢复义务

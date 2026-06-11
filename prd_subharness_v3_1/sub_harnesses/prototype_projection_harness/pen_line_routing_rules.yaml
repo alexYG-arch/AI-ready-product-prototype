@@ -1,0 +1,113 @@
+pen_line_routing_rules:
+  version: "2.1"
+  purpose: >-
+    Define documentation-only visual lines for flow maps and optional canvas explanation. These lines may use Figma
+    line/vector/pen-style nodes, but clickable prototype behavior must always come from Figma reactions.
+
+  source_basis:
+    figma_line_api:
+      notes:
+        - "Figma plugin API can create LineNode with figma.createLine()."
+        - "LineNode is a one-dimensional object with length and rotation; it is visual, not a prototype connection."
+      source_urls:
+        - "https://developers.figma.com/docs/plugins/api/properties/figma-createline/"
+        - "https://developers.figma.com/docs/plugins/api/LineNode/"
+
+  line_authority:
+    visual_lines_are_documentation_only: true
+    reaction_map_is_authoritative_for_click_behavior: true
+    line_edit_in_figma_does_not_modify_runtime: true
+    visual_line_changes_are_figma_only_unless_comment_or_reaction_changes_semantic_logic: true
+
+  line_types:
+    primary_navigation:
+      route_priority: 1
+      label_fields: [interaction_id, trigger, destination]
+    conditional_branch:
+      route_priority: 2
+      label_fields: [interaction_id, guard, branch_result]
+      render_as: "single_source_split_after_gateway"
+    state_transition:
+      route_priority: 3
+      label_fields: [transition_id, state_effect]
+    overlay_open:
+      route_priority: 4
+      label_fields: [interaction_id, overlay_id]
+    recovery_or_cancel:
+      route_priority: 5
+      label_fields: [interaction_id, recovery_action]
+    external_or_cross_flow:
+      route_priority: 6
+      label_fields: [interaction_id, target]
+
+  anchor_points:
+    source_anchor_order:
+      - component_edge_closest_to_destination
+      - generated_hotspot_edge
+      - screen_frame_right_edge
+      - screen_frame_bottom_edge_for_error_recovery
+    destination_anchor_order:
+      - destination_frame_left_edge
+      - overlay_frame_left_edge
+      - state_frame_top_edge_for_vertical_state
+      - gateway_node_center
+    self_transition:
+      use_loopback_stub: true
+      avoid_long_return_lines: true
+
+  routing_algorithm:
+    style: "orthogonal_elbow_preferred"
+    avoid_diagonal_spaghetti: true
+    bend_limit_per_edge: 4
+    minimum_gap_from_frame: 28
+    minimum_gap_between_parallel_lines: 18
+    label_position: "near_first_bend_or_gateway"
+    route_assignment:
+      step_1: "classify edge type and priority"
+      step_2: "assign corridor from layout_route_plan"
+      step_3: "allocate lane index inside corridor"
+      step_4: "offset parallel edges by lane index * line_spacing"
+      step_5: "dedupe/merge edges that violate duplicate trigger policy"
+      step_6: "emit line nodes and labels"
+
+  duplicate_and_overlap_controls:
+    same_source_same_trigger:
+      forbidden_as_multiple_independent_lines: true
+      required_solution: "conditional_gateway_or_single_comment_with_branch_summary"
+    same_screen_multistate_repetition:
+      avoid_repeated_long_lines: true
+      strategy:
+        - "draw one canonical line from default state if behavior is identical"
+        - "place inherited-interaction marker on other states"
+        - "draw local state-specific line only if branch behavior differs"
+    line_overlap:
+      detect_by_bounding_box_intersection: true
+      max_overlap_length_px: 24
+      if_overlap:
+        - "increase_lane_offset"
+        - "reroute_to_secondary_corridor"
+        - "bundle_to_gateway_node"
+        - "collapse_to_interaction_spec_panel"
+    line_crossing:
+      max_crossings_per_edge: 2
+      crossing_marker_required: true
+      if_excessive: "reroute_or_collapse"
+
+  gateway_nodes:
+    use_when:
+      - "more_than_5_visible_edges_leave_same_frame"
+      - "same_trigger_has_3_or_more_branches"
+      - "multiple_states_share_identical_outbound_logic"
+    gateway_label_template: "{interaction_id}: {trigger} branches"
+    gateway_comment_required: true
+
+  visual_language:
+    color_tokens_must_come_from_design_semantic_library: true
+    non_color_differentiators_required: true
+    non_color_differentiators:
+      - label_prefix
+      - stroke_dash_style
+      - arrow_cap
+      - line_weight
+      - route_lane
+    accessibility_note: "Do not rely on color alone to differentiate edge meaning."

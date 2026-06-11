@@ -1,0 +1,101 @@
+layout_routing_coupling_rules:
+  version: "2.1"
+  principle: >-
+    Layout and connection routing are one problem. The renderer must reserve routing corridors before writing pages,
+    otherwise duplicate state lines, overlay lines and recovery lines will overlap and become unreadable.
+
+  canvas_model:
+    coordinate_system: "absolute_figma_canvas"
+    unit: "px"
+    flow_direction_default: "left_to_right"
+    grouping_levels:
+      - flow_section
+      - sequence_group
+      - screen_cluster
+      - state_stack
+      - overlay_lane
+      - interaction_spec_lane
+      - route_corridor
+
+  layout_defaults:
+    frame_width: 390
+    frame_height: 844
+    screen_gap_x: 360
+    state_gap_y: 140
+    sequence_gap_x: 520
+    flow_gap_y: 520
+    overlay_lane_gap_x: 260
+    comment_lane_width: 280
+    route_corridor_width: 160
+    line_spacing: 18
+    edge_label_gap: 8
+
+  placement_rules:
+    happy_path:
+      direction: "left_to_right"
+      row: "primary_flow_row"
+      line_style: "primary"
+    same_screen_states:
+      placement: "vertical_state_stack"
+      order:
+        - default
+        - loading
+        - empty
+        - input_invalid
+        - submitting
+        - success
+        - failed
+        - recovery
+      state_transition_lines: "short_vertical_or_elbow"
+    overlays:
+      placement: "right_overlay_lane_near_source_screen"
+      open_overlay_line: "short_elbow_to_overlay_lane"
+      close_overlay_line: "short_return_or_close_marker"
+    error_and_recovery:
+      placement: "below_primary_state_or_error_lane"
+      line_style: "warning_or_recovery"
+    comments:
+      placement: "anchored_to_source_component_plus_summary_lane_when_dense"
+      do_not_block_touch_targets: true
+
+  route_corridor_rules:
+    reserve_before_frame_render: true
+    corridor_types:
+      primary_horizontal: "happy path and main navigation"
+      vertical_state: "state transitions inside same screen cluster"
+      overlay_short: "modal/toast/popover open and close"
+      recovery_back: "retry/back/cancel paths"
+      cross_flow: "rare links that jump sequence groups"
+    routing_order:
+      - primary_horizontal
+      - vertical_state
+      - overlay_short
+      - recovery_back
+      - cross_flow
+    crossing_policy:
+      max_crossings_per_edge: 2
+      crossings_through_frames_allowed: false
+      crossing_labels_required: true
+      if_crossings_exceed_budget: "collapse_to_hub_or_interaction_spec_panel"
+    density_policy:
+      max_visible_edges_leaving_one_frame: 5
+      max_visible_edges_entering_one_frame: 6
+      if_exceeds_density_budget:
+        - "merge_same_trigger_branches"
+        - "bundle_edges_to_gateway_node"
+        - "show_detailed_branches_in_interaction_spec"
+        - "draw_only_primary_edge_on_canvas"
+
+  duplicate_line_policy:
+    same_source_component_same_trigger_same_destination:
+      action: "dedupe_and_share_one_canonical_interaction"
+    same_source_component_same_trigger_different_destinations:
+      action: "merge_as_conditional_edge_with_branch_labels"
+    same_semantic_interaction_across_multiple_states:
+      action: "one_interaction_comment_with_applies_to_state_list; state-specific reactions may remain"
+    same_screen_multistate_repeated_reaction:
+      action: "render state-stack local lines only when outcome differs; otherwise show inherited interaction marker"
+
+  output:
+    layout_route_plan_schema: "schemas/layout_route_plan.schema.json"
+    output_path: "io/output/layout_route_plan.yaml"

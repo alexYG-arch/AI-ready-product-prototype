@@ -1,0 +1,21 @@
+logic_sidecar_card_map:
+  version: "3.1"
+  mode: DRD_MODE
+  board_id: BOARD-BAD
+  cards:
+    - card_id: SC-GOOD
+      anchor_badge_id: BADGE-01
+      title_zh: 合法说明卡
+      trigger_zh: 点击确认
+      guard_zh: 条件不满足
+      action_summary_zh: 展示说明。
+      feedback_timing_zh: before_confirm
+      source_refs:
+        - PRD.md#bad
+  annotation_stubs:
+    - annotation_id: ANN-BAD
+      target_node_or_region: FR-BAD.button
+      interaction_or_state_id: STATE-BAD
+      short_summary_zh: 缺少 sidecar_card_id。
+      source_refs:
+        - PRD.md#bad

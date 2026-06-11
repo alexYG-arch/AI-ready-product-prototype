@@ -1,0 +1,82 @@
+skill_methodology_hook_rules:
+  id: SKILL_METHODOLOGY_HOOK_RULES_V3_1
+  id_zh: 方法论型技能钩子规则 v3.1
+  purpose_zh: >
+    Skill 不写具体业务模板，而提供抽象推理镜头。它可以影响角色义务、设计内核、构图、热点、审计和修补建议，不能改事实、不能绕过 validator。
+
+  allowed_methodology_types:
+    - method_id: boundary_value_analysis
+      method_id_zh: 边界值分析
+      abstraction_level: high
+      applies_to:
+        - ROLE-01
+        - DK-01
+        - AUD-01
+      guidance_zh: 对数量、金额、大小、时间、长度等上下限，检查最小非法、最小合法、最大合法、最大非法。
+
+    - method_id: earliest_fix_point_analysis
+      method_id_zh: 最早可修正点分析
+      abstraction_level: high
+      applies_to:
+        - DK-01
+        - AUD-01
+      guidance_zh: 错误应在用户最早能理解并修正的位置提示，不应延迟到返回后或提交后。
+
+    - method_id: external_surface_expansion
+      method_id_zh: 外部表面展开
+      abstraction_level: high
+      applies_to:
+        - ROLE-01
+        - COMP-01
+      guidance_zh: 系统选择器、权限页、支付、分享、通知、文件/相册选择等不能压成单一按钮结果。
+
+    - method_id: disabled_affordance_explanation
+      method_id_zh: 禁用态解释
+      abstraction_level: high
+      applies_to:
+        - HOT-01
+        - RND-06B
+      guidance_zh: 置灰控件必须有原因、修正方式和对应说明卡。
+
+    - method_id: failure_recovery_chain
+      method_id_zh: 失败恢复链
+      abstraction_level: high
+      applies_to:
+        - ROLE-01
+        - DK-01
+        - AUD-01
+      guidance_zh: 异步失败、权限拒绝、提交失败、上传失败必须有恢复路径或明确无恢复理由。
+
+  forbidden_skill_shapes:
+    - bad_shape_zh: 写死“相册上传必须画 1/3/5/6 张”。
+      reason_zh: 这是业务模板，不是抽象方法论。
+    - bad_shape_zh: 写死某个 UI 组件或视觉布局。
+      reason_zh: Skill 不能覆盖宿主表面推理或组件解析规则。
+    - bad_shape_zh: 把个人经验当 confirmed fact。
+      reason_zh: 个人经验只能影响推理建议，不能成为事实源。
+
+  precedence_order:
+    - hard_safety_and_accessibility_rules
+    - prd_fact_bundle
+    - deductive_rules
+    - validators
+    - project_design_system
+    - skill_methodology_pack
+    - aesthetic_default
+
+  required_trace_fields:
+    - skill_id
+    - method_id
+    - affected_stage
+    - affected_artifact
+    - before_decision_zh
+    - after_decision_zh
+    - reason_zh
+    - source_refs
+    - validator_result
+
+  blocks_if:
+    - skill_changes_product_fact
+    - skill_bypasses_validator
+    - skill_has_no_influence_trace
+    - skill_conflicts_with_prd_and_skill_wins
