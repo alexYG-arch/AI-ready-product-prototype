@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DRD v3.1 Annotation Stub Map",
+  "type": "object",
+  "required": ["annotation_stub_map"],
+  "properties": {
+    "annotation_stub_map": {
+      "type": "object",
+      "required": ["version", "mode", "source_refs", "stubs"],
+      "properties": {
+        "version": { "const": "3.1" },
+        "mode": { "const": "DRD_MODE" },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "stubs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["annotation_id", "target_id", "sidecar_card_id", "body_zh", "source_refs"],
+            "properties": {
+              "annotation_id": { "type": "string", "minLength": 1 },
+              "target_id": { "type": "string", "minLength": 1 },
+              "sidecar_card_id": { "type": "string", "minLength": 1 },
+              "body_zh": { "type": "string", "minLength": 1 },
+              "source_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

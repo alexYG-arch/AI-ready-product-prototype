@@ -1,0 +1,19 @@
+schema:
+  id: build_crew_plan.schema
+  name_zh: 建设队计划 Schema
+  required:
+    - run_id
+    - build_orders
+    - build_order_sequence
+    - generation_trace_path
+  properties:
+    run_id:
+      type: string
+    build_orders:
+      type: list
+      items_type: object
+    build_order_sequence:
+      type: list
+      items_type: string
+    generation_trace_path:
+      type: string

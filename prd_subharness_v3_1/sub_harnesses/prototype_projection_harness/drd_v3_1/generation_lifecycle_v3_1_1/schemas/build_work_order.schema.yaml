@@ -1,0 +1,39 @@
+schema:
+  id: build_work_order.schema
+  name_zh: 生成工单 Schema
+  required:
+    - build_order_id
+    - stage_id
+    - generator_id
+    - assigned_worker_id
+    - target_artifacts
+    - upstream_inputs
+    - minimum_viable_output
+    - self_check
+    - forbidden_writes
+    - generation_trace_required
+  properties:
+    build_order_id:
+      type: string
+    stage_id:
+      type: string
+    generator_id:
+      type: string
+    assigned_worker_id:
+      type: string
+    target_artifacts:
+      type: list
+      items_type: string
+    upstream_inputs:
+      type: list
+      items_type: string
+    minimum_viable_output:
+      type: object
+    self_check:
+      type: list
+      items_type: string
+    forbidden_writes:
+      type: list
+      items_type: string
+    generation_trace_required:
+      type: boolean

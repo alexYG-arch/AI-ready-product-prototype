@@ -1,0 +1,26 @@
+schema:
+  id: loop_finding_schema
+  id_zh: 回路发现项 Schema
+  type: object
+  required:
+    - finding_id
+    - trigger_source
+    - severity
+    - failure_class
+    - affected_artifacts
+    - repair_hint_zh
+  properties:
+    finding_id:
+      type: string
+    trigger_source:
+      type: string
+    severity:
+      enum: [info, minor, major, blocker, semantic_defect]
+    failure_class:
+      type: string
+    affected_artifacts:
+      type: array
+    source_refs:
+      type: array
+    repair_hint_zh:
+      type: string

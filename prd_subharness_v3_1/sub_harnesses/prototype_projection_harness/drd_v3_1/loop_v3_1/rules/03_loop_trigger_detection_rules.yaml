@@ -1,0 +1,98 @@
+loop_trigger_detection_rules:
+  version: '3.1'
+  name_zh: 回路触发检测规则
+
+  trigger_sources:
+    - source: validator_result
+      source_zh: 校验结果
+      examples:
+        - blocker_validator_failed
+        - major_validator_failed
+    - source: logic_sidecar_audit
+      source_zh: 逻辑侧车审计
+      examples:
+        - usage_chain_step_missing
+        - constraint_not_covered
+        - feedback_timing_wrong
+    - source: projection_report
+      source_zh: 投射报告
+      examples:
+        - coverage_missing
+        - map_inconsistency
+        - unresolved_gap
+    - source: layout_analyzer
+      source_zh: 布局分析器
+      examples:
+        - sidecar_column_overflow
+        - leader_line_too_long
+        - badge_overlap
+    - source: skill_trace
+      source_zh: 技能影响追踪
+      examples:
+        - skill_conflicts_with_prd
+        - skill_suggestion_rejected_by_validator
+
+  trigger_normalization:
+    required_fields:
+      - finding_id
+      - trigger_source
+      - severity
+      - failure_class
+      - affected_stage_candidate
+      - affected_artifacts
+      - source_refs
+      - repair_hint_zh
+    severity_values:
+      - info
+      - minor
+      - major
+      - blocker
+      - semantic_defect
+
+  trigger_rules:
+    - id: TRIG-001
+      name_zh: Blocker 必须触发 loop 或停止
+      when:
+        severity: blocker
+      then:
+        loop_required: true
+        human_review_allowed: true
+
+    - id: TRIG-002
+      name_zh: PRD 语义缺陷不进入自动 local patch
+      when:
+        severity: semantic_defect
+      then:
+        loop_required: false
+        emit_semantic_defect_candidate: true
+        stop_auto_patch: true
+
+    - id: TRIG-003
+      name_zh: Layout minor 可局部修补
+      when:
+        failure_class: FC-LAYOUT-READABILITY
+        severity: minor
+      then:
+        route_to: RND-01
+        rerun_scope: affected_board_only
+
+    - id: TRIG-004
+      name_zh: 缺使用链路步骤必须进入推理或构图回路
+      when:
+        failure_class: FC-INFERENCE-MISSING
+      then:
+        route_to:
+          - ROLE-01
+          - DK-01
+          - COMP-01
+        rerun_downstream: true
+
+    - id: TRIG-005
+      name_zh: 缺侧车说明进入说明侧车回路
+      when:
+        failure_class: FC-SIDECAR-MISSING
+      then:
+        route_to:
+          - HOT-01
+          - RND-06B
+        rerun_downstream: true

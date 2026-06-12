@@ -1,0 +1,19 @@
+example:
+  id: standard_form_loop
+  id_zh: 标准表单回路示例
+  selected_profile: LOOP_PROFILE_STANDARD
+  reason_zh: 存在表单输入、校验、提交和轻量错误反馈，但无系统交接。
+  findings:
+    - finding_id: AUD-F-FORM-001
+      failure_class: FC-KERNEL-INCOMPLETE
+      severity: major
+      finding_zh: 必填字段错误没有声明 earliest_fix_surface。
+  repair_plan:
+    route_to:
+      - DK-01
+    patch_type: design_kernel_patch
+    operations:
+      - add_feedback_timing: before_submit
+      - add_earliest_fix_surface: form_field_region
+    rerun_scope: stage_and_downstream
+  expected_exit_zh: 两轮内通过，若重复出现则人工评审。

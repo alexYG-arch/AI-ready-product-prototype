@@ -1,0 +1,51 @@
+package:
+  id: prototype_harness_generation_lifecycle_upgrade_v3_1_1
+  name: Prototype Harness Generation Lifecycle Upgrade
+  name_zh: 原型 Harness 生成生命周期升级包
+  version: "3.1.1"
+  compatible_with:
+    - prototype_harness_loop_upgrade_v3_1
+    - prototype_harness_loop_repair_crew_upgrade_v3_1
+    - prototype_projection_harness_2_1
+  purpose_zh: >
+    补齐 stage 首轮生成层，避免规则和 validator 在 required artifact 缺失时直接阻断。
+    本包新增 Build Crew Generator、Stage Generate Contract、Generation Worker、Generation Trace、
+    Missing Artifact Bootstrap 和 Generate-Validate-Repair 生命周期。
+  entrypoints:
+    codex_prompt: codex/CODEX_GENERATION_LIFECYCLE_UPGRADE_PROMPT.md
+    complete_rules: rules/09_complete_generation_lifecycle_rules.yaml
+    generation_controller: rules/00_stage_generation_controller.yaml
+    build_crew: rules/01_build_crew_generator_rules.yaml
+  artifacts:
+    rules:
+      - rules/00_stage_generation_controller.yaml
+      - rules/01_build_crew_generator_rules.yaml
+      - rules/02_stage_generate_contract.yaml
+      - rules/03_generation_worker_contracts.yaml
+      - rules/04_generation_trace_rules.yaml
+      - rules/05_generate_validate_repair_lifecycle.yaml
+      - rules/06_missing_artifact_bootstrap_rules.yaml
+      - rules/07_regeneration_policy.yaml
+      - rules/08_validator_behavior_update.yaml
+      - rules/09_complete_generation_lifecycle_rules.yaml
+      - rules/10_repair_crew_integration_rules.yaml
+      - rules/11_stage_generator_matrix.yaml
+      - rules/12_generation_safety_rules.yaml
+    schemas:
+      - schemas/stage_generate_contract.schema.yaml
+      - schemas/generation_trace.schema.yaml
+      - ../../schemas/generation_job_queue.schema.json
+      - ../../schemas/model_execution_contract.schema.json
+      - ../../schemas/model_invocation_trace.schema.json
+      - schemas/build_work_order.schema.yaml
+      - schemas/generated_artifact_manifest.schema.yaml
+      - schemas/build_crew_plan.schema.yaml
+    examples:
+      - examples/design_kernel_generation_trace.sample.yaml
+      - examples/sidecar_card_generation.sample.yaml
+      - examples/missing_artifact_bootstrap.sample.yaml
+    docs:
+      - docs/GENERATION_LIFECYCLE_DESIGN_v3_1_1.md
+      - docs/WHY_THIS_WAS_NOT_SEEN_BEFORE.md
+  validation:
+    script: scripts/validate_yaml.py

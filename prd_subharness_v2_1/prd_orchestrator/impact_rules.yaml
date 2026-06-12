@@ -1,0 +1,57 @@
+impact_rules:
+  version: "2.1"
+
+  route_to_rerun:
+    requirement_harness:
+      downstream:
+        - "screen_state_harness"
+        - "metrics_events_harness"
+        - "traceability_harness"
+        - "projection_sync_harness"
+        - "prototype_projection_harness"
+
+    screen_state_harness:
+      downstream:
+        - "traceability_harness"
+        - "projection_sync_harness"
+        - "prototype_projection_harness"
+
+    metrics_events_harness:
+      downstream:
+        - "traceability_harness"
+        - "projection_sync_harness"
+        - "prototype_projection_harness"
+
+    release_ops_harness:
+      downstream:
+        - "projection_sync_harness"
+
+    prd_core_harness:
+      downstream:
+        - "requirement_harness"
+        - "traceability_harness"
+        - "projection_sync_harness"
+        - "prototype_projection_harness"
+
+    traceability_harness:
+      downstream:
+        - "prototype_projection_harness"
+
+    projection_sync_harness:
+      downstream: []
+
+    prototype_projection_harness:
+      downstream: []
+      reverse_sync:
+        route_via: "prd_orchestrator"
+        output_only:
+          - "change_patch_candidate"
+          - "figma_diff_report"
+          - "prototype_projection_report"
+          - "figma_comment_diff_report"
+        forbidden_direct_writes:
+          - "product-spec/requirements.yaml"
+          - "product-spec/screens.yaml"
+          - "product-spec/metrics.yaml"
+          - "product-spec/events.yaml"
+          - "product-spec/PRD.md"

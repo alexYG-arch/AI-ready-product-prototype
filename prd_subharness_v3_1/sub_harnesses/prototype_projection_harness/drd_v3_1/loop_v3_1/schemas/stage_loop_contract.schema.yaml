@@ -1,0 +1,39 @@
+schema:
+  id: stage_loop_contract_schema
+  id_zh: 阶段级回路契约 Schema
+  type: object
+  required:
+    - stage_id
+    - loop_enabled
+    - loop_layer
+    - triggers
+    - repair_actions
+    - writes
+    - forbidden_writes
+    - rerun_scope
+    - revalidate
+    - exit_conditions
+    - max_iterations
+  properties:
+    stage_id:
+      type: string
+    loop_enabled:
+      type: boolean
+    loop_layer:
+      type: string
+    triggers:
+      type: array
+    repair_actions:
+      type: array
+    writes:
+      type: array
+    forbidden_writes:
+      type: array
+    rerun_scope:
+      type: object
+    revalidate:
+      type: array
+    exit_conditions:
+      type: array
+    max_iterations:
+      type: integer

@@ -1,0 +1,186 @@
+prototype_rule_projection_map:
+  id: RULE_PROJECTION_MAP_V3_1_2
+  id_zh: 规则编号投射表 v3.1.2
+  version: "3.1.2"
+  mode: DRD_MODE
+  purpose_zh: >
+    声明同一 rule_id 如何从规则文件贯穿到 generator 输出、loop gate evidence
+    和 validator 错误。生成物缺少本表中的 rule_id trace 时必须被阻断。
+
+  artifacts:
+    prototype_source_brief:
+      stage_id: GEN-SOURCE-SLICES
+      rule_ids: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_003, ROLE_DED_004, ROLE_DED_005, ROLE_DED_006, ROLE_DED_007]
+      validator_commands: [validate-generation-trace, validate-source-coverage]
+    source_slice_index:
+      stage_id: GEN-SOURCE-SLICES
+      rule_ids: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_005, ROLE_DED_006]
+      validator_commands: [validate-generation-job-queue]
+    screen_role_obligations:
+      stage_id: ROLE-01
+      rule_ids: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_003, ROLE_DED_004, ROLE_DED_005, ROLE_DED_006, ROLE_DED_007]
+      validator_commands: [validate-role-obligations]
+    design_kernel:
+      stage_id: DK-01
+      rule_ids: [DK_DED_001, DK_DED_002, DK_DED_003, DK_DED_004]
+      validator_commands: [validate-design-kernel]
+    composition_plan:
+      stage_id: COMP-01
+      rule_ids: [COMP_DED_001, COMP_DED_002, COMP_DED_003, COMP_DED_004, COMP_DED_005]
+      validator_commands: [validate-render-readiness]
+    interaction_hotspot_map:
+      stage_id: HOT-01
+      rule_ids: [HOT_DED_001, HOT_DED_002, HOT_DED_003, HOT_DED_004]
+      validator_commands: [validate-render-readiness]
+    logic_sidecar_card_map:
+      stage_id: RND-06B
+      rule_ids: [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001, PEN_DED_003]
+      validator_commands: [validate-sidecar-cards, validate-render-readiness]
+    annotation_stub_map:
+      stage_id: RND-06
+      rule_ids: [COMP_DED_005, HOT_DED_004, PEN_DED_001, PEN_DED_003]
+      validator_commands: [validate-render-readiness]
+    anchor_badge_map:
+      stage_id: RND-08A
+      rule_ids: [HOT_DED_004, PEN_DED_002, PEN_DED_003]
+      validator_commands: [validate-render-readiness]
+    local_materialization_patch:
+      stage_id: PATCH-01
+      rule_ids: [PATCH_DED_001, PATCH_DED_002, PATCH_DED_003, PATCH_DED_004]
+      validator_commands: [validate-local-patches, validate-local-loop-patches]
+    runtime:
+      stage_id: GEN-RUNTIME-PAYLOAD
+      rule_ids: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_005, ROLE_DED_006, COMP_DED_001, COMP_DED_002, COMP_DED_003, COMP_DED_005, HOT_DED_001, HOT_DED_002, HOT_DED_003, HOT_DED_004]
+      validator_commands: [validate-runtime, validate-render-readiness]
+    payload:
+      stage_id: GEN-RUNTIME-PAYLOAD
+      rule_ids: [COMP_DED_001, COMP_DED_002, COMP_DED_003, COMP_DED_004, COMP_DED_005, HOT_DED_001, HOT_DED_002, HOT_DED_003, HOT_DED_004, PEN_DED_001, PEN_DED_002, PEN_DED_003]
+      validator_commands: [validate-render-readiness]
+    interaction_carrier_map:
+      stage_id: GEN-CARRIER-HANDOFF-DRAFT
+      rule_ids: [CARRIER_DED_001, CARRIER_DED_002, HANDOFF_DED_001, OPS_DED_001]
+      validator_commands: [validate-carrier-map, validate-render-readiness]
+    system_handoff_map:
+      stage_id: GEN-CARRIER-HANDOFF-DRAFT
+      rule_ids: [HANDOFF_DED_001, HANDOFF_DED_002, CARRIER_DED_001, CAPABILITY_DED_001]
+      validator_commands: [validate-system-handoff-map, validate-render-readiness]
+    user_operation_chain:
+      stage_id: GEN-CARRIER-HANDOFF-DRAFT
+      rule_ids: [OPS_DED_001, HANDOFF_DED_001, HANDOFF_DED_002, CARRIER_DED_001]
+      validator_commands: [validate-operation-chain, validate-render-readiness]
+    capability_assessment:
+      stage_id: GEN-CARRIER-HANDOFF-DRAFT
+      rule_ids: [CAPABILITY_DED_001, HANDOFF_DED_001]
+      validator_commands: [validate-capability-assessment, validate-render-readiness]
+    prototype_review_view_model:
+      stage_id: GEN-REVIEW-VIEW-MODEL
+      rule_ids: [REVIEW_DED_001, CARRIER_DED_001, CARRIER_DED_002, HANDOFF_DED_001, HANDOFF_DED_002, OPS_DED_001, CAPABILITY_DED_001]
+      validator_commands: [validate-review-view-model]
+    model_contract_promotion_report:
+      stage_id: GEN-CONTRACT-PROMOTION
+      rule_ids: [CONTRACT_DED_001, CARRIER_DED_001, HANDOFF_DED_001, OPS_DED_001, CAPABILITY_DED_001]
+      validator_commands: [validate-contract-promotion]
+    source_coverage_report:
+      stage_id: GEN-COVERAGE-MANIFEST
+      rule_ids: [ROLE_DED_002, ROLE_DED_004, COMP_DED_001, COMP_DED_002, HOT_DED_002, HOT_DED_004]
+      validator_commands: [validate-source-coverage, validate-render-readiness]
+    generation_job_queue:
+      stage_id: GEN-COVERAGE-MANIFEST
+      rule_ids: [ROLE_DED_001, ROLE_DED_002, DK_DED_001, DK_DED_002, COMP_DED_001, COMP_DED_002, HOT_DED_001, HOT_DED_004, PATCH_DED_001]
+      validator_commands: [validate-generation-job-queue]
+    generation_trace:
+      stage_id: GEN-COVERAGE-MANIFEST
+      rule_ids: [ROLE_DED_001, ROLE_DED_002, DK_DED_001, COMP_DED_001, COMP_DED_002, HOT_DED_001, HOT_DED_004]
+      validator_commands: [validate-generation-trace]
+    generated_artifact_manifest:
+      stage_id: GEN-COVERAGE-MANIFEST
+      rule_ids: [ROLE_DED_001, DK_DED_001, COMP_DED_001, HOT_DED_001, PATCH_DED_001]
+      validator_commands: [validate-generated-artifact-manifest]
+    model_execution_contract:
+      stage_id: GEN-MODEL-REVIEW
+      rule_ids: [ROLE_DED_007, COMP_DED_004, COMP_DED_005, PEN_DED_001, CONTRACT_DED_001]
+      validator_commands: [validate-model-execution-contract]
+    model_invocation_trace:
+      stage_id: GEN-MODEL-REVIEW
+      rule_ids: [ROLE_DED_007, COMP_DED_004, COMP_DED_005, PEN_DED_001, CONTRACT_DED_001]
+      validator_commands: [validate-model-invocation-trace]
+    model_surface_ownership:
+      stage_id: GEN-MODEL-SURFACE-OWNERSHIP
+      rule_ids: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_007, COMP_DED_004, CARRIER_DED_001, CARRIER_DED_002, CONTRACT_DED_001]
+      validator_commands: [validate-model-surface-ownership, validate-model-stage-coverage]
+    model_user_journey:
+      stage_id: GEN-MODEL-USER-JOURNEY
+      rule_ids: [ROLE_DED_002, ROLE_DED_004, ROLE_DED_007, HOT_DED_001, HOT_DED_004, HANDOFF_DED_001, HANDOFF_DED_002, OPS_DED_001, CONTRACT_DED_001]
+      validator_commands: [validate-model-user-journey, validate-model-stage-coverage]
+    model_interaction_state_machine:
+      stage_id: GEN-MODEL-INTERACTION-STATE-MACHINE
+      rule_ids: [ROLE_DED_004, ROLE_DED_007, HOT_DED_001, HOT_DED_002, HOT_DED_003, HOT_DED_004, CARRIER_DED_001, OPS_DED_001, CONTRACT_DED_001]
+      validator_commands: [validate-model-interaction-state-machine, validate-model-stage-coverage]
+    model_component_blueprint:
+      stage_id: GEN-MODEL-COMPONENT-BLUEPRINT
+      rule_ids: [ROLE_DED_007, COMP_DED_001, COMP_DED_002, COMP_DED_004, COMP_DED_005, PEN_DED_001, CARRIER_DED_001, REVIEW_DED_001, CONTRACT_DED_001]
+      validator_commands: [validate-model-component-blueprint, validate-model-stage-coverage]
+    codex_inference_review:
+      stage_id: GEN-MODEL-REVIEW
+      rule_ids: [ROLE_DED_007, COMP_DED_004, COMP_DED_005, PEN_DED_001]
+      validator_commands: [validate-model-invocation-trace]
+    projection_report:
+      stage_id: RND-09
+      rule_ids: [ROLE_DED_001, DK_DED_001, COMP_DED_001, HOT_DED_001, PATCH_DED_001, PEN_DED_001]
+      validator_commands: [validate-generation-trace]
+
+  stages:
+    ROLE-01: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_003, ROLE_DED_004, ROLE_DED_005, ROLE_DED_006, ROLE_DED_007]
+    DK-01: [DK_DED_001, DK_DED_002, DK_DED_003, DK_DED_004]
+    COMP-01: [COMP_DED_001, COMP_DED_002, COMP_DED_003, COMP_DED_004, COMP_DED_005]
+    HOT-01: [HOT_DED_001, HOT_DED_002, HOT_DED_003, HOT_DED_004]
+    AUD-01: [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001]
+    PATCH-01: [PATCH_DED_001, PATCH_DED_002, PATCH_DED_003, PATCH_DED_004]
+    RND-06B: [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001, PEN_DED_003]
+    RND-08A: [HOT_DED_004, PEN_DED_002, PEN_DED_003]
+    RND-07: [PEN_DED_001, PEN_DED_002, PEN_DED_003]
+    GEN-MODEL-SURFACE-OWNERSHIP: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_007, COMP_DED_004]
+    GEN-MODEL-USER-JOURNEY: [ROLE_DED_002, ROLE_DED_004, ROLE_DED_007, HOT_DED_001, HOT_DED_004]
+    GEN-MODEL-INTERACTION-STATE-MACHINE: [ROLE_DED_004, ROLE_DED_007, HOT_DED_001, HOT_DED_002, HOT_DED_003, HOT_DED_004]
+    GEN-MODEL-COMPONENT-BLUEPRINT: [ROLE_DED_007, COMP_DED_001, COMP_DED_002, COMP_DED_004, COMP_DED_005, PEN_DED_001]
+    GEN-CARRIER-HANDOFF-DRAFT: [CARRIER_DED_001, CARRIER_DED_002, HANDOFF_DED_001, HANDOFF_DED_002, OPS_DED_001, CAPABILITY_DED_001]
+    GEN-CONTRACT-PROMOTION: [CONTRACT_DED_001, CARRIER_DED_001, HANDOFF_DED_001, OPS_DED_001, CAPABILITY_DED_001]
+    GEN-REVIEW-VIEW-MODEL: [REVIEW_DED_001, CARRIER_DED_001, CARRIER_DED_002, HANDOFF_DED_001, HANDOFF_DED_002, OPS_DED_001, CAPABILITY_DED_001]
+
+  failure_classes:
+    FC-INFERENCE-MISSING: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_005, ROLE_DED_006, COMP_DED_001]
+    FC-KERNEL-INCOMPLETE: [DK_DED_001, DK_DED_002, DK_DED_003, DK_DED_004]
+    FC-MATERIALIZATION-MISSING: [COMP_DED_001, COMP_DED_002, COMP_DED_003, COMP_DED_004, COMP_DED_005, PATCH_DED_001]
+    FC-HOTSPOT-ANCHOR-MISSING: [HOT_DED_001, HOT_DED_002, HOT_DED_003, HOT_DED_004, PEN_DED_002, PEN_DED_003]
+    FC-SIDECAR-MISSING: [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001]
+    FC-LAYOUT-READABILITY: [COMP_DED_004, PEN_DED_001, PEN_DED_003]
+    FC-SCHEMA-INTEGRITY: [ROLE_DED_001, DK_DED_001, COMP_DED_001, HOT_DED_001, PATCH_DED_001]
+    FC-SEMANTIC-PRD-DEFECT: [PATCH_DED_004]
+    FC-CARRIER-MISSING: [CARRIER_DED_001, CARRIER_DED_002]
+    FC-HANDOFF-MISSING: [HANDOFF_DED_001, HANDOFF_DED_002]
+    FC-OPERATION-CHAIN-TOO-COARSE: [OPS_DED_001]
+    FC-CAPABILITY-UNKNOWN-WITHOUT-REVIEW: [CAPABILITY_DED_001]
+    FC-REVIEW-PROJECTION-LEAK: [REVIEW_DED_001]
+    FC-CONTRACT-PROMOTION-MISSING: [CONTRACT_DED_001]
+
+  validators:
+    validate-runtime: [ROLE_DED_001, COMP_DED_001, HOT_DED_001]
+    validate-render-readiness: [COMP_DED_001, COMP_DED_002, COMP_DED_005, HOT_DED_001, HOT_DED_004, PEN_DED_001, PEN_DED_002]
+    validate-source-coverage: [ROLE_DED_002, ROLE_DED_004, COMP_DED_001, COMP_DED_002, HOT_DED_002]
+    validate-generation-job-queue: [ROLE_DED_001, DK_DED_001, COMP_DED_001, HOT_DED_001, PATCH_DED_001]
+    validate-generation-trace: [ROLE_DED_001, DK_DED_001, COMP_DED_001, HOT_DED_001]
+    validate-model-surface-ownership: [ROLE_DED_001, ROLE_DED_002, ROLE_DED_007, COMP_DED_004]
+    validate-model-user-journey: [ROLE_DED_002, ROLE_DED_004, ROLE_DED_007, HOT_DED_001, HOT_DED_004]
+    validate-model-interaction-state-machine: [ROLE_DED_004, ROLE_DED_007, HOT_DED_001, HOT_DED_002, HOT_DED_003, HOT_DED_004]
+    validate-model-component-blueprint: [ROLE_DED_007, COMP_DED_001, COMP_DED_002, COMP_DED_004, COMP_DED_005, PEN_DED_001]
+    validate-model-stage-coverage: [ROLE_DED_007, COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001]
+    validate-generated-artifact-manifest: [ROLE_DED_001, DK_DED_001, COMP_DED_001, HOT_DED_001, PATCH_DED_001]
+    validate-carrier-map: [CARRIER_DED_001, CARRIER_DED_002]
+    validate-system-handoff-map: [HANDOFF_DED_001, HANDOFF_DED_002]
+    validate-operation-chain: [OPS_DED_001, HANDOFF_DED_001]
+    validate-capability-assessment: [CAPABILITY_DED_001]
+    validate-review-view-model: [REVIEW_DED_001, CARRIER_DED_001, HANDOFF_DED_001, OPS_DED_001]
+    validate-contract-promotion: [CONTRACT_DED_001, CARRIER_DED_001, HANDOFF_DED_001, OPS_DED_001, CAPABILITY_DED_001]
+    validate-loop-finding: [PATCH_DED_001, PATCH_DED_004]
+    validate-repair-plan: [PATCH_DED_001, PATCH_DED_002, PATCH_DED_003, PATCH_DED_004]
+    validate-loop-manifest: [PATCH_DED_001, PATCH_DED_004]

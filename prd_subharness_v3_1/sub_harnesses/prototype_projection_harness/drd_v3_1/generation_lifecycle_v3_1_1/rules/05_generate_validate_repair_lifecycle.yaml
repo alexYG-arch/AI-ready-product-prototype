@@ -1,0 +1,66 @@
+generate_validate_repair_lifecycle:
+  id: GVR-01
+  name: Generate Validate Repair Lifecycle
+  name_zh: 生成-校验-修补生命周期
+  version: "3.1.1"
+
+  stage_lifecycle:
+    - phase: prepare
+      phase_zh: 准备输入
+      owner: stage_generation_controller
+    - phase: generate
+      phase_zh: 生成首轮产物
+      owner: build_crew_generator
+    - phase: self_check
+      phase_zh: 生成后自检
+      owner: generation_worker
+    - phase: validate
+      phase_zh: 正式校验
+      owner: validator
+    - phase: diagnose_on_failure
+      phase_zh: 失败诊断
+      owner: loop_controller
+    - phase: repair
+      phase_zh: 局部修补
+      owner: repair_crew_generator
+    - phase: dry_run_patch
+      phase_zh: 试施工补丁
+      owner: repair_crew_generator
+    - phase: apply_patch
+      phase_zh: 应用补丁
+      owner: assigned_repair_worker
+    - phase: revalidate
+      phase_zh: 复验
+      owner: validator
+    - phase: report
+      phase_zh: 报告
+      owner: projection_report_generator
+
+  phase_rules:
+    - id: GVR-001
+      rule_zh: validate 必须发生在 generate/self_check 之后。
+      severity: blocker
+    - id: GVR-002
+      rule_zh: repair 必须发生在 validate 失败之后，不得用于首轮 artifact 缺失。
+      severity: blocker
+    - id: GVR-003
+      rule_zh: 每次 repair 后必须 revalidate。
+      severity: blocker
+    - id: GVR-004
+      rule_zh: 每个 phase 必须写入 lifecycle_log。
+      severity: major
+    - id: GVR-005
+      rule_zh: 如果 self_check 失败，不能进入正式 validator，应先生成 generation_gap 或重生成。
+      severity: major
+
+  lifecycle_log_fields:
+    - run_id
+    - stage_id
+    - phase
+    - input_hash
+    - output_hash
+    - status
+    - gaps
+    - findings
+    - patch_ids
+    - next_phase

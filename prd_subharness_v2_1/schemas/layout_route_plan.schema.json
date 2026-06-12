@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Layout Route Plan",
+  "type": "object",
+  "required": [
+    "layout_route_plan"
+  ],
+  "properties": {
+    "layout_route_plan": {
+      "type": "object",
+      "required": [
+        "version",
+        "runtime_hash",
+        "canvas",
+        "sequence_groups",
+        "route_corridors",
+        "edge_routes"
+      ],
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "runtime_hash": {
+          "type": "string"
+        },
+        "canvas": {
+          "type": "object"
+        },
+        "sequence_groups": {
+          "type": "array"
+        },
+        "route_corridors": {
+          "type": "array"
+        },
+        "edge_routes": {
+          "type": "array"
+        },
+        "density_report": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

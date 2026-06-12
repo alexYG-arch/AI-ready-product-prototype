@@ -1,0 +1,102 @@
+validator_spec_version: "1.0"
+review_status: "approved_by_human_review"
+intent: "把需求事实整理为 pattern-based C-EARS、语义槽、fit criteria、验收和 verification，同时阻止无来源 confirmed 需求、空泛需求和伪精确数值。"
+
+validators:
+  - id: "requirement_harness_contract_validator"
+    severity: "blocker"
+    natural_language: "Requirement Harness 只能生成或修改需求候选、已确认需求、需求 gaps 和验收/验证字段；页面状态、埋点口径和发布策略必须交给下游 harness。"
+    applies_to:
+      documents:
+        - "product-spec/requirements.yaml"
+      owned_fields:
+        - "requirements"
+        - "requirement_candidates"
+        - "unknowns"
+        - "change_log"
+    machine_rule:
+      check_type: "requirement_shape_and_boundary"
+      required_fields_for_p0_p1:
+        - "source_refs"
+        - "pattern_id"
+        - "cn_ears"
+        - "semantic_slots"
+        - "evidence_status"
+        - "gaps"
+        - "acceptance"
+        - "verification"
+        - "quality_profile"
+        - "quantification_review"
+      pass_when:
+        - "Rendered C-EARS is assembled into requirement_candidates or requirements before quality review."
+        - "P0/P1 requirements include all required_fields_for_p0_p1."
+        - "pattern_id exists in requirement_pattern_registry.yaml."
+        - "semantic_slots satisfy the selected pattern required_slots."
+        - "Inferred slots are marked candidate/assumed and include inference_notes."
+        - "quantification_review is quantified, not_quantifiable_yet, or not_applicable with required review fields."
+      fail_when:
+        - "Requirement patch writes screen state, metric target, or release rollout as confirmed fact."
+        - "C-EARS text exists without a structured requirement record."
+        - "P0/P1 requirement misses acceptance or verification."
+        - "pattern_id is unknown or semantic_slots are incomplete."
+        - "Inferred slot, acceptance, or downstream handoff is written as confirmed without review."
+        - "C-EARS is rendered but quantification_review is missing."
+    human_review:
+      reviewer_prompt: "这条需求是否可验收、可验证、来源清楚，并且没有越界定义页面/指标/发布细节？"
+      evidence:
+        - "requirement candidate"
+        - "pattern registry entry"
+        - "acceptance"
+        - "verification"
+
+  - id: "requirement_harness_source_ref_validator"
+    severity: "blocker"
+    natural_language: "任何 confirmed 需求都必须能追溯到旧 PRD、变更请求或人工 review decision；LLM 只能产出 candidate，不能自己批准。"
+    applies_to:
+      documents:
+        - "product-spec/requirements.yaml"
+        - "prd_orchestrator/review_decisions/"
+    machine_rule:
+      check_type: "confirmed_requirement_source"
+      pass_when:
+        - "Confirmed requirements have source_refs."
+        - "Candidate requirements remain candidate_not_approved until review_decision approves them."
+      fail_when:
+        - "status is confirmed or approved and source_refs is empty."
+        - "unknown or assumption is written into cn_ears as a confirmed behavior."
+    human_review:
+      reviewer_prompt: "是否存在没有来源却被写成 confirmed 的需求？"
+      evidence:
+        - "source_refs"
+        - "review_decisions"
+        - "change_request"
+
+  - id: "requirement_harness_gap_validator"
+    severity: "major"
+    natural_language: "需求语句如果只有 C-EARS 句式但没有落成 REQ 记录，或缺少 fit criteria、验收、verification、质量画像、数值化审核，应进入 review_required/gap，而不是通过质量门禁。"
+    applies_to:
+      documents:
+        - "product-spec/requirements.yaml"
+        - "sub_harnesses/requirement_harness/cears_quality_profile.yaml"
+    machine_rule:
+      check_type: "requirement_quality_gate"
+      pass_when:
+        - "Each item is a structured requirement record with required fields from requirement_record_after_cears."
+        - "No vague term appears without fit_criteria."
+        - "Each requirement has quality_profile."
+        - "Numeric targets are sourced or marked TBD_AFTER_BASELINE."
+        - "Each confirmed requirement has quantification_review with a valid decision."
+      fail_when:
+        - "C-EARS exists but requirement record fields are missing."
+        - "Vague terms appear without fit_criteria."
+        - "quality_profile is missing."
+        - "Numeric target appears without baseline/source."
+        - "Requirement skips quantification_review after C-EARS."
+    human_review:
+      reviewer_prompt: "这条需求是‘语法上像需求’，还是已经完成验收、验证和数值化审核？"
+      evidence:
+        - "cn_ears"
+        - "fit_criteria"
+        - "quality_profile"
+        - "quantification_review"
+        - "quality_gate_report"

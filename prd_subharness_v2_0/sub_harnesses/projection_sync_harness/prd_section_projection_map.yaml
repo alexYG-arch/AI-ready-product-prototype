@@ -1,0 +1,68 @@
+prd_section_projection_map:
+  profile_id: "AI_READY_PRD_FULL_TEMPLATE_V1"
+
+  mappings:
+    "1. TL;DR":
+      source_documents:
+        - "product-spec/requirements.yaml"
+        - "product-spec/metrics.yaml"
+        - "prd_orchestrator/prd_open_questions.yaml"
+    "2. 背景与问题":
+      source_documents:
+        - "product-spec/legacy_prd.md"
+        - "product-spec/requirements.yaml"
+    "3. 用户与场景":
+      source_documents:
+        - "product-spec/requirements.yaml"
+        - "product-spec/screens.yaml"
+    "4. 目标与指标":
+      source_documents:
+        - "product-spec/requirements.yaml"
+        - "product-spec/metrics.yaml"
+    "5. Scope / Non-goals":
+      source_documents:
+        - "product-spec/requirements.yaml"
+    "7. 页面语义说明":
+      source_documents:
+        - "product-spec/screens.yaml"
+        - "product-spec/events.yaml"
+    "8. 功能需求":
+      source_documents:
+        - "product-spec/requirements.yaml"
+    "9. 非功能需求":
+      source_documents:
+        - "product-spec/requirements.yaml"
+        - "product-spec/metrics.yaml"
+    "10. 数据与实验":
+      source_documents:
+        - "product-spec/metrics.yaml"
+        - "product-spec/events.yaml"
+    "11. 验收标准":
+      source_documents:
+        - "product-spec/requirements.yaml"
+        - "product-spec/traceability.md"
+    "12. 发布计划":
+      source_documents:
+        - "product-spec/release-plan.md"
+    "13. 风险、依赖、开放问题":
+      source_documents:
+        - "product-spec/requirements.yaml"
+        - "prd_orchestrator/open_questions.yaml"
+    "14. 变更记录":
+      source_documents:
+        - "prd_orchestrator/patch_reports"
+        - "prd_orchestrator/change_patches"
+
+  review_rules:
+    - rule_id: "PROJ-MAP-001"
+      natural_language: "每个 PRD 章节都必须声明允许使用的来源文档。"
+      machine_mapping:
+        check_type: "section_has_source_documents"
+      human_review_prompt: "这个章节的内容应该从哪些事实源来？有没有遗漏或越权来源？"
+
+    - rule_id: "PROJ-MAP-002"
+      natural_language: "如果章节来源是 forbidden_as_fact_source 的投影文档，只能作为可读参考，不能作为 confirmed fact 来源。"
+      machine_mapping:
+        check_type: "forbidden_fact_source_guard"
+        registry: "prd_orchestrator/document_registry.yaml"
+      human_review_prompt: "PRD 投影是否引用了不能作为事实源的文档来确认新事实？"

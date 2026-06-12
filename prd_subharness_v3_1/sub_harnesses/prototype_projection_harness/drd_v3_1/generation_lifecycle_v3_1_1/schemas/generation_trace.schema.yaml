@@ -1,0 +1,46 @@
+schema:
+  id: generation_trace.schema
+  name_zh: 生成追踪 Schema
+  required:
+    - trace_id
+    - artifact_id
+    - artifact_path
+    - generator_id
+    - generator_worker_id
+    - generated_at
+    - input_hashes
+    - source_refs
+    - decisions
+    - output_hash
+    - self_check_result
+  properties:
+    trace_id:
+      type: string
+    artifact_id:
+      type: string
+    artifact_path:
+      type: string
+    generator_id:
+      type: string
+    generator_worker_id:
+      type: string
+    generated_at:
+      type: string
+    input_hashes:
+      type: object
+    source_refs:
+      type: list
+      items_type: string
+    decisions:
+      type: list
+      items_type: object
+    skill_influence:
+      type: list
+      items_type: object
+    generation_gaps:
+      type: list
+      items_type: object
+    output_hash:
+      type: string
+    self_check_result:
+      type: object

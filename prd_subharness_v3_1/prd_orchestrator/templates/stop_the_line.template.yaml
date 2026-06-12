@@ -1,0 +1,16 @@
+stop_the_line:
+  schema_version: "1.0"
+  stop_id: ""
+  run_id: ""
+  stage: ""
+  sub_harness: ""
+  severity: "blocker"
+  reason: ""
+  required_next_action: ""
+  resume_condition: ""
+  owner: ""
+  source_artifacts: []
+  status: "open"
+  created_at: ""
+  resolved_by_review_decision: ""
+  notes: ""

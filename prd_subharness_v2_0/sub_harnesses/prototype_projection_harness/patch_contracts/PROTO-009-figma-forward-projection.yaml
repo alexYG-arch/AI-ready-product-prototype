@@ -1,0 +1,30 @@
+patch_contract:
+  schema_version: "2.0"
+  id: "PROTO-009"
+  name: "Figma Forward Projection"
+  owner: "prototype_projection_harness"
+  input_documents:
+    - "product-spec/prototype.runtime.json"
+    - "product-spec/figma-sync-map.yaml"
+    - "product-spec/figma-interaction-map.yaml"
+    - "product-spec/component-binding-map.yaml"
+  output_documents:
+    - "product-spec/figma-sync-map.yaml"
+    - "product-spec/figma-interaction-map.yaml"
+    - "prd_orchestrator/prototype_projection_reports/PROTO-009-*.yaml"
+  external_artifact:
+    type: "figma_file"
+    writes_frames: true
+    writes_reactions: true
+    writes_flow_map: true
+  rules:
+    - "Patch by semantic_id; never full rebuild by default."
+    - "Figma node metadata must include semantic_id/runtime_hash/source_refs."
+    - "Every interaction_graph edge must be projected as reaction or explicit gap."
+    - "Flow Map annotation cannot replace real reaction."
+  validators:
+    - "PROTO-INTERACTION-001"
+    - "PROTO-INTERACTION-002"
+    - "PROTO-INTERACTION-003"
+    - "PROTO-FIGMA-001"
+    - "PROTO-FIGMA-002"

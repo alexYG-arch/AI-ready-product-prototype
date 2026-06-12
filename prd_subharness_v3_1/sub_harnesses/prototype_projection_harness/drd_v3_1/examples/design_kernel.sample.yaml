@@ -2,62 +2,75 @@ design_kernel:
   version: "3.1"
   mode: DRD_MODE
   source_refs:
-    - PRD.md#upload-image-rule
+    - PRD.md#tag-selection-rule
+  rule_trace:
+    trace_version: "3.1.1"
+    projection_map_id: RULE_PROJECTION_MAP_V3_1_1
+    artifact_key: design_kernel
+    stage_id: DK-01
+    rule_ids: &dk_rule_ids [DK_DED_001, DK_DED_002, DK_DED_003, DK_DED_004]
   task_contract:
-    task_id: TASK-IMAGE-UPLOAD-3-5
-    task_name_zh: 上传 3-5 张图片
-    user_goal_zh: 用户从系统相册选择合规数量的图片并返回业务页上传。
-    action: select_and_upload
-    object: images
+    task_id: TASK-TAG-SELECTION-2-4
+    task_name_zh: 选择 2 到 4 个标签
+    user_goal_zh: 用户选择合规数量的标签后继续提交。
+    action: select
+    object: tags
     source_refs:
-      - PRD.md#upload-image-rule
+      - PRD.md#tag-selection-rule
+    rule_ids: *dk_rule_ids
   surface_contract:
-    surface_type: system_handoff
-    surface_type_zh: 系统相册选择器
-    entry_surface: app_upload_entry
-    return_surface: app_upload_page
+    surface_type: app_screen_flow
+    surface_type_zh: 应用页面流
+    entry_surface: tag_selection_page
+    return_surface: tag_result_page
     forbidden_realizations:
-      - 只画上传入口和成功/失败提示。
-      - 等返回业务页后才提示选择数量不符合。
+      - 只画提交按钮，不展示数量边界。
+      - 等提交后才提示选择数量不符合。
+    rule_ids: *dk_rule_ids
   constraint_contracts:
-    - constraint_id: C-MIN-3
-      constraint_zh: 至少选择 3 张
-      applies_at: photo_picker_selection
-      applies_at_zh: 相册选择器选择阶段
-      earliest_fix_surface: photo_picker
+    - constraint_id: C-MIN-2
+      constraint_zh: 至少选择 2 个标签
+      applies_at: tag_selection
+      applies_at_zh: 标签选择阶段
+      earliest_fix_surface: tag_selection_page
       feedback_timing: before_confirm
-      valid_condition: selected_count >= 3
-      invalid_condition: selected_count < 3
-    - constraint_id: C-MAX-5
-      constraint_zh: 最多选择 5 张
-      applies_at: photo_picker_selection
-      applies_at_zh: 相册选择器选择阶段
-      earliest_fix_surface: photo_picker
+      valid_condition: selected_count >= 2
+      invalid_condition: selected_count < 2
+      rule_ids: *dk_rule_ids
+    - constraint_id: C-MAX-4
+      constraint_zh: 最多选择 4 个标签
+      applies_at: tag_selection
+      applies_at_zh: 标签选择阶段
+      earliest_fix_surface: tag_selection_page
       feedback_timing: on_select_or_before_confirm
-      valid_condition: selected_count <= 5
-      invalid_condition: selected_count > 5
+      valid_condition: selected_count <= 4
+      invalid_condition: selected_count > 4
+      rule_ids: *dk_rule_ids
   control_contracts:
-    - control_id: picker_confirm_button
-      control_zh: 选择器确认按钮
+    - control_id: tag_confirm_button
+      control_zh: 标签确认按钮
       affected_by_constraints:
-        - C-MIN-3
-        - C-MAX-5
+        - C-MIN-2
+        - C-MAX-4
       required_states:
         - disabled_or_blocked_for_invalid
         - enabled_for_valid
+      rule_ids: *dk_rule_ids
   feedback_contracts:
     - feedback_id: FB-COUNT-LOW
-      feedback_zh: 至少还需选择 2 张
+      feedback_zh: 至少还需选择 1 个标签
       severity: blocking
       timing: before_confirm
-      surface: photo_picker
-      anchor: picker_confirm_button
+      surface: tag_selection_page
+      anchor: tag_confirm_button
+      rule_ids: *dk_rule_ids
     - feedback_id: FB-COUNT-HIGH
-      feedback_zh: 最多只能选择 5 张
+      feedback_zh: 最多只能选择 4 个标签
       severity: blocking
       timing: on_select_or_before_confirm
-      surface: photo_picker
-      anchor: selected_image_grid
+      surface: tag_selection_page
+      anchor: selected_tag_list
+      rule_ids: *dk_rule_ids
   forbidden_realizations:
-    - 只画上传入口和成功/失败提示。
-    - 把系统选择器压成一个普通按钮结果。
+    - 只画提交按钮，不展示数量边界。
+    - 把标签选择压成一个普通按钮结果。

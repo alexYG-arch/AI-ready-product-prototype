@@ -1,0 +1,43 @@
+complete_loop_rules:
+  version: '3.1'
+  name_zh: 完整反馈回路规则聚合
+
+  include_files:
+    - 00_loop_engineering_principles.yaml
+    - 01_loop_taxonomy_layers.yaml
+    - 02_loop_profile_policy.yaml
+    - 03_loop_trigger_detection_rules.yaml
+    - 04_failure_classification_rules.yaml
+    - 05_loop_router_rules.yaml
+    - 06_patch_type_rules.yaml
+    - 07_rerun_scope_rules.yaml
+    - 08_stage_loop_contracts.yaml
+    - 09_revalidation_exit_rules.yaml
+    - 10_loop_manifest_rules.yaml
+    - 11_loop_safety_governance_rules.yaml
+    - 12_harness_macro_loop_rules.yaml
+    - 13_skill_loop_influence_rules.yaml
+    - 14_loop_observability_rules.yaml
+
+  one_sentence_contract_zh: >
+    规则发现问题，回路修补投射，校验证明修补有效，报告解释修补决策；loop 默认不写 PRD，只修补原型物化层。
+
+  required_controller:
+    id: LOOP-00
+    name: Feedback Loop Controller
+    name_zh: 反馈回路控制器
+    must_run_after:
+      - RND-09
+      - AUD-01
+      - any_blocker_validator
+    must_emit:
+      - loop_manifest.yaml
+      - repair_plan.yaml
+      - rerun_scope.yaml
+      - final_loop_report.yaml
+
+  default_profile_selection_zh: >
+    三档 profile 是默认策略：simple / standard / complex。实现必须通过 profile_selection_algorithm 选择，而不是硬编码固定档位。
+
+  default_safety_zh: >
+    自动修补禁止写 PRD fact store；PRD 语义缺陷必须生成 candidate 并进入人工评审。

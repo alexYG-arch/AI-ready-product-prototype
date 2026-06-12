@@ -1,0 +1,101 @@
+loop_taxonomy_layers:
+  version: '3.1'
+  name_zh: 反馈回路分层体系
+
+  responsibility_layers:
+    - loop_layer: inference_loop
+      loop_layer_zh: 推理回路
+      purpose_zh: 修复 PRD 规则到使用链路义务推导中的漏项。
+      typical_failures:
+        - missing_boundary_obligation
+        - missing_system_surface_obligation
+        - missing_recovery_obligation
+      owning_stages:
+        - ROLE-01
+        - DK-01
+
+    - loop_layer: design_kernel_loop
+      loop_layer_zh: 设计内核回路
+      purpose_zh: 修复约束时机、最早可修正表面、控件状态、禁止实现。
+      typical_failures:
+        - wrong_feedback_timing
+        - missing_earliest_fix_surface
+        - missing_commit_control_state
+      owning_stages:
+        - DK-01
+
+    - loop_layer: materialization_loop
+      loop_layer_zh: 物化回路
+      purpose_zh: 修复已推导但没有生成 frame、surface group、hotspot、sidecar 的问题。
+      typical_failures:
+        - required_frame_missing
+        - system_surface_not_materialized
+        - boundary_state_not_displayed
+      owning_stages:
+        - COMP-01
+        - HOT-01
+        - PATCH-01
+
+    - loop_layer: annotation_sidecar_loop
+      loop_layer_zh: 说明侧车回路
+      purpose_zh: 修复 annotation stub、logic sidecar card、anchor badge 的缺失或不可读。
+      typical_failures:
+        - sidecar_card_missing
+        - annotation_stub_missing
+        - anchor_badge_missing
+        - source_refs_missing_in_card
+      owning_stages:
+        - RND-06
+        - RND-06B
+        - HOT-01
+
+    - loop_layer: layout_loop
+      loop_layer_zh: 布局回路
+      purpose_zh: 修复侧栏溢出、leader line 太长、badge 覆盖、画布密度过高。
+      typical_failures:
+        - sidecar_column_overflow
+        - leader_line_too_long
+        - badge_overlaps_control
+        - board_density_too_high
+      owning_stages:
+        - RND-01
+        - RND-06B
+        - RND-08A
+
+    - loop_layer: validation_repair_loop
+      loop_layer_zh: 校验修补回路
+      purpose_zh: 将 validator failure 转成 finding、route 和 repair plan。
+      typical_failures:
+        - blocker_validator_failed
+        - major_validator_failed
+      owning_stages:
+        - LOOP-00
+        - RND-09
+
+    - loop_layer: governance_loop
+      loop_layer_zh: 治理回路
+      purpose_zh: 防止无限循环、越权写 PRD、skill 覆盖事实、非幂等修补。
+      typical_failures:
+        - max_iterations_reached
+        - non_idempotent_patch
+        - prd_fact_write_attempt
+        - skill_override_fact_attempt
+      owning_stages:
+        - LOOP-00
+
+  execution_scope_layers:
+    - scope: stage_micro_loop
+      scope_zh: 阶段内微循环
+      description_zh: 当前 stage 内部生成、校验、修补、复验。
+    - scope: adjacent_stage_loop
+      scope_zh: 相邻阶段回流
+      description_zh: 下游发现问题，回到最近责任 stage。
+    - scope: board_shard_loop
+      scope_zh: 画布/页面分片回路
+      description_zh: 只重跑受影响 board/page shard。
+    - scope: harness_macro_loop
+      scope_zh: 整体 Harness 大回路
+      description_zh: 汇总所有 finding 并执行全局迭代。
+    - scope: human_review_loop
+      scope_zh: 人工评审回路
+      description_zh: 自动 loop 不能安全解决时停止并请求人工确认。

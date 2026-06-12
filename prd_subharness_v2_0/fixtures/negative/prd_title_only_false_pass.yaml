@@ -1,0 +1,8 @@
+fixture_id: "prd_title_only_false_pass"
+bad_prd:
+  sections:
+    - "## 1. TL;DR"
+    - "## 2. 背景与问题"
+  content: "only headings"
+expected_result: "blocked"
+reason: "PRD.md 不得只有标题或占位符。"

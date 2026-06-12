@@ -1,0 +1,32 @@
+missing_artifact_bootstrap_sample:
+  sample_id: SAMPLE-MISSING-ARTIFACT-BOOTSTRAP-001
+  sample_id_zh: 缺失产物自举示例
+
+  validator_observation:
+    stage_id: DK-01
+    expected_artifact: design_kernel.yaml
+    observed: missing
+    old_behavior_zh: validator 直接 block
+    new_behavior_zh: 返回 needs_generation，并调用 GEN-DESIGN-KERNEL
+
+  bootstrap_action:
+    generator_id: GEN-DESIGN-KERNEL
+    assigned_worker_id: GEN-WORKER-KERNEL
+    inputs:
+      - screen_role_obligation_map.yaml
+      - source_slices/SLICE-IMAGE-UPLOAD.yaml
+      - surface_decisions.yaml
+    outputs:
+      - design_kernel.yaml
+      - kernel_constraint_report.yaml
+    minimum_viable_output:
+      - kernel_id
+      - host_surface
+      - constraints
+      - required_controls
+      - feedback_timing
+      - source_refs
+
+  result:
+    status: generated
+    next_phase: self_check_then_validate

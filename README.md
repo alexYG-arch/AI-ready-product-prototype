@@ -1,6 +1,6 @@
 # AI-ready Product PRD Sub-Harness
 
-本仓库是 **AI-ready PRD 子 Harness 架构 v1.0** 的工程包。它把单体 PRD mini harness 拆成一个总控 Orchestrator 和七个专业 subharness，用来管理旧 PRD 迁移、自然语言变更、结构化需求、页面状态、指标埋点、发布计划、追踪矩阵和 `PRD.md` 同步。
+本仓库是 **AI-ready PRD 子 Harness 架构 v2.1** 的工程包。它把单体 PRD mini harness 拆成一个总控 Orchestrator 和多个专业 subharness，用来管理旧 PRD 迁移、自然语言变更、结构化需求、页面状态、指标埋点、发布计划、追踪矩阵、`PRD.md` 同步，以及 prototype runtime / Figma 原型投射。
 
 核心原则很简单：
 
@@ -9,15 +9,16 @@
 - 高风险变更必须人工 review。
 - 人工批准前，不得写入 instance `product-spec/`、关闭 open question、确认 metric target 或 tombstone item。
 - 真实 PRD 的输入、候选、报告和输出放在独立 `prd_instances/<instance_id>/`，不要污染 harness 工程包。
+- `prototype_projection_harness` 只做投影和 diff candidate，不拥有需求、页面、指标、事件或 `PRD.md` 事实。
 
-完整工程入口在 [`prd_subharness_v1_0/`](prd_subharness_v1_0/)。
+当前默认工程入口在 [`prd_subharness_v2_1/`](prd_subharness_v2_1/)；[`prd_subharness_v2_0/`](prd_subharness_v2_0/) 保留为 v2.0 回滚基线，[`prd_subharness_v1_0/`](prd_subharness_v1_0/) 保留为 v1.0 回滚基线。
 
 ## 快速开始
 
 安装校验依赖：
 
 ```bash
-cd prd_subharness_v1_0
+cd prd_subharness_v2_1
 python3 -m pip install -r requirements-dev.txt
 ```
 
@@ -27,6 +28,12 @@ python3 -m pip install -r requirements-dev.txt
 python3 scripts/prd_control/harnessctl.py status
 python3 scripts/prd_control/harnessctl.py validate-rule-specs
 python3 scripts/prd_control/harnessctl.py validate-fixtures
+python3 scripts/prd_control/prototypectl.py status
+python3 scripts/prd_control/prototypectl.py validate-runtime
+python3 scripts/prd_control/prototypectl.py validate-interactions
+python3 scripts/prd_control/prototypectl.py validate-uxwriter --catalog sub_harnesses/prototype_projection_harness/examples/uxwriter-copy-catalog.sample.yaml
+python3 scripts/prd_control/prototypectl.py validate-layout --plan sub_harnesses/prototype_projection_harness/examples/layout-route-plan.sample.yaml
+python3 scripts/prd_control/prototypectl.py validate-comments --map sub_harnesses/prototype_projection_harness/examples/figma-comment-map.yaml
 ```
 
 创建真实 PRD instance：
@@ -57,7 +64,7 @@ python3 scripts/prd_control/harnessctl.py --instance-root ../prd_instances/my-pr
 ## 架构总览
 
 ```text
-prd_subharness_v1_0/
+prd_subharness_v2_1/
   prd_orchestrator/
     routing_rules.yaml
     harness_registry.yaml
@@ -74,6 +81,7 @@ prd_subharness_v1_0/
     release_ops_harness/
     projection_sync_harness/
     traceability_harness/
+    prototype_projection_harness/
 ```
 
 Orchestrator 只负责接收源 PRD 或变更请求、路由、影响分析、局部重跑计划、review/tombstone 记录和多文档隔离。它不生成产品事实。
@@ -91,6 +99,7 @@ Subharness 负责各自领域的候选产物、validator、patch contract、上�
 | `release_ops_harness` | 管理灰度、监控、回滚、运营、客服和发布条件。 | 上线前准备；灰度策略；监控和告警；回滚条件；客服 FAQ/运营口径。 | GA、回滚条件、客服口径等高风险项必须人工 review。不能改需求语句、页面状态或埋点口径。 |
 | `projection_sync_harness` | 将结构化 YAML 投影为完整 14 章 `PRD.md`，并校验模板结构和同步覆盖。 | 从 `requirements.yaml`、`screens.yaml`、`metrics.yaml`、`events.yaml` 等生成可读 PRD；检查 PRD 是否只有标题或占位符；同步 YAML 到 Markdown。 | `PRD.md` 只是事实投影，不能反向创造 confirmed fact，不能关闭 open question。每章事实必须能回链到允许来源。 |
 | `traceability_harness` | 管理追踪矩阵、依赖图、影响分析、局部重跑计划和 tombstone。 | 评估变更影响；确认目标、需求、页面、事件、测试、监控之间的覆盖关系；删除需求后的 tombstone 和局部重跑。 | 不能生成需求内容或批准产品决策。任何 requirement/screen/metric/event/release/delete 变更都应有 impact analysis 和 partial rerun plan。 |
+| `prototype_projection_harness` | 管理 two-pass prototype runtime、renderer stage plan、Figma frame/reaction/comment/line 投射、component binding、Figma diff candidate。 | 从 structured facts 生成可交互原型；校验 runtime/interaction/UX writer/layout/comments；把 Figma 修改回流为 candidate。 | 原型和 Figma 不是事实源；comments 和 visual lines 只是审阅/说明层；Figma diff 只能生成 report/candidate，必须经 owner harness review 后才能改事实。 |
 
 ## 场景路由
 
@@ -189,6 +198,30 @@ projection_sync_harness
 
 规则：只允许从结构化事实投影到 `PRD.md`，不得在 Markdown 中新增 YAML 没有的 confirmed fact。
 
+### 更新或生成可交互原型
+
+```text
+structured facts
+→ prototype_projection_harness
+→ prototype.runtime.json
+→ figma-sync-map.yaml / figma-interaction-map.yaml
+→ Figma frames / reactions / Flow Map / Interaction Spec
+```
+
+规则：runtime 只能从结构化事实和受控 binding 生成；真实可点击交互必须来自 `interaction_graph.edges[]`。
+
+### Figma 修改回流
+
+```text
+Figma semantic diff
+→ figma_diff_report
+→ change_patch_candidate
+→ prd_orchestrator route
+→ owner fact harness review
+```
+
+规则：Figma 修改不得直接写 `requirements.yaml`、`screens.yaml`、`metrics.yaml`、`events.yaml` 或 `PRD.md`。
+
 ## 使用规则
 
 ### 1. 人工 Review 门槛
@@ -206,7 +239,7 @@ projection_sync_harness
 
 ### 2. Instance 与 Run 隔离
 
-`prd_subharness_v1_0/` 是 harness 工程包，只存放规则、contract、validator、模板和脚本。真实 PRD 输入、候选、报告、impact、rerun plan、日志和输出应放在：
+`prd_subharness_v2_0/` 是当前 harness 工程包，只存放规则、contract、validator、模板和脚本。真实 PRD 输入、候选、报告、impact、rerun plan、日志和输出应放在：
 
 ```text
 prd_instances/<instance_id>/
@@ -236,13 +269,13 @@ Orchestrator 会按关键词和 ownership 路由：
 
 ## 推荐阅读顺序
 
-- PM / 需求评审者：[`prd_subharness_v1_0/USER_GUIDE_NON_BUILDERS.md`](prd_subharness_v1_0/USER_GUIDE_NON_BUILDERS.md)
-- 场景路径：[`prd_subharness_v1_0/SCENARIO_PATHS.md`](prd_subharness_v1_0/SCENARIO_PATHS.md)
-- 架构说明：[`prd_subharness_v1_0/ARCHITECTURE_v1.0.md`](prd_subharness_v1_0/ARCHITECTURE_v1.0.md)
-- Codex 执行：[`prd_subharness_v1_0/EXECUTION_GUIDE_CODEX.md`](prd_subharness_v1_0/EXECUTION_GUIDE_CODEX.md)
-- LLM Runtime 执行：[`prd_subharness_v1_0/EXECUTION_GUIDE_LLM_RUNTIME.md`](prd_subharness_v1_0/EXECUTION_GUIDE_LLM_RUNTIME.md)
-- 搭建者指南：[`prd_subharness_v1_0/BUILDER_SETUP_GUIDE.md`](prd_subharness_v1_0/BUILDER_SETUP_GUIDE.md)
+- PM / 需求评审者：[`prd_subharness_v2_0/USER_GUIDE_NON_BUILDERS.md`](prd_subharness_v2_0/USER_GUIDE_NON_BUILDERS.md)
+- 场景路径：[`prd_subharness_v2_0/SCENARIO_PATHS.md`](prd_subharness_v2_0/SCENARIO_PATHS.md)
+- 架构说明：[`prd_subharness_v2_0/ARCHITECTURE_v2.0_PROTOTYPE_PROJECTION.md`](prd_subharness_v2_0/ARCHITECTURE_v2.0_PROTOTYPE_PROJECTION.md)
+- Codex 执行：[`prd_subharness_v2_0/EXECUTION_GUIDE_CODEX.md`](prd_subharness_v2_0/EXECUTION_GUIDE_CODEX.md)
+- LLM Runtime 执行：[`prd_subharness_v2_0/EXECUTION_GUIDE_LLM_RUNTIME.md`](prd_subharness_v2_0/EXECUTION_GUIDE_LLM_RUNTIME.md)
+- 搭建者指南：[`prd_subharness_v2_0/BUILDER_SETUP_GUIDE.md`](prd_subharness_v2_0/BUILDER_SETUP_GUIDE.md)
 
 ## 当前状态
 
-该版本定位为 v1.0 harness 工程基线。规则、contract、validator、patch contract、fixtures 和人工 review 入口已经纳入基线；真实产品 PRD 请通过独立 instance 运行。
+该版本定位为 v2.0 harness 工程基线。v1.0 规则治理、source baseline、instance/run 隔离继续保留；v2.0 新增 prototype projection、Figma reaction map、Figma diff candidate 和 Patch Control v2。

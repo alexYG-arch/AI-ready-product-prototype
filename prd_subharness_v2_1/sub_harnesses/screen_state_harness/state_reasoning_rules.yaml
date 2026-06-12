@@ -1,0 +1,191 @@
+state_reasoning_rules:
+  chain:
+    - "Feature"
+    - "Task"
+    - "Journey Step"
+    - "Decision Point"
+    - "Interaction"
+    - "Trigger"
+    - "System Operation"
+    - "Outcome"
+    - "State"
+    - "Recovery"
+    - "Acceptance/Event"
+
+  required_state_dimensions:
+    - "data_state"
+    - "network_state"
+    - "permission_state"
+    - "input_state"
+    - "request_lifecycle"
+    - "consistency_state"
+    - "recovery_state"
+    - "platform_device_state"
+
+  completeness_definition:
+    minimum_complete_chain:
+      - field: "feature"
+        natural_language: "该状态属于哪个功能。"
+      - field: "task"
+        natural_language: "用户试图完成什么任务。"
+      - field: "journey_step"
+        natural_language: "状态发生在用户旅程的哪个步骤。"
+      - field: "decision_point"
+        natural_language: "用户或系统在这里需要判断什么。"
+      - field: "interaction"
+        natural_language: "用户执行了什么交互，或系统接收了什么输入。"
+      - field: "trigger"
+        natural_language: "什么事件触发状态变化。"
+      - field: "system_operation"
+        natural_language: "系统执行了什么操作。"
+      - field: "outcome"
+        natural_language: "操作结果是什么。"
+      - field: "state"
+        natural_language: "页面展示的明确状态。"
+      - field: "recovery"
+        natural_language: "失败、阻塞或异常时用户如何恢复。"
+      - field: "acceptance_or_event"
+        natural_language: "如何验收该状态，或用哪个事件观测它。"
+
+    pass_criteria:
+      - "关键路径状态必须覆盖 minimum_complete_chain 的全部字段。"
+      - "异常路径状态必须至少覆盖 trigger、outcome、state、recovery、copy、acceptance_or_event。"
+      - "每个非成功状态必须有 user_visible_feedback 和 next_action。"
+      - "每个状态必须声明 source_refs、requirement_refs 或 candidate_reason。"
+      - "不适用的字段必须写 not_applicable reason，不能留空。"
+
+    fail_criteria:
+      - "只有页面名称或状态名称，没有触发、结果或恢复路径。"
+      - "失败/错误/超时/无权限状态没有用户可见反馈。"
+      - "状态链不能回连到需求、验收或事件。"
+      - "关键状态维度缺失且没有 screen_state_gap。"
+      - "把推测的页面状态写成 confirmed。"
+
+  scenario_required_states:
+    form_or_input:
+      natural_language: "表单、搜索、验证码、登录等输入类流程。"
+      states:
+        - "initial"
+        - "editing"
+        - "validating"
+        - "submitting"
+        - "success"
+        - "field_error"
+        - "request_error"
+        - "disabled"
+        - "retry_or_recovery"
+    data_fetching:
+      natural_language: "列表、详情、报表等读取数据流程。"
+      states:
+        - "loading"
+        - "success_with_data"
+        - "empty"
+        - "partial_data"
+        - "error"
+        - "refreshing"
+        - "offline_or_timeout"
+    permission_or_privacy:
+      natural_language: "权限、隐私、授权、敏感数据访问流程。"
+      states:
+        - "permission_unknown"
+        - "requesting_permission"
+        - "permission_granted"
+        - "permission_denied"
+        - "fallback"
+        - "privacy_notice"
+    async_operation:
+      natural_language: "异步任务、支付、上传、生成、批处理等流程。"
+      states:
+        - "queued"
+        - "processing"
+        - "completed"
+        - "failed"
+        - "cancelled"
+        - "retrying"
+        - "status_unknown"
+
+  reasoning_completion_rules:
+    - rule_id: "SCREEN-INFER-001"
+      name: "infer_missing_required_states"
+      natural_language: "根据场景类型补全可能缺失的必备状态，但补出的状态必须标为 candidate，并说明由哪个 scenario_required_states 规则推导。"
+      allowed_inputs:
+        - "scenario_type"
+        - "scenario_required_states"
+        - "requirement_refs"
+      output_fields:
+        - "state_candidates"
+        - "screen_state_gaps"
+        - "inference_notes"
+      pass_condition: "缺失状态被补为 candidate 或 gap，并带有推断来源。"
+      fail_condition: "把场景推断出的状态直接写为 confirmed，或不说明为什么需要该状态。"
+      human_review_prompt: "这个状态是设计/需求明确要求，还是根据场景规则补出的候选？"
+
+    - rule_id: "SCREEN-INFER-002"
+      name: "infer_recovery_path"
+      natural_language: "错误、失败、超时、无权限、离线等非成功状态必须推导恢复路径候选；不能确定时写 recovery gap。"
+      allowed_inputs:
+        - "state"
+        - "outcome"
+        - "error_or_blocker_reason"
+        - "requirement_refs"
+      output_fields:
+        - "recovery"
+        - "next_action"
+        - "screen_state_gaps"
+      pass_condition: "每个非成功状态有 recovery/next_action，或有明确 gap。"
+      fail_condition: "非成功状态只有错误文案，没有恢复路径或 gap。"
+      human_review_prompt: "用户失败后能做什么？如果不能确定，是否记录为 gap？"
+
+    - rule_id: "SCREEN-INFER-003"
+      name: "infer_copy_and_accessibility_candidate"
+      natural_language: "可以根据状态和恢复路径生成文案与可访问性候选，但必须标为 candidate_copy/candidate_a11y，等待设计或人工 review。"
+      allowed_inputs:
+        - "state"
+        - "user_visible_feedback"
+        - "recovery"
+        - "accessibility context"
+      output_fields:
+        - "candidate_copy"
+        - "candidate_a11y"
+        - "review_required"
+      pass_condition: "文案和可访问性补全被标为候选，并有 review_required。"
+      fail_condition: "推断文案直接写成 final copy 或 approved accessibility requirement。"
+      human_review_prompt: "这段文案/可访问性规则是否需要设计、内容或合规确认？"
+
+    - rule_id: "SCREEN-INFER-004"
+      name: "infer_acceptance_or_event_link"
+      natural_language: "状态链末端需要验收或观测事件；如果没有明确来源，可以生成 acceptance/event link candidate，并交给 requirement 或 metrics_events harness review。"
+      allowed_inputs:
+        - "state_reasoning_chain"
+        - "requirement_refs"
+        - "event_candidates"
+      output_fields:
+        - "acceptance_or_event_candidate"
+        - "target_sub_harness_candidate"
+        - "open_questions"
+      pass_condition: "状态链末端有验收/事件候选或 gap，并路由给对应 harness。"
+      fail_condition: "状态链没有验收/事件，也没有 gap 或下游 handoff。"
+      human_review_prompt: "这个状态如何被验收或观测？需要交给 requirement/data harness 吗？"
+
+  rule_mappings:
+    - rule_id: "SCREEN-CHAIN-001"
+      natural_language: "关键页面状态必须满足 completeness_definition：从用户任务一路推导到系统结果、页面状态、恢复路径和验收/事件。"
+      machine_mapping:
+        check_type: "required_chain_steps_present"
+        required_steps_from: "state_reasoning_rules.completeness_definition.minimum_complete_chain"
+        pass_criteria_from: "state_reasoning_rules.completeness_definition.pass_criteria"
+        fail_criteria_from: "state_reasoning_rules.completeness_definition.fail_criteria"
+      human_review_prompt: "这条状态链是否满足最低完整字段？若有字段不适用，是否写明 reason？"
+
+    - rule_id: "SCREEN-DIMENSION-002"
+      natural_language: "关键页面至少要考虑数据、网络、权限、输入、请求生命周期、一致性、恢复、平台设备这些状态维度。"
+      machine_mapping:
+        check_type: "state_dimension_coverage"
+        required_dimensions_from: "state_reasoning_rules.required_state_dimensions"
+      human_review_prompt: "有没有用户会遇到但文档没覆盖的 loading、empty、error、offline、permission 或 retry 状态？"
+
+    - rule_id: "SCREEN-COPY-A11Y-003"
+      natural_language: "用户可见的错误、空态、成功、禁用和恢复路径必须有文案与可访问性考虑。"
+      machine_mapping:
+        check_type: "copy_and_accessibility_required_for_user_visible_states"
+      human_review_prompt: "用户看到这个状态时是否知道发生了什么、下一步能做什么？"

@@ -1,0 +1,49 @@
+validator_behavior_update:
+  id: VAL-BEHAVIOR-01
+  name: Validator Behavior Update
+  name_zh: 校验器行为更新
+  version: "3.1.1"
+
+  purpose_zh: >
+    防止 validator 在产物缺失时直接阻断。校验器只负责校验已生成产物；产物缺失时应先交给 Stage Generation Controller。
+
+  default_missing_artifact_behavior:
+    before_zh: 直接 block。
+    after_zh: 调用 generator；只有无 generator、上游缺失、validate_only 或 generator 失败时才 block。
+
+  rules:
+    - id: VAL-GEN-001
+      rule_zh: validator 发现 required artifact 缺失时，应返回 missing_artifact finding，而不是直接 hard fail。
+      severity: major
+    - id: VAL-GEN-002
+      rule_zh: Stage Generation Controller 接收到 missing_artifact finding 后，应调用对应 generator。
+      severity: blocker
+    - id: VAL-GEN-003
+      rule_zh: generator 输出后，validator 再执行正式 schema / semantic / authority 校验。
+      severity: blocker
+    - id: VAL-GEN-004
+      rule_zh: 如果 generator 失败且产物是 blocker artifact，validator 可以 hard fail，但必须引用 generation_gap_id。
+      severity: blocker
+    - id: VAL-GEN-005
+      rule_zh: validator 不得自己填补字段；字段补全属于 generator 或 repair worker。
+      severity: blocker
+
+  validator_response_contract:
+    artifact_missing:
+      status: needs_generation
+      required_fields:
+        - artifact_path
+        - expected_generator_id
+        - stage_id
+        - missing_reason_zh
+    artifact_generated_but_invalid:
+      status: invalid
+      route_to: repair_crew
+    artifact_generated_and_valid:
+      status: pass
+    generation_failed:
+      status: blocker
+      required_fields:
+        - generation_gap_id
+        - generator_id
+        - failure_reason_zh

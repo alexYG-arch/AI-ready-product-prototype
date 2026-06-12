@@ -26,12 +26,17 @@ prototype_harness_drd_deductive_complete_rules:
       role_zh: 归纳辅助
     - file: rules/11_validators.yaml
       role_zh: 验证器
+    - file: rules/14_carrier_handoff_operation_chain_rules.yaml
+      role_zh: 承载面、系统交接、真实操作链与能力前提
+    - file: rules/13_rule_projection_map.yaml
+      role_zh: 规则编号投射表
 
   core_contract_zh: >
     PRD 仍是事实源；演绎规则从 PRD source slices 推导 screen role obligations；
     Design Kernel 把义务转成设计契约；Composition 生成必要状态画布；Hotspots 标定关键锚点；
     Logic Sidecar Audit 检查遗漏；Local Patch 修补投射层；Annotation Stub 只做节点短说明；
-    Logic Sidecar Card 承载完整逻辑；Pen 线只保留短引导线或主流程概览线。
+    Logic Sidecar Card 承载完整逻辑；Pen 线只保留短引导线或主流程概览线；
+    rule_id 必须投射到 generator、gate 和 validator，缺 trace 即阻断。
 
   execution_summary:
     - step_zh: 加载 PRD source slices 和 fact bundle。

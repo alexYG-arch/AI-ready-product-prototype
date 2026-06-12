@@ -1,0 +1,13 @@
+plan_id: RP-BAD-MISSING-PATCH-SET
+loop_version: "3.1"
+gate_only: true
+findings:
+  - finding_id: LOOP-FINDING-BAD-001
+    failure_class: FC-SIDECAR-MISSING
+selected_profile: LOOP_PROFILE_STANDARD
+route_targets:
+  - RND-06B
+rerun_scope:
+  scope: affected_board_only
+revalidate:
+  - SIDECAR-VAL-001

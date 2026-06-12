@@ -1,0 +1,827 @@
+validator_spec_version: '2.1'
+validator_group_spec: prototype_stage_grouped
+review_status: approved_by_human_review
+intent: 把结构化 PRD facts 安全投射为 two-pass prototype runtime、renderer stage plan、Figma
+  reactions/comments/visual lines，并把 Figma diff 回流为 candidate；不得把原型或 Figma 当成事实源。
+validators:
+  runtime_validators:
+  - id: PROTO-RUNTIME-001
+    stage: runtime_generation
+    severity: blocker
+    natural_language: Runtime is generated from allowed sources only
+    applies_to:
+      documents: &id001
+      - product-spec/prototype.runtime.base.json
+      - product-spec/prototype.runtime.json
+      - sub_harnesses/prototype_projection_harness/runtime_generation_rules.yaml
+      - sub_harnesses/prototype_projection_harness/runtime_inference_policy.yaml
+      - sub_harnesses/prototype_projection_harness/prototype_runtime_profile.yaml
+    machine_rule:
+      check_type: proto_runtime_001
+      pass_when:
+      - Runtime is generated from allowed sources only is satisfied with explicit
+        source, lineage, review, or projection evidence.
+      fail_when:
+      - Runtime is generated from allowed sources only is missing, contradicted, or
+        used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RUNTIME-001：Runtime is generated from allowed sources
+        only 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: &id002
+      - generation_lineage
+      - reasoning_completion
+      - source_refs
+      - prototype_gaps
+  - id: PROTO-RUNTIME-002
+    stage: runtime_generation
+    severity: blocker
+    natural_language: Base runtime and completed runtime lineage are present
+    applies_to:
+      documents: *id001
+    machine_rule:
+      check_type: proto_runtime_002
+      pass_when:
+      - Base runtime and completed runtime lineage are present is satisfied with explicit
+        source, lineage, review, or projection evidence.
+      fail_when:
+      - Base runtime and completed runtime lineage are present is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RUNTIME-002：Base runtime and completed runtime lineage
+        are present 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id002
+  - id: PROTO-RUNTIME-003
+    stage: runtime_generation
+    severity: blocker
+    natural_language: Every inferred state or interaction has inference_basis, confidence
+      and source_refs
+    applies_to:
+      documents: *id001
+    machine_rule:
+      check_type: proto_runtime_003
+      pass_when:
+      - Every inferred state or interaction has inference_basis, confidence and source_refs
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Every inferred state or interaction has inference_basis, confidence and source_refs
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RUNTIME-003：Every inferred state or interaction has
+        inference_basis, confidence and source_refs 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma
+        当成事实源？
+      evidence: *id002
+  - id: PROTO-RUNTIME-004
+    stage: runtime_generation
+    severity: blocker
+    natural_language: Every screen state covers required state dimensions or explicit
+      not_applicable reason
+    applies_to:
+      documents: *id001
+    machine_rule:
+      check_type: proto_runtime_004
+      pass_when:
+      - Every screen state covers required state dimensions or explicit not_applicable
+        reason is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Every screen state covers required state dimensions or explicit not_applicable
+        reason is missing, contradicted, or used to create/overwrite PRD facts without
+        owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RUNTIME-004：Every screen state covers required state
+        dimensions or explicit not_applicable reason 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma
+        当成事实源？
+      evidence: *id002
+  - id: PROTO-RUNTIME-005
+    stage: runtime_generation
+    severity: blocker
+    natural_language: Every runtime interaction has source, trigger, ordered actions,
+      destination/state effect and fallback/gap
+    applies_to:
+      documents: *id001
+    machine_rule:
+      check_type: proto_runtime_005
+      pass_when:
+      - Every runtime interaction has source, trigger, ordered actions, destination/state
+        effect and fallback/gap is satisfied with explicit source, lineage, review,
+        or projection evidence.
+      fail_when:
+      - Every runtime interaction has source, trigger, ordered actions, destination/state
+        effect and fallback/gap is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RUNTIME-005：Every runtime interaction has source,
+        trigger, ordered actions, destination/state effect and fallback/gap 是否已由 2.1
+        原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id002
+  uxwriter_validators:
+  - id: PROTO-UXW-001
+    stage: uxwriter_copy_stage
+    severity: blocker
+    natural_language: UX writer copy catalog validates against uxwriter_copy_catalog.schema.json
+    applies_to:
+      documents: &id003
+      - sub_harnesses/prototype_projection_harness/uxwriter_stage_rules.yaml
+      - sub_harnesses/prototype_projection_harness/uxwriter_validators.yaml
+      - schemas/uxwriter_copy_catalog.schema.json
+    machine_rule:
+      check_type: proto_uxw_001
+      pass_when:
+      - UX writer copy catalog validates against uxwriter_copy_catalog.schema.json
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - UX writer copy catalog validates against uxwriter_copy_catalog.schema.json
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-UXW-001：UX writer copy catalog validates against uxwriter_copy_catalog.schema.json
+        是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: &id004
+      - uxwriter_copy_catalog.copy_items
+      - validation.passed
+      - source_refs
+  - id: PROTO-UXW-002
+    stage: uxwriter_copy_stage
+    severity: blocker
+    natural_language: Critical flow copy passes UXW validators
+    applies_to:
+      documents: *id003
+    machine_rule:
+      check_type: proto_uxw_002
+      pass_when:
+      - Critical flow copy passes UXW validators is satisfied with explicit source,
+        lineage, review, or projection evidence.
+      fail_when:
+      - Critical flow copy passes UXW validators is missing, contradicted, or used
+        to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-UXW-002：Critical flow copy passes UXW validators 是否已由
+        2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id004
+  - id: PROTO-UXW-003
+    stage: uxwriter_copy_stage
+    severity: blocker
+    natural_language: Destructive/privacy/payment copy requires human review
+    applies_to:
+      documents: *id003
+    machine_rule:
+      check_type: proto_uxw_003
+      pass_when:
+      - Destructive/privacy/payment copy requires human review is satisfied with explicit
+        source, lineage, review, or projection evidence.
+      fail_when:
+      - Destructive/privacy/payment copy requires human review is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-UXW-003：Destructive/privacy/payment copy requires
+        human review 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id004
+  renderer_validators:
+  - id: PROTO-RENDER-001
+    stage: renderer_stage_plan
+    severity: blocker
+    natural_language: Layout route plan exists before page detail render
+    applies_to:
+      documents: &id005
+      - sub_harnesses/prototype_projection_harness/renderer_stage_plan.yaml
+      - sub_harnesses/prototype_projection_harness/renderer_skill_hook_policy.yaml
+    machine_rule:
+      check_type: proto_render_001
+      pass_when:
+      - Layout route plan exists before page detail render is satisfied with explicit
+        source, lineage, review, or projection evidence.
+      fail_when:
+      - Layout route plan exists before page detail render is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RENDER-001：Layout route plan exists before page detail
+        render 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: &id006
+      - renderer_stage_plan.stages
+      - layout_route_plan
+      - renderer_skill_influence_trace
+  - id: PROTO-RENDER-002
+    stage: renderer_stage_plan
+    severity: blocker
+    natural_language: Canvas skeleton contains all screen/state/overlay placeholders
+      before details
+    applies_to:
+      documents: *id005
+    machine_rule:
+      check_type: proto_render_002
+      pass_when:
+      - Canvas skeleton contains all screen/state/overlay placeholders before details
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Canvas skeleton contains all screen/state/overlay placeholders before details
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RENDER-002：Canvas skeleton contains all screen/state/overlay
+        placeholders before details 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id006
+  - id: PROTO-RENDER-003
+    stage: renderer_stage_plan
+    severity: blocker
+    natural_language: Renderer skill influence trace exists when skill pack is provided
+    applies_to:
+      documents: *id005
+    machine_rule:
+      check_type: proto_render_003
+      pass_when:
+      - Renderer skill influence trace exists when skill pack is provided is satisfied
+        with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Renderer skill influence trace exists when skill pack is provided is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RENDER-003：Renderer skill influence trace exists when
+        skill pack is provided 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id006
+  - id: PROTO-RENDER-004
+    stage: renderer_stage_plan
+    severity: blocker
+    natural_language: Renderer did not create product logic absent from completed
+      runtime
+    applies_to:
+      documents: *id005
+    machine_rule:
+      check_type: proto_render_004
+      pass_when:
+      - Renderer did not create product logic absent from completed runtime is satisfied
+        with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Renderer did not create product logic absent from completed runtime is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-RENDER-004：Renderer did not create product logic absent
+        from completed runtime 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id006
+  interaction_validators:
+  - id: PROTO-INTERACTION-001
+    stage: interaction_projection
+    severity: blocker
+    natural_language: Every runtime interaction has a Figma source node or explicit
+      blocking gap
+    applies_to:
+      documents: &id007
+      - product-spec/prototype.runtime.json
+      - product-spec/figma-interaction-map.yaml
+      - sub_harnesses/prototype_projection_harness/interaction_projection_rules.yaml
+      - sub_harnesses/prototype_projection_harness/figma_reaction_mapping.yaml
+    machine_rule:
+      check_type: proto_interaction_001
+      pass_when:
+      - Every runtime interaction has a Figma source node or explicit blocking gap
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Every runtime interaction has a Figma source node or explicit blocking gap
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-INTERACTION-001：Every runtime interaction has a Figma
+        source node or explicit blocking gap 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: &id008
+      - interaction_graph.edges
+      - figma_interaction_map.interactions
+      - source_node_id + trigger uniqueness
+  - id: PROTO-INTERACTION-002
+    stage: interaction_projection
+    severity: blocker
+    natural_language: Every navigate/open_overlay/change_to action resolves to destination
+      node
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: proto_interaction_002
+      pass_when:
+      - Every navigate/open_overlay/change_to action resolves to destination node
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Every navigate/open_overlay/change_to action resolves to destination node
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-INTERACTION-002：Every navigate/open_overlay/change_to
+        action resolves to destination node 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id008
+  - id: PROTO-INTERACTION-003
+    stage: interaction_projection
+    severity: blocker
+    natural_language: No duplicate same-source same-trigger reactions unless merged
+      as conditional
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: proto_interaction_003
+      pass_when:
+      - No duplicate same-source same-trigger reactions unless merged as conditional
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - No duplicate same-source same-trigger reactions unless merged as conditional
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-INTERACTION-003：No duplicate same-source same-trigger
+        reactions unless merged as conditional 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma
+        当成事实源？
+      evidence: *id008
+  - id: PROTO-INTERACTION-004
+    stage: interaction_projection
+    severity: blocker
+    natural_language: Every edge has source_refs and edge_id
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: proto_interaction_004
+      pass_when:
+      - Every edge has source_refs and edge_id is satisfied with explicit source,
+        lineage, review, or projection evidence.
+      fail_when:
+      - Every edge has source_refs and edge_id is missing, contradicted, or used to
+        create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-INTERACTION-004：Every edge has source_refs and edge_id
+        是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id008
+  - id: PROTO-INTERACTION-005
+    stage: interaction_projection
+    severity: blocker
+    natural_language: Every blocking modal has close/cancel path
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: proto_interaction_005
+      pass_when:
+      - Every blocking modal has close/cancel path is satisfied with explicit source,
+        lineage, review, or projection evidence.
+      fail_when:
+      - Every blocking modal has close/cancel path is missing, contradicted, or used
+        to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-INTERACTION-005：Every blocking modal has close/cancel
+        path 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id008
+  - id: PROTO-INTERACTION-006
+    stage: interaction_projection
+    severity: blocker
+    natural_language: Every toast has dismiss strategy
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: proto_interaction_006
+      pass_when:
+      - Every toast has dismiss strategy is satisfied with explicit source, lineage,
+        review, or projection evidence.
+      fail_when:
+      - Every toast has dismiss strategy is missing, contradicted, or used to create/overwrite
+        PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-INTERACTION-006：Every toast has dismiss strategy 是否已由
+        2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id008
+  - id: PROTO-INTERACTION-007
+    stage: interaction_projection
+    severity: major
+    natural_language: Every semantic interaction has a Figma comment or collapsed
+      summary comment
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: proto_interaction_007
+      pass_when:
+      - Every semantic interaction has a Figma comment or collapsed summary comment
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Every semantic interaction has a Figma comment or collapsed summary comment
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-INTERACTION-007：Every semantic interaction has a Figma
+        comment or collapsed summary comment 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id008
+  - id: PROTO-INTERACTION-008
+    stage: interaction_projection
+    severity: blocker
+    natural_language: Figma reaction map round trip matches runtime interaction graph
+    applies_to:
+      documents: *id007
+    machine_rule:
+      check_type: proto_interaction_008
+      pass_when:
+      - Figma reaction map round trip matches runtime interaction graph is satisfied
+        with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Figma reaction map round trip matches runtime interaction graph is missing,
+        contradicted, or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-INTERACTION-008：Figma reaction map round trip matches
+        runtime interaction graph 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id008
+  comment_validators:
+  - id: PROTO-COMMENT-001
+    stage: figma_comment_annotations
+    severity: blocker
+    natural_language: Figma comment map validates against schema
+    applies_to:
+      documents: &id009
+      - sub_harnesses/prototype_projection_harness/figma_comment_annotation_policy.yaml
+      - schemas/figma_comment_map.schema.json
+    machine_rule:
+      check_type: proto_comment_001
+      pass_when:
+      - Figma comment map validates against schema is satisfied with explicit source,
+        lineage, review, or projection evidence.
+      fail_when:
+      - Figma comment map validates against schema is missing, contradicted, or used
+        to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-COMMENT-001：Figma comment map validates against schema
+        是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: &id010
+      - figma_comment_map.comments
+      - anchor.target_semantic_id
+      - message_template
+  - id: PROTO-COMMENT-002
+    stage: figma_comment_annotations
+    severity: blocker
+    natural_language: Every interaction comment is anchored to source component/hotspot/frame
+      region
+    applies_to:
+      documents: *id009
+    machine_rule:
+      check_type: proto_comment_002
+      pass_when:
+      - Every interaction comment is anchored to source component/hotspot/frame region
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Every interaction comment is anchored to source component/hotspot/frame region
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-COMMENT-002：Every interaction comment is anchored
+        to source component/hotspot/frame region 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma
+        当成事实源？
+      evidence: *id010
+  - id: PROTO-COMMENT-003
+    stage: figma_comment_annotations
+    severity: major
+    natural_language: Comment density threshold is not exceeded or collapsed summary
+      is created
+    applies_to:
+      documents: *id009
+    machine_rule:
+      check_type: proto_comment_003
+      pass_when:
+      - Comment density threshold is not exceeded or collapsed summary is created
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Comment density threshold is not exceeded or collapsed summary is created
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-COMMENT-003：Comment density threshold is not exceeded
+        or collapsed summary is created 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id010
+  - id: PROTO-COMMENT-004
+    stage: figma_comment_annotations
+    severity: major
+    natural_language: Comment text includes trigger, guard, actions, state effect,
+      event and refs
+    applies_to:
+      documents: *id009
+    machine_rule:
+      check_type: proto_comment_004
+      pass_when:
+      - Comment text includes trigger, guard, actions, state effect, event and refs
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Comment text includes trigger, guard, actions, state effect, event and refs
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-COMMENT-004：Comment text includes trigger, guard,
+        actions, state effect, event and refs 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma
+        当成事实源？
+      evidence: *id010
+  layout_and_line_validators:
+  - id: PROTO-LAYOUT-001
+    stage: layout_route_and_visual_lines
+    severity: blocker
+    natural_language: Every visual line route uses a reserved corridor from layout_route_plan
+    applies_to:
+      documents: &id011
+      - sub_harnesses/prototype_projection_harness/layout_routing_coupling_rules.yaml
+      - sub_harnesses/prototype_projection_harness/pen_line_routing_rules.yaml
+      - schemas/layout_route_plan.schema.json
+    machine_rule:
+      check_type: proto_layout_001
+      pass_when:
+      - Every visual line route uses a reserved corridor from layout_route_plan is
+        satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Every visual line route uses a reserved corridor from layout_route_plan is
+        missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-LAYOUT-001：Every visual line route uses a reserved
+        corridor from layout_route_plan 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: &id012
+      - layout_route_plan.route_corridors
+      - edge_routes
+      - visual_flow_line_map
+  - id: PROTO-LINE-001
+    stage: layout_route_and_visual_lines
+    severity: blocker
+    natural_language: Visual pen lines are documentation-only and not treated as interactions
+    applies_to:
+      documents: *id011
+    machine_rule:
+      check_type: proto_line_001
+      pass_when:
+      - Visual pen lines are documentation-only and not treated as interactions is
+        satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Visual pen lines are documentation-only and not treated as interactions is
+        missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-LINE-001：Visual pen lines are documentation-only and
+        not treated as interactions 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id012
+  - id: PROTO-LINE-002
+    stage: layout_route_and_visual_lines
+    severity: blocker
+    natural_language: No same-source same-trigger duplicate visual lines
+    applies_to:
+      documents: *id011
+    machine_rule:
+      check_type: proto_line_002
+      pass_when:
+      - No same-source same-trigger duplicate visual lines is satisfied with explicit
+        source, lineage, review, or projection evidence.
+      fail_when:
+      - No same-source same-trigger duplicate visual lines is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-LINE-002：No same-source same-trigger duplicate visual
+        lines 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id012
+  - id: PROTO-LINE-003
+    stage: layout_route_and_visual_lines
+    severity: major
+    natural_language: Line overlap and crossing budgets are respected or edges are
+      bundled/collapsed
+    applies_to:
+      documents: *id011
+    machine_rule:
+      check_type: proto_line_003
+      pass_when:
+      - Line overlap and crossing budgets are respected or edges are bundled/collapsed
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Line overlap and crossing budgets are respected or edges are bundled/collapsed
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-LINE-003：Line overlap and crossing budgets are respected
+        or edges are bundled/collapsed 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id012
+  - id: PROTO-LINE-004
+    stage: layout_route_and_visual_lines
+    severity: major
+    natural_language: Same-screen multistate repeated interactions use canonical interaction
+      marker
+    applies_to:
+      documents: *id011
+    machine_rule:
+      check_type: proto_line_004
+      pass_when:
+      - Same-screen multistate repeated interactions use canonical interaction marker
+        is satisfied with explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Same-screen multistate repeated interactions use canonical interaction marker
+        is missing, contradicted, or used to create/overwrite PRD facts without owner
+        review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-LINE-004：Same-screen multistate repeated interactions
+        use canonical interaction marker 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id012
+  reverse_sync_validators:
+  - id: PROTO-REVERSE-001
+    stage: reverse_sync_candidate_ingest
+    severity: blocker
+    natural_language: Figma comment edits do not directly modify PRD facts
+    applies_to:
+      documents: &id013
+      - sub_harnesses/prototype_projection_harness/reverse_sync_policy.yaml
+      - sub_harnesses/prototype_projection_harness/figma_diff_policy.yaml
+      - prd_orchestrator/templates/figma_diff_patch_candidate.template.yaml
+    machine_rule:
+      check_type: proto_reverse_001
+      pass_when:
+      - Figma comment edits do not directly modify PRD facts is satisfied with explicit
+        source, lineage, review, or projection evidence.
+      fail_when:
+      - Figma comment edits do not directly modify PRD facts is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-REVERSE-001：Figma comment edits do not directly modify
+        PRD facts 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: &id014
+      - figma_diff_report
+      - change_patch_candidate
+      - forbidden_direct_writes_checked
+  - id: PROTO-REVERSE-002
+    stage: reverse_sync_candidate_ingest
+    severity: blocker
+    natural_language: Figma reaction semantic changes generate patch candidates
+    applies_to:
+      documents: *id013
+    machine_rule:
+      check_type: proto_reverse_002
+      pass_when:
+      - Figma reaction semantic changes generate patch candidates is satisfied with
+        explicit source, lineage, review, or projection evidence.
+      fail_when:
+      - Figma reaction semantic changes generate patch candidates is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-REVERSE-002：Figma reaction semantic changes generate
+        patch candidates 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id014
+  - id: PROTO-REVERSE-003
+    stage: reverse_sync_candidate_ingest
+    severity: blocker
+    natural_language: Visual line-only changes are classified as figma_only
+    applies_to:
+      documents: *id013
+    machine_rule:
+      check_type: proto_reverse_003
+      pass_when:
+      - Visual line-only changes are classified as figma_only is satisfied with explicit
+        source, lineage, review, or projection evidence.
+      fail_when:
+      - Visual line-only changes are classified as figma_only is missing, contradicted,
+        or used to create/overwrite PRD facts without owner review.
+    human_review:
+      reviewer_prompt: 确认 PROTO-REVERSE-003：Visual line-only changes are classified
+        as figma_only 是否已由 2.1 原型 stage 证据支撑，且没有把原型/Figma 当成事实源？
+      evidence: *id014
+  component_validators:
+  - id: PROTO-COMP-001
+    stage: component_binding
+    severity: blocker
+    natural_language: Semantic component 必须解析到 Figma component、pattern、semantic library
+      composition 或明确 gap。
+    applies_to:
+      documents:
+      - product-spec/component-binding-map.yaml
+      - product-spec/design-semantic-library.json
+      - sub_harnesses/prototype_projection_harness/component_binding_policy.yaml
+    machine_rule:
+      check_type: component_binding_resolution
+      pass_when:
+      - Every semantic component resolves through the configured priority order or
+        records a binding gap.
+      fail_when:
+      - A required semantic component has no binding and no gap.
+      - Projection silently downgrades to placeholder without recording gap.
+    human_review:
+      reviewer_prompt: 组件绑定是来自真实设计系统、pattern、语义库 fallback，还是需要补 gap？
+      evidence:
+      - component-binding-map.yaml
+      - component_binding_policy.priority_order
+  - id: PROTO-COMP-002
+    stage: component_binding
+    severity: minor
+    natural_language: Variant mapping 应覆盖 runtime 需要的状态；缺 variant 时必须生成 review_required
+      gap。
+    applies_to:
+      documents:
+      - product-spec/component-binding-map.yaml
+      - sub_harnesses/prototype_projection_harness/component_binding_policy.yaml
+    machine_rule:
+      check_type: component_variant_coverage
+      pass_when:
+      - Required runtime states map to component variants or explicit gaps.
+      fail_when:
+      - Runtime requires a disabled/loading/error state but variant mapping is absent
+        and no gap exists.
+    human_review:
+      reviewer_prompt: 设计系统组件 variant 是否覆盖原型需要的状态？
+      evidence:
+      - variant_rules
+      - component binding gaps
+  - id: PROTO-COMP-003
+    stage: component_binding
+    severity: blocker
+    natural_language: 组件角色变化、button/link 替换、主次 intent 变化等语义性替换必须成为 candidate，不能直接改事实。
+    applies_to:
+      documents:
+      - product-spec/component-binding-map.yaml
+      - prd_orchestrator/change_patch_candidates/
+    machine_rule:
+      check_type: semantic_component_replacement_gate
+      pass_when:
+      - Role-changing replacements generate semantic candidates and human review requirements.
+      fail_when:
+      - A role-changing component replacement is accepted as visual-only.
+      - A component change directly writes requirements, screens, metrics, events,
+        or PRD.
+    human_review:
+      reviewer_prompt: 这个组件替换是否改变了用户行为、语义角色或需求事实？
+      evidence:
+      - component_binding_policy.prop_override_rules
+      - change_patch_candidates
+  figma_sync_validators:
+  - id: PROTO-FIGMA-001
+    stage: figma_forward_projection
+    severity: blocker
+    natural_language: Managed Figma nodes 必须保存 semantic_id、runtime_hash、source_refs
+      等 metadata。
+    applies_to:
+      documents:
+      - product-spec/figma-sync-map.yaml
+      - sub_harnesses/prototype_projection_harness/figma_projection_rules.yaml
+    machine_rule:
+      check_type: figma_node_metadata_required
+      pass_when:
+      - Managed nodes include semantic_id, semantic_type, runtime_hash, source_refs,
+        managed_by, and override_policy.
+      fail_when:
+      - A managed node lacks required metadata.
+      - Full runtime payload is stored on Figma node instead of ids/hashes/refs.
+    human_review:
+      reviewer_prompt: Figma node metadata 是否足以支持 diff、patch 和回链？
+      evidence:
+      - figma-sync-map.yaml
+      - figma_projection_rules.node_metadata
+  - id: PROTO-FIGMA-002
+    stage: figma_forward_projection
+    severity: blocker
+    natural_language: 默认不能 full rebuild designer-owned zones；应按 semantic_id patch
+      managed zones 并保留设计师视觉覆盖。
+    applies_to:
+      documents:
+      - product-spec/figma-sync-map.yaml
+      - sub_harnesses/prototype_projection_harness/figma_projection_rules.yaml
+    machine_rule:
+      check_type: figma_patch_preserves_designer_zones
+      pass_when:
+      - Projection updates managed zones by semantic_id.
+      - Designer-owned zones are preserved unless explicit review approves replacement.
+      fail_when:
+      - Projection plans a full rebuild by default.
+      - Designer-owned nodes are overwritten without review.
+    human_review:
+      reviewer_prompt: 本次投射是否只 patch harness-managed 区域，是否保护了设计师拥有的视觉层？
+      evidence:
+      - figma_projection_rules.update_policy
+      - prototype_projection_plan
+  - id: PROTO-FIGMA-003
+    stage: reverse_sync
+    severity: blocker
+    natural_language: Figma diff 不能直接写 fact stores，只能生成 figma_diff_report 和 change_patch_candidate。
+    applies_to:
+      documents:
+      - prd_orchestrator/figma_diff_reports/
+      - prd_orchestrator/change_patch_candidates/
+      - prd_orchestrator/patch_control_v2.yaml
+    machine_rule:
+      check_type: figma_diff_no_direct_fact_write
+      pass_when:
+      - Figma diff outputs are reports and candidates only.
+      - Fact store changes route through owner harness review.
+      fail_when:
+      - Figma diff writes requirements, screens, metrics, events, or PRD directly.
+    human_review:
+      reviewer_prompt: Figma 修改是否只进入 candidate，而不是直接改事实文件？
+      evidence:
+      - patch_control_v2.write_policy
+      - figma_diff_reports
+      - change_patch_candidates
+  - id: PROTO-FIGMA-004
+    stage: reverse_sync
+    severity: blocker
+    natural_language: 反向同步生成 semantic candidate 前必须做三向 diff：上次 runtime、当前 Figma semantic
+      extract、当前 PRD runtime。
+    applies_to:
+      documents:
+      - prd_orchestrator/figma_diff_reports/
+      - prd_orchestrator/patch_control_v2.yaml
+      - sub_harnesses/prototype_projection_harness/reverse_sync_policy.yaml
+    machine_rule:
+      check_type: figma_reverse_sync_three_way_diff
+      pass_when:
+      - Diff reports include base, Figma extract, and current PRD runtime hashes or
+        refs.
+      - Same semantic field changed on both sides is classified as conflict.
+      fail_when:
+      - Semantic candidate is created from Figma diff without three-way evidence.
+      - Conflict is auto-applied without review decision.
+    human_review:
+      reviewer_prompt: 这个 Figma diff 是否已经和上次 runtime、当前 PRD runtime 做过三向比较？冲突是否进入人工决策？
+      evidence:
+      - figma_diff_reports
+      - reverse_sync_policy.three_way_diff

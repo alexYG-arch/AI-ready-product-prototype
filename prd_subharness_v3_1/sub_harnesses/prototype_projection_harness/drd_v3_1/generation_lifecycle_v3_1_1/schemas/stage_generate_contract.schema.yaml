@@ -1,0 +1,43 @@
+schema:
+  id: stage_generate_contract.schema
+  name_zh: 阶段生成契约 Schema
+  required:
+    - generator_id
+    - generator_name_zh
+    - generate_when
+    - inputs
+    - outputs
+    - algorithm
+    - minimum_viable_output
+    - self_check
+    - forbidden
+    - on_generate_failure
+    - generation_trace
+  properties:
+    generator_id:
+      type: string
+    generator_name_zh:
+      type: string
+    generate_when:
+      type: list
+      items_type: string
+    inputs:
+      type: object
+    outputs:
+      type: list
+      items_type: string
+    algorithm:
+      type: list
+      items_type: string
+    minimum_viable_output:
+      type: object
+    self_check:
+      type: list
+      items_type: string
+    forbidden:
+      type: list
+      items_type: string
+    on_generate_failure:
+      type: object
+    generation_trace:
+      type: object

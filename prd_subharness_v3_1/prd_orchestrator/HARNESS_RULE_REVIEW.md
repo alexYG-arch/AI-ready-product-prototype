@@ -451,6 +451,9 @@ Intent：把已批准的结构化 PRD facts 投射为 prototype runtime、Figma 
 | `PROTO-GEN-012` Figma comment annotations | 交互说明使用 Figma comments，锚定 source component/hotspot/frame region；comment edit 只能成为 candidate。 | runtime edge + comment policy | figma-comment-map | comment 是否只是审阅说明，而不是事实源？ |
 | `PROTO-GEN-013` Layout route and visual lines | visual pen lines 必须跟随 layout route plan；它们只是 documentation，不能代表可点击行为。 | layout route plan + interaction map | visual flow line map | 是否存在重复线、越过 corridor 或把视觉线当 reaction 的情况？ |
 | `PROTO-GEN-014` Renderer skill hook | renderer skill pack 只能 advisory，并且必须留下 influence trace；不能覆盖 facts、validators 或 review。 | optional skill pack | renderer skill influence trace | skill 建议是否可追踪，是否越权改变产品事实？ |
+| `PROTO-GEN-015` DRD v3.1 演绎规则归档 | DRD 规则、库、schema、examples 必须作为 v3.1 原型 harness 资产归档，并由一期 validator 校验公共 artifact。 | DRD rules/libs/schema/examples | DRD validation report | 规则和 schema 是否完整、可解析、可追溯到 source_refs？ |
+| `PROTO-GEN-016` DRD local materialization | DRD local patch 只能修补原型投射缺口，必须声明 `writes_prd: false`，不能写 PRD fact store。 | local materialization patch | projection-only local patch | patch 是否越权改写 requirements、screens、metrics、events 或 PRD.md？ |
+| `PROTO-GEN-017` SDS monochrome binding | SDS 组件只能经 monochrome adapter 和 binding map 调用，输出必须保持黑白灰，不把组件依赖变成事实来源。 | SDS adapter + component binding map | monochrome component binding | 是否绕过 adapter、引入彩色视觉或把组件样例当产品推理来源？ |
 
 #### Validator 规则
 

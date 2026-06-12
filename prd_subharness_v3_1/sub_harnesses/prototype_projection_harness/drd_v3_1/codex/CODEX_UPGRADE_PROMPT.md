@@ -19,7 +19,7 @@
 3. 更新 renderer，使其从 `source slices + materialization shards + sidecar card map` 生成 DRD 画布，而不是单体 `prototype_render_payload.yaml`。
 4. 为每个 stage 输出 YAML artifact，并把 hash / source refs 写入 run manifest。
 5. 增加 validators：screen role obligation、kernel constraints、sidecar card、annotation stub、anchor badge、leader line、local patch。
-6. 添加示例测试：`examples/image_upload_3_5_walkthrough.yaml`。
+6. 不添加业务专属示例作为生产规则；边界值测试使用通用非图片 fixture。
 7. 保留旧命令兼容，但新增命令别名：
    - `validate-role-obligations`
    - `validate-design-kernel`
@@ -28,7 +28,7 @@
 
 ## 验收标准
 
-- 上传 3-5 张图片示例不能只生成“上传入口 + 成功/失败”。
-- 必须推导出相册/系统选择器表面、权限/系统交接、1/3/5/6 张边界状态、确认按钮置灰/可用、before_confirm 强提醒、返回业务页、上传处理中、失败恢复。
+- 数量边界 fixture 不能只生成“入口 + 成功/失败”。
+- 必须由源文本推导出 min-1/min/max/max+1 边界状态、确认按钮置灰/可用、before_confirm 强提醒、返回业务页、处理中、失败恢复。
 - 全量 Pen 线不得出现；复杂逻辑写入 sidecar card。
 - Annotation Stub 必须锚定真实节点并引用 sidecar_card_id。

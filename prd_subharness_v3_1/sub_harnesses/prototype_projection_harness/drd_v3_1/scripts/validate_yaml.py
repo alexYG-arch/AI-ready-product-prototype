@@ -20,7 +20,6 @@ required = [
     'rules/01_screen_role_obligation_rules.yaml',
     'rules/11_validators.yaml',
     'codex/CODEX_UPGRADE_PROMPT.md',
-    'examples/image_upload_3_5_walkthrough.yaml',
 ]
 for rel in required:
     if not (root/rel).exists():

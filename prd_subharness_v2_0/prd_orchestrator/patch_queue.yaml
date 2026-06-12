@@ -1,0 +1,26 @@
+patch_queue:
+  version: "1.0"
+
+  initial_migration:
+    - "SOURCE-EXTRACT"
+    - "SOURCE-EXTRACTION-REVIEW"
+    - "STRUCTURED-SOURCE-BASELINE"
+    - "CORE-000"
+    - "CORE-001"
+    - "CORE-002"
+    - "REQ-003A"
+    - "REQ-003B"
+    - "REQ-003C"
+    - "SCREEN-004"
+    - "DATA-005"
+    - "TRACE-006"
+    - "PROJ-007"
+
+  daily_delta:
+    - "CHANGE-INGEST"
+    - "ROUTE-CHANGE"
+    - "PRD-DELTA"
+    - "IMPACT"
+    - "RERUN-PLAN"
+    - "AFFECTED-SUB-HARNESS"
+    - "PROJ-SYNC"

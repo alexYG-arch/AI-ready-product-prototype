@@ -33,6 +33,10 @@ WRITE_COMMANDS = {
     "core-review-md",
     "review-decision",
     "promote-approved",
+    "run-prd-loop",
+    "write-patch-report",
+    "stop-the-line",
+    "write-loop-gate",
 }
 
 SUB_HARNESS_ORDER = [
@@ -239,6 +243,86 @@ def resolve_input_path(path_text: str) -> Path:
         return run_candidate
     return HARNESS_ROOT / path
 
+def text_file_has_content(path: Path) -> bool:
+    try:
+        return bool(path.read_text(encoding="utf-8").strip())
+    except Exception:
+        return False
+
+def discover_prd_input_files() -> list[Path]:
+    if not INSTANCE_ROOT_PROVIDED:
+        return []
+    inputs_root = INSTANCE_ROOT / "inputs"
+    if not inputs_root.exists():
+        return []
+    candidates = []
+    for suffix in ["*.md", "*.markdown", "*.txt"]:
+        candidates.extend(inputs_root.rglob(suffix))
+    return sorted(
+        path
+        for path in candidates
+        if path.is_file()
+        and "change_requests" not in path.relative_to(inputs_root).parts
+        and text_file_has_content(path)
+    )
+
+def product_spec_material_counts() -> dict:
+    req = yload(instance_path("product-spec", "requirements.yaml"))
+    screens = yload(instance_path("product-spec", "screens.yaml"))
+    metrics = yload(instance_path("product-spec", "metrics.yaml"))
+    events = yload(instance_path("product-spec", "events.yaml"))
+    return {
+        "goals": len(req.get("goals") or []),
+        "requirements": len(req.get("requirements") or []),
+        "requirement_candidates": len(req.get("requirement_candidates") or []),
+        "screens": len(screens.get("screens") or []),
+        "state_reasoning_chains": len(screens.get("state_reasoning_chains") or []),
+        "metrics": len(metrics.get("metrics") or []),
+        "events": len(events.get("events") or []),
+    }
+
+def has_product_spec_material() -> bool:
+    return any(product_spec_material_counts().values())
+
+def current_source_baseline_path() -> Path:
+    return run_path(*SOURCE_BASELINE_REL.parts)
+
+def prd_run_state() -> dict:
+    inputs = discover_prd_input_files()
+    baseline_path = current_source_baseline_path()
+    counts = product_spec_material_counts() if INSTANCE_ROOT.exists() else {}
+    baseline = yload(baseline_path).get("structured_source_baseline", {}) if baseline_path.exists() else {}
+    approved_path = None
+    if baseline_path.exists() and path_is_within(baseline_path, RUN_ROOT):
+        approved_path, _decision = find_approved_decision(baseline_path)
+    return {
+        "instance_root": str(INSTANCE_ROOT),
+        "run_id": RUN_ID,
+        "prd_inputs": [str(path.relative_to(INSTANCE_ROOT)) for path in inputs],
+        "source_baseline": artifact_relpath(baseline_path) if baseline_path.exists() and path_is_within(baseline_path, RUN_ROOT) else "",
+        "source_baseline_status": baseline.get("status", ""),
+        "source_baseline_review_approved": bool(approved_path),
+        "source_baseline_review_decision": str(approved_path.relative_to(INSTANCE_ROOT)) if approved_path else "",
+        "product_spec_material_counts": counts,
+        "has_product_spec_material": any(counts.values()) if counts else False,
+    }
+
+def prd_input_blocker(command_name: str) -> str | None:
+    state = prd_run_state()
+    if state["prd_inputs"] or state["source_baseline"] or state["has_product_spec_material"]:
+        return None
+    return (
+        f"BLOCKED: {command_name} requires a real PRD input before running. "
+        "Put a source PRD markdown file under <instance-root>/inputs/ and run "
+        "`extract-source-baseline inputs/<file>.md`, or run `run-prd-loop --source inputs/<file>.md`. "
+        "Empty product-spec templates are not PRD input."
+    )
+
+def ensure_prd_input_or_block(command_name: str):
+    blocker = prd_input_blocker(command_name)
+    if blocker:
+        raise SystemExit(blocker)
+
 def display_path(path: Path) -> str:
     for base_name, base in [
         ("run", RUN_ROOT),
@@ -263,6 +347,239 @@ def ywrite(path: Path, data):
         raise RuntimeError("Install pyyaml: pip install pyyaml")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+def jload(path: Path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+def validate_with_schema(instance_path: Path, schema_name: str) -> list[str]:
+    try:
+        from jsonschema import Draft202012Validator
+    except Exception as exc:
+        raise RuntimeError("Install jsonschema: pip install jsonschema") from exc
+    schema_path = harness_path("schemas", schema_name)
+    if not instance_path.exists():
+        return [f"missing artifact {display_path(instance_path)}"]
+    if not schema_path.exists():
+        return [f"missing schema {display_path(schema_path)}"]
+    schema = jload(schema_path)
+    Draft202012Validator.check_schema(schema)
+    data = yload(instance_path) if instance_path.suffix.lower() in [".yaml", ".yml"] else jload(instance_path)
+    validator = Draft202012Validator(schema)
+    errors = sorted(validator.iter_errors(data), key=lambda item: list(item.path))
+    result = []
+    for error in errors:
+        path = ".".join(str(part) for part in error.path) or "<root>"
+        schema_path_text = ".".join(str(part) for part in error.schema_path)
+        result.append(f"{path}: {error.message} (schema: {schema_path_text})")
+    return result
+
+def validate_with_schema_path(instance_path: Path, schema_path: Path) -> list[str]:
+    try:
+        from jsonschema import Draft202012Validator
+    except Exception as exc:
+        raise RuntimeError("Install jsonschema: pip install jsonschema") from exc
+    if not instance_path.exists():
+        return [f"missing artifact {display_path(instance_path)}"]
+    if not schema_path.exists():
+        return [f"missing schema {display_path(schema_path)}"]
+    schema = jload(schema_path)
+    Draft202012Validator.check_schema(schema)
+    data = yload(instance_path) if instance_path.suffix.lower() in [".yaml", ".yml"] else jload(instance_path)
+    validator = Draft202012Validator(schema)
+    errors = sorted(validator.iter_errors(data), key=lambda item: list(item.path))
+    result = []
+    for error in errors:
+        path = ".".join(str(part) for part in error.path) or "<root>"
+        schema_path_text = ".".join(str(part) for part in error.schema_path)
+        result.append(f"{path}: {error.message} (schema: {schema_path_text})")
+    return result
+
+def print_blocking_validation(title: str, errors: list[str]):
+    print(f"# {title}")
+    print("PASS" if not errors else "BLOCKED")
+    for error in errors:
+        print(f"- ERROR: {error}")
+    if errors:
+        raise SystemExit(1)
+
+def run_output_path(path_text: str | None, default: Path, option_name: str) -> Path:
+    rel = run_relative_arg(path_text, default, option_name)
+    return run_path(*rel.parts)
+
+def markdown_companion_path(yaml_path: Path) -> Path:
+    if yaml_path.suffix.lower() in {".yaml", ".yml"}:
+        return yaml_path.with_suffix(".md")
+    return yaml_path.with_name(f"{yaml_path.name}.md")
+
+def md_inline(value) -> str:
+    if value is None:
+        text = ""
+    elif isinstance(value, list):
+        text = ", ".join(str(item) for item in value)
+    else:
+        text = str(value)
+    return text.replace("\n", " ").replace("|", "\\|")
+
+def md_list(items: list[str] | None) -> list[str]:
+    if not items:
+        return ["- 无"]
+    return [f"- `{md_inline(item)}`" for item in items]
+
+def write_stop_report_markdown(yaml_path: Path, report: dict):
+    stop = report.get("stop_the_line", {})
+    md_path = markdown_companion_path(yaml_path)
+    lines = [
+        "# Stop The Line",
+        "",
+        "本文件是人工阅读入口；同名 YAML 是机器校验源。",
+        "",
+        "## 状态",
+        "",
+        "| 字段 | 值 |",
+        "|---|---|",
+        f"| stop_id | `{md_inline(stop.get('stop_id'))}` |",
+        f"| run_id | `{md_inline(stop.get('run_id'))}` |",
+        f"| stage | `{md_inline(stop.get('stage'))}` |",
+        f"| sub_harness | `{md_inline(stop.get('sub_harness'))}` |",
+        f"| severity | `{md_inline(stop.get('severity'))}` |",
+        f"| status | `{md_inline(stop.get('status'))}` |",
+        f"| created_at | `{md_inline(stop.get('created_at'))}` |",
+        "",
+        "## 阻断原因",
+        "",
+        md_inline(stop.get("reason")),
+        "",
+        "## 下一步",
+        "",
+        md_inline(stop.get("required_next_action")),
+        "",
+        "## 恢复条件",
+        "",
+        md_inline(stop.get("resume_condition")),
+        "",
+        "## 来源证据",
+        "",
+        *md_list(stop.get("source_artifacts")),
+        "",
+        "## Review",
+        "",
+        f"- resolved_by_review_decision: `{md_inline(stop.get('resolved_by_review_decision'))}`",
+        f"- owner: `{md_inline(stop.get('owner'))}`",
+        f"- notes: {md_inline(stop.get('notes'))}",
+        "",
+        "## 机器源",
+        "",
+        f"- YAML: `{yaml_path.relative_to(RUN_ROOT).as_posix() if path_is_within(yaml_path, RUN_ROOT) else yaml_path}`",
+    ]
+    md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return md_path
+
+def write_patch_report_markdown(yaml_path: Path, report: dict):
+    patch = report.get("patch_report", {})
+    md_path = markdown_companion_path(yaml_path)
+    review = patch.get("human_review") or {}
+    lines = [
+        "# Patch Report",
+        "",
+        "本文件是人工阅读入口；同名 YAML 是机器校验源。",
+        "",
+        "## 状态",
+        "",
+        "| 字段 | 值 |",
+        "|---|---|",
+        f"| patch_id | `{md_inline(patch.get('patch_id'))}` |",
+        f"| run_id | `{md_inline(patch.get('run_id'))}` |",
+        f"| sub_harness | `{md_inline(patch.get('sub_harness'))}` |",
+        f"| status | `{md_inline(patch.get('status'))}` |",
+        "",
+        "## Summary",
+        "",
+        md_inline(patch.get("summary")),
+        "",
+        "## Root Cause",
+        "",
+        md_inline(patch.get("root_cause")),
+        "",
+        "## Changed Files",
+        "",
+        *md_list(patch.get("changed_files")),
+        "",
+        "## Validation",
+        "",
+        *[f"- {md_inline(item)}" for item in (patch.get("validation") or [])],
+        "",
+        "## Remaining Gaps",
+        "",
+        *md_list(patch.get("remaining_gaps")),
+        "",
+        "## Stop The Line Refs",
+        "",
+        *md_list(patch.get("stop_the_line_refs")),
+        "",
+        "## Source Artifacts",
+        "",
+        *md_list(patch.get("source_artifacts")),
+        "",
+        "## Review",
+        "",
+        f"- required: `{md_inline(review.get('required'))}`",
+        f"- stage: `{md_inline(review.get('stage'))}`",
+        f"- decision_required_before: `{md_inline(review.get('decision_required_before'))}`",
+        f"- decision_path: `{md_inline(review.get('decision_path'))}`",
+        "",
+        "## 机器源",
+        "",
+        f"- YAML: `{yaml_path.relative_to(RUN_ROOT).as_posix() if path_is_within(yaml_path, RUN_ROOT) else yaml_path}`",
+    ]
+    md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return md_path
+
+def write_stop_report(
+    *,
+    stage: str,
+    reason: str,
+    required_next_action: str,
+    resume_condition: str,
+    severity: str = "blocker",
+    sub_harness: str = "orchestrator",
+    owner: str = "",
+    source_artifacts: list[str] | None = None,
+    notes: str = "",
+    stop_id: str | None = None,
+    output: str | None = None,
+) -> Path:
+    safe_stage = safe_slug(stage)
+    stop_id = stop_id or f"STL-{RUN_ID}-{safe_stage}-{utc_slug_text()}"
+    out = run_output_path(
+        output,
+        Path("prd_orchestrator") / "stop_the_line" / f"{safe_slug(stop_id)}.stop_the_line.yaml",
+        "--output",
+    )
+    data = {
+        "stop_the_line": {
+            "schema_version": "1.0",
+            "stop_id": stop_id,
+            "run_id": RUN_ID,
+            "stage": stage,
+            "sub_harness": sub_harness,
+            "severity": severity,
+            "reason": reason,
+            "required_next_action": required_next_action,
+            "resume_condition": resume_condition,
+            "owner": owner,
+            "source_artifacts": source_artifacts or [],
+            "status": "open",
+            "created_at": utc_now_text(),
+            "resolved_by_review_decision": "",
+            "notes": notes,
+        }
+    }
+    ywrite(out, data)
+    errors = validate_with_schema(out, "stop_the_line.schema.json")
+    if errors:
+        raise SystemExit("BLOCKED: generated stop_the_line report failed schema validation:\n- " + "\n- ".join(errors))
+    write_stop_report_markdown(out, data)
+    return out
 
 def status(args):
     reg = yload(harness_path("prd_orchestrator", "harness_registry.yaml")).get("harness_registry", {})
@@ -409,31 +726,47 @@ def check_prd_sync(args):
     else:
         print("PASS: no obvious placeholder/projection-only marker found")
 
+def preflight_prd_run(args):
+    state = prd_run_state()
+    print(json.dumps({"prd_run_preflight": state}, ensure_ascii=False, indent=2))
+    blocker = prd_input_blocker("preflight-prd-run")
+    if blocker:
+        raise SystemExit(blocker)
+    if state["prd_inputs"] and not state["source_baseline"] and not state["has_product_spec_material"]:
+        raise SystemExit(
+            "BLOCKED: PRD input exists, but source extraction has not run. "
+            "Run `run-prd-loop --source <input>` or `extract-source-baseline <input>`."
+        )
+    if state["source_baseline"] and not state["source_baseline_review_approved"]:
+        raise SystemExit(
+            "BLOCKED: structured_source_baseline exists but has no approved review decision. "
+            "Review the extraction output before downstream harness generation."
+        )
+    if state["source_baseline_review_approved"] and not state["has_product_spec_material"]:
+        raise SystemExit(
+            "BLOCKED: source baseline is approved, but product-spec still has no generated requirements/screens. "
+            "Downstream requirement/screen generation is the next loop stage and must run before prototype runtime."
+        )
+    print("PASS: PRD run preflight has source material for the current stage")
+
 def quality_gate(args):
+    ensure_prd_input_or_block("quality-gate")
     ensure_run_manifest("quality-gate")
     req = yload(instance_path("product-spec", "requirements.yaml"))
     items = (req.get("requirement_candidates") or []) + (req.get("requirements") or [])
     source_baseline, source_baseline_relpath = load_source_baseline()
     if source_baseline and not items:
-        out = {
-            "quality_gate_report": {
-                "report_status": "not_applicable_until_requirement_candidates",
-                "summary": {"blocked": 0, "review_required": 0, "passed": 0},
-                "results": [],
-                "blockers": ["source_baseline_not_yet_projected_to_requirements"],
-                "source_baseline": source_baseline_relpath,
-                "message": "quality-gate runs after requirement_harness creates requirements.yaml candidates from the reviewed source baseline",
-                "human_review": human_review_gate("quality-gate", "quality_gate_report"),
-            }
-        }
-        out_path = run_path("sub_harnesses", "requirement_harness", "reports", "QUALITY_GATE_REPORT.yaml")
-        ywrite(out_path, out)
-        print(f"Wrote {out_path}")
-        print(json.dumps({
-            "status": out["quality_gate_report"]["report_status"],
-            "source_baseline": source_baseline_relpath,
-        }, ensure_ascii=False, indent=2))
-        return
+        raise SystemExit(
+            "BLOCKED: source baseline exists, but no requirements or requirement_candidates were generated. "
+            f"Next breakpoint: project reviewed baseline `{source_baseline_relpath}` into requirement_harness outputs before quality-gate."
+        )
+    if not items:
+        raise SystemExit(
+            "BLOCKED: quality-gate found no requirements or requirement_candidates. "
+            "Run source extraction and requirement_harness generation before quality-gate; "
+            "0/0/0 is not a valid PRD run result."
+        )
+
     profile = yload(harness_path("sub_harnesses", "requirement_harness", "cears_quality_profile.yaml")).get("cears_quality_profile", {})
     vague = profile.get("vague_terms", [])
     req_record = profile.get("requirement_record_after_cears", {})
@@ -1155,7 +1488,11 @@ def write_source_extraction_review(review_path: Path, baseline: dict, baseline_r
 def extract_source_baseline(args):
     ensure_run_manifest("extract-source-baseline")
     source_path = resolve_input_path(args.markdown)
+    if not source_path.exists():
+        raise SystemExit(f"BLOCKED: source PRD input not found: {args.markdown}")
     text = source_path.read_text(encoding="utf-8")
+    if not text.strip():
+        raise SystemExit(f"BLOCKED: source PRD input is empty: {source_path}")
     sections = markdown_source_sections(text)
     review_items, by_harness, open_questions = build_source_review_items(source_path, text)
     baseline = {
@@ -1305,6 +1642,412 @@ def run_relative_arg(path_text: str | None, default: Path, option_name: str) -> 
     if path.is_absolute() or ".." in path.parts:
         raise SystemExit(f"BLOCKED: {option_name} must be a relative path under <instance-root>/runs/<run-id>/")
     return path
+
+def validate_patch_report(args):
+    artifact = resolve_run_artifact(args.artifact)
+    print_blocking_validation("validate-patch-report", validate_with_schema(artifact, "patch_report.schema.json"))
+
+def validate_stop_the_line(args):
+    artifact = resolve_run_artifact(args.artifact)
+    print_blocking_validation("validate-stop-the-line", validate_with_schema(artifact, "stop_the_line.schema.json"))
+
+def stop_the_line(args):
+    ensure_run_manifest("stop-the-line")
+    out = write_stop_report(
+        stage=args.stage,
+        reason=args.reason,
+        required_next_action=args.next_action,
+        resume_condition=args.resume_condition,
+        severity=args.severity,
+        sub_harness=args.sub_harness,
+        owner=args.owner,
+        source_artifacts=args.source_artifact or [],
+        notes=args.notes,
+        stop_id=args.stop_id,
+        output=args.output,
+    )
+    print(f"Wrote {out}")
+    print(f"Wrote {markdown_companion_path(out)}")
+
+def write_patch_report(args):
+    ensure_run_manifest("write-patch-report")
+    patch_id = args.patch_id or f"PATCH-{RUN_ID}-{utc_slug_text()}"
+    out = run_output_path(
+        args.output,
+        Path("prd_orchestrator") / "patch_reports" / f"{safe_slug(patch_id)}.patch_report.yaml",
+        "--output",
+    )
+    data = {
+        "patch_report": {
+            "schema_version": "1.0",
+            "patch_id": patch_id,
+            "run_id": RUN_ID,
+            "sub_harness": args.sub_harness,
+            "status": args.status,
+            "summary": args.summary,
+            "root_cause": args.root_cause,
+            "source_artifacts": args.source_artifact or [],
+            "changed_files": args.changed_file,
+            "validation": args.validation,
+            "remaining_gaps": args.remaining_gap or [],
+            "stop_the_line_refs": args.stop_the_line_ref or [],
+            "human_review": human_review_gate("patch-report", "patch_report"),
+        }
+    }
+    ywrite(out, data)
+    errors = validate_with_schema(out, "patch_report.schema.json")
+    if errors:
+        raise SystemExit("BLOCKED: generated patch_report failed schema validation:\n- " + "\n- ".join(errors))
+    write_patch_report_markdown(out, data)
+    print(f"Wrote {out}")
+    print(f"Wrote {markdown_companion_path(out)}")
+
+def loop_root_path() -> Path:
+    return harness_path("sub_harnesses", "prototype_projection_harness", "drd_v3_1", "loop_v3_1")
+
+def drd_root_path() -> Path:
+    return loop_root_path().parent
+
+def loop_schema_path(name: str) -> Path:
+    return loop_root_path() / "schemas" / name
+
+def loop_rules_path(name: str) -> Path:
+    return loop_root_path() / "rules" / name
+
+def collect_values_for_key(node, key: str) -> list[str]:
+    values = []
+    if isinstance(node, dict):
+        for current_key, current_value in node.items():
+            if current_key == key and isinstance(current_value, str):
+                values.append(current_value)
+            values.extend(collect_values_for_key(current_value, key))
+    elif isinstance(node, list):
+        for item in node:
+            values.extend(collect_values_for_key(item, key))
+    return values
+
+def drd_rule_source_index() -> dict[str, str]:
+    index = {}
+    rules_root = drd_root_path() / "rules"
+    for path in sorted(rules_root.glob("*.yaml")):
+        data = yload(path)
+        for rule_id in collect_values_for_key(data, "rule_id"):
+            index.setdefault(rule_id, path.relative_to(drd_root_path()).as_posix())
+    return index
+
+def rule_projection_map() -> dict:
+    return yload(drd_root_path() / "rules" / "13_rule_projection_map.yaml").get("prototype_rule_projection_map", {})
+
+def normalize_rule_ids(rule_ids: list[str] | tuple[str, ...] | set[str] | None) -> list[str]:
+    return sorted({str(rule_id) for rule_id in (rule_ids or []) if str(rule_id or "").strip()})
+
+def stage_rule_ids(stage_id: str | None) -> list[str]:
+    if not stage_id:
+        return []
+    return normalize_rule_ids((rule_projection_map().get("stages", {}) or {}).get(stage_id, []) or [])
+
+def failure_class_rule_ids(failure_class: str | None) -> list[str]:
+    if not failure_class:
+        return []
+    return normalize_rule_ids((rule_projection_map().get("failure_classes", {}) or {}).get(failure_class, []) or [])
+
+def loop_gate_rule_trace(stage_id: str, failure_class: str) -> dict:
+    rule_ids = normalize_rule_ids(stage_rule_ids(stage_id) + failure_class_rule_ids(failure_class))
+    sources = drd_rule_source_index()
+    projection = rule_projection_map()
+    return {
+        "trace_version": "3.1.1",
+        "projection_map_id": projection.get("id", "RULE_PROJECTION_MAP_V3_1_1"),
+        "stage_id": stage_id,
+        "failure_class": failure_class,
+        "rule_ids": rule_ids,
+        "rule_sources": [
+            {"rule_id": rule_id, "file": sources.get(rule_id, "")}
+            for rule_id in rule_ids
+        ],
+        "validator_commands": ["validate-loop-finding", "validate-repair-plan", "validate-loop-manifest"],
+    }
+
+def loop_failure_classes() -> dict:
+    rules = yload(loop_rules_path("04_failure_classification_rules.yaml")).get("failure_classification_rules", {})
+    return {item.get("class_id"): item for item in rules.get("classes", []) or [] if item.get("class_id")}
+
+def loop_router_table() -> dict:
+    rules = yload(loop_rules_path("05_loop_router_rules.yaml")).get("loop_router_rules", {})
+    return (rules.get("route_table") or {})
+
+def loop_profiles() -> dict:
+    policy = yload(loop_rules_path("02_loop_profile_policy.yaml")).get("loop_profile_policy", {})
+    return {item.get("profile_id"): item for item in policy.get("profiles", []) or [] if item.get("profile_id")}
+
+def loop_stage_contracts() -> dict:
+    contracts = yload(loop_rules_path("17_harness_aligned_stage_loop_contracts.yaml")).get("harness_aligned_stage_loop_contracts", {})
+    return {item.get("stage_id"): item for item in contracts.get("contracts", []) or [] if item.get("stage_id")}
+
+def sha256_text(text: str) -> str:
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+def route_targets_for_failure(failure_class: str, stage: str) -> tuple[list[str], list[str], str, bool]:
+    classes = loop_failure_classes()
+    routers = loop_router_table()
+    if failure_class not in classes:
+        known = ", ".join(sorted(classes))
+        raise SystemExit(f"BLOCKED: unknown failure_class {failure_class}. Known classes: {known}")
+    class_rule = classes[failure_class]
+    route_rule = routers.get(failure_class, {})
+    route_targets = route_rule.get("route_to") or class_rule.get("default_route") or [stage]
+    route_targets = [stage if target == "owning_stage" else target for target in route_targets]
+    rerun_after = route_rule.get("rerun_after") or []
+    patch_type = class_rule.get("patch_type") or "loop_repair_recommendation"
+    stop_auto_patch = bool(route_rule.get("stop_auto_patch") or class_rule.get("auto_patch_allowed") is False)
+    return route_targets, rerun_after, patch_type, stop_auto_patch
+
+def loop_rerun_scope(severity: str, affected_artifacts: list[str], rerun_after: list[str], stop_auto_patch: bool) -> dict:
+    if stop_auto_patch or severity == "semantic_defect":
+        scope = "stop_auto_patch"
+        reason = "semantic defect or rule-level stop_auto_patch; gate-only mode records evidence and stops."
+    elif affected_artifacts:
+        scope = "affected_artifact_only"
+        reason = "gate-only mode records the affected artifact scope but does not rerun."
+    else:
+        scope = "stage_only"
+        reason = "gate-only mode records the owning stage scope but does not rerun."
+    return {
+        "scope": scope,
+        "reason": reason,
+        "would_rerun_after": rerun_after,
+        "actual_rerun_executed": False,
+    }
+
+def loop_profile_iteration_policy(profile_id: str) -> dict:
+    profiles = loop_profiles()
+    if profile_id not in profiles:
+        known = ", ".join(sorted(profiles))
+        raise SystemExit(f"BLOCKED: unknown loop profile {profile_id}. Known profiles: {known}")
+    return profiles[profile_id].get("max_iterations", {}) or {}
+
+def loop_gate_dir(gate_id: str) -> Path:
+    return run_path("prd_orchestrator", "loop_gates", safe_slug(gate_id))
+
+def write_loop_report_markdown(
+    *,
+    path: Path,
+    gate_id: str,
+    finding: dict,
+    repair_plan: dict,
+    manifest: dict,
+    stop_line_relpath: str,
+):
+    lines = [
+        "# Loop Gate Report",
+        "",
+        "本文件是人工阅读入口；同目录 YAML 是机器校验源。",
+        "",
+        "## 状态",
+        "",
+        "| 字段 | 值 |",
+        "|---|---|",
+        f"| gate_id | `{md_inline(gate_id)}` |",
+        f"| run_id | `{md_inline(finding.get('run_id'))}` |",
+        f"| stage | `{md_inline(finding.get('stage'))}` |",
+        f"| severity | `{md_inline(finding.get('severity'))}` |",
+        f"| failure_class | `{md_inline(finding.get('failure_class'))}` |",
+        f"| rule_ids | `{md_inline(finding.get('rule_ids'))}` |",
+        f"| profile | `{md_inline(repair_plan.get('selected_profile'))}` |",
+        f"| final_status | `{md_inline(manifest.get('final_status'))}` |",
+        "",
+        "## Finding",
+        "",
+        f"- finding_id: `{md_inline(finding.get('finding_id'))}`",
+        f"- trigger_source: `{md_inline(finding.get('trigger_source'))}`",
+        f"- affected_artifacts: `{md_inline(finding.get('affected_artifacts'))}`",
+        f"- source_refs: `{md_inline(finding.get('source_refs'))}`",
+        f"- repair_hint_zh: {md_inline(finding.get('repair_hint_zh'))}",
+        "",
+        "## Repair Plan",
+        "",
+        f"- route_targets: `{md_inline(repair_plan.get('route_targets'))}`",
+        f"- patch_set_count: `{len(repair_plan.get('patch_set') or [])}`",
+        f"- rerun_scope: `{md_inline((repair_plan.get('rerun_scope') or {}).get('scope'))}`",
+        f"- actual_patch_apply_executed: `{md_inline(repair_plan.get('actual_patch_apply_executed'))}`",
+        f"- actual_rerun_executed: `{md_inline((repair_plan.get('rerun_scope') or {}).get('actual_rerun_executed'))}`",
+        "",
+        "## Stop Line",
+        "",
+        f"- stop_the_line: `{md_inline(stop_line_relpath or 'not_required')}`",
+        "",
+        "## 机器源",
+        "",
+        "- `loop_finding.yaml`",
+        "- `repair_plan.yaml`",
+        "- `loop_manifest.yaml`",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+def write_loop_gate(args):
+    ensure_run_manifest("write-loop-gate")
+    contracts = loop_stage_contracts()
+    if args.stage not in contracts:
+        known = ", ".join(sorted(contracts))
+        raise SystemExit(f"BLOCKED: unknown stage {args.stage}. Known loop stages: {known}")
+
+    gate_id = args.gate_id or f"LOOP-GATE-{RUN_ID}-{utc_slug_text()}"
+    finding_id = f"{safe_slug(gate_id)}-FINDING"
+    affected_artifacts = args.affected_artifact or [f"stage:{args.stage}"]
+    source_refs = args.source_ref or [f"manual_review:{args.stage}"]
+    route_targets, rerun_after, patch_type, stop_auto_patch = route_targets_for_failure(args.failure_class, args.stage)
+    max_iterations = loop_profile_iteration_policy(args.profile)
+    rule_trace = loop_gate_rule_trace(args.stage, args.failure_class)
+    rule_ids = rule_trace["rule_ids"]
+    input_lock_hash = sha256_text(json.dumps({
+        "run_id": RUN_ID,
+        "gate_id": gate_id,
+        "stage": args.stage,
+        "trigger_source": args.trigger_source,
+        "severity": args.severity,
+        "failure_class": args.failure_class,
+        "rule_ids": rule_ids,
+        "affected_artifacts": affected_artifacts,
+        "source_refs": source_refs,
+        "repair_hint_zh": args.repair_hint,
+        "profile": args.profile,
+    }, ensure_ascii=False, sort_keys=True))
+    created_at = utc_now_text()
+
+    finding = {
+        "finding_id": finding_id,
+        "run_id": RUN_ID,
+        "stage": args.stage,
+        "trigger_source": args.trigger_source,
+        "severity": args.severity,
+        "failure_class": args.failure_class,
+        "rule_trace": rule_trace,
+        "rule_ids": rule_ids,
+        "affected_stage_candidate": route_targets,
+        "affected_artifacts": affected_artifacts,
+        "source_refs": source_refs,
+        "repair_hint_zh": args.repair_hint,
+        "created_at": created_at,
+    }
+    patch_id = f"{safe_slug(gate_id)}-PATCH-RECOMMENDATION"
+    patch_set = [{
+        "patch_id": patch_id,
+        "patch_type": patch_type,
+        "source_finding_id": finding_id,
+        "rule_ids": rule_ids,
+        "before_hash": input_lock_hash,
+        "operations": [
+            {"record_repair_hint_zh": args.repair_hint},
+            {"route_targets": route_targets},
+            {"gate_only_no_patch_apply": True},
+        ],
+        "after_hash": "sha256:not-applied-gate-only",
+        "writes_prd": False,
+        "source_refs": source_refs,
+        "status": "recommendation_only",
+    }]
+    repair_plan = {
+        "plan_id": f"{safe_slug(gate_id)}-REPAIR-PLAN",
+        "loop_version": "3.1",
+        "gate_only": True,
+        "rule_trace": rule_trace,
+        "rule_ids": rule_ids,
+        "findings": [{
+            "finding_id": finding_id,
+            "failure_class": args.failure_class,
+            "rule_ids": rule_ids,
+        }],
+        "selected_profile": args.profile,
+        "route_targets": route_targets,
+        "patch_set": patch_set,
+        "rerun_scope": loop_rerun_scope(args.severity, affected_artifacts, rerun_after, stop_auto_patch),
+        "revalidate": contracts[args.stage].get("revalidate", []) or [],
+        "max_iterations_policy": max_iterations,
+        "actual_patch_apply_executed": False,
+        "apply_allowed_patches_executed": False,
+    }
+    stop_required = args.severity in {"blocker", "semantic_defect"} or stop_auto_patch
+    manifest = {
+        "run_id": RUN_ID,
+        "loop_version": "3.1",
+        "loop_profile": args.profile,
+        "rule_trace": rule_trace,
+        "rule_ids": rule_ids,
+        "input_lock_hash": input_lock_hash,
+        "iterations": [{
+            "iteration_id": 1,
+            "started_at": created_at,
+            "input_hash": input_lock_hash,
+            "rule_ids": rule_ids,
+            "findings": [finding],
+            "repair_plan": {
+                "plan_id": repair_plan["plan_id"],
+                "selected_profile": args.profile,
+                "route_targets": route_targets,
+            },
+            "patch_set": patch_set,
+            "rerun_scope": repair_plan["rerun_scope"],
+            "revalidation_results": {
+                "status": "blocked" if stop_required else "review_required",
+                "reason": "gate-only mode records the finding; no patch apply or rerun was executed.",
+            },
+            "output_hash": "sha256:not-applied-gate-only",
+            "exit_decision": "stop_line" if stop_required else "review_required",
+        }],
+        "final_status": "stop_line" if stop_required else "review_required",
+        "final_exit_reason": "blocker or semantic defect recorded" if stop_required else "loop gate evidence recorded for review",
+    }
+
+    out_dir = loop_gate_dir(gate_id)
+    finding_path = out_dir / "loop_finding.yaml"
+    repair_path = out_dir / "repair_plan.yaml"
+    manifest_path = out_dir / "loop_manifest.yaml"
+    report_path = out_dir / "final_loop_report.md"
+    ywrite(finding_path, finding)
+    ywrite(repair_path, repair_plan)
+    ywrite(manifest_path, manifest)
+
+    generated_errors = []
+    generated_errors.extend(validate_with_schema_path(finding_path, loop_schema_path("loop_finding.schema.json")))
+    generated_errors.extend(validate_with_schema_path(repair_path, loop_schema_path("repair_plan.schema.json")))
+    generated_errors.extend(validate_with_schema_path(manifest_path, loop_schema_path("loop_manifest.schema.json")))
+    if generated_errors:
+        raise SystemExit("BLOCKED: generated loop gate failed schema validation:\n- " + "\n- ".join(generated_errors))
+
+    stop_line_relpath = ""
+    if stop_required:
+        stop_path = write_stop_report(
+            stage=args.stage,
+            reason=f"Loop gate recorded {args.severity} finding {finding_id}: {args.failure_class}.",
+            required_next_action="Review final_loop_report.md and decide whether to implement a real prototype artifact generator, patch applier, or manual PRD clarification.",
+            resume_condition="A human review decision exists and the artifact generator or manual repair path is explicitly selected.",
+            severity="critical" if args.severity == "semantic_defect" else "blocker",
+            sub_harness="prototype_projection_harness",
+            source_artifacts=[
+                artifact_relpath(finding_path),
+                artifact_relpath(repair_path),
+                artifact_relpath(manifest_path),
+            ],
+            notes="Generated by write-loop-gate in gate-only mode; no patch apply, rerun, product-spec write, or Figma write occurred.",
+            stop_id=f"STL-{safe_slug(gate_id)}",
+        )
+        stop_line_relpath = artifact_relpath(stop_path)
+
+    write_loop_report_markdown(
+        path=report_path,
+        gate_id=gate_id,
+        finding=finding,
+        repair_plan=repair_plan,
+        manifest=manifest,
+        stop_line_relpath=stop_line_relpath,
+    )
+    print(f"Wrote {finding_path}")
+    print(f"Wrote {repair_path}")
+    print(f"Wrote {manifest_path}")
+    print(f"Wrote {report_path}")
+    if stop_line_relpath:
+        print(f"Wrote {run_path(*Path(stop_line_relpath).parts)}")
+        print(f"Wrote {markdown_companion_path(run_path(*Path(stop_line_relpath).parts))}")
 
 def core_review_category_specs() -> list[dict]:
     return [
@@ -1586,6 +2329,7 @@ def core_review_md(args):
     print(f"Wrote {out_path}")
 
 def unified_review(args):
+    ensure_prd_input_or_block("unified-review")
     ensure_run_manifest("unified-review")
     output_rel = Path(args.output or "human_review/REVIEW.md")
     if output_rel.is_absolute() or ".." in output_rel.parts:
@@ -2283,12 +3027,35 @@ def validate_rule_specs(args):
     def collect_rule_ids(node):
         if isinstance(node, dict):
             for key, value in node.items():
-                if key in {"id", "rule_id", "step_id", "pattern_id", "validator_id"} and isinstance(value, str):
+                if key in {
+                    "id",
+                    "rule_id",
+                    "step_id",
+                    "pattern_id",
+                    "validator_id",
+                    "adapter_id",
+                    "library_id",
+                    "mode",
+                    "profile_id",
+                    "contract_id",
+                } and isinstance(value, str):
                     known_yaml_ids.add(value)
                 collect_rule_ids(value)
         elif isinstance(node, list):
             for value in node:
                 collect_rule_ids(value)
+
+    def is_internal_rule_asset(path: Path) -> bool:
+        if path.name in {"validators.yaml", "harness_contract.yaml"}:
+            return False
+        rel_parts = path.relative_to(HARNESS_ROOT).parts
+        return "figma-sds" not in rel_parts
+
+    def harness_rule_files(harness_dir: Path) -> list[Path]:
+        candidates = []
+        for pattern in ("*.yaml", "*.yml"):
+            candidates.extend(harness_dir.rglob(pattern))
+        return sorted(p for p in candidates if is_internal_rule_asset(p))
 
     for harness_dir in sorted(harness_path("sub_harnesses").glob("*_harness")):
         if not harness_dir.is_dir():
@@ -2338,13 +3105,7 @@ def validate_rule_specs(args):
             if not machine_rule.get("fail_when"):
                 issues.append(f"{validators_path}: {item.get('id', 'UNKNOWN')} missing machine_rule.fail_when")
 
-        rule_files = [
-            p for p in harness_dir.glob("*.yaml")
-            if p.name not in {"validators.yaml", "harness_contract.yaml"}
-        ]
-        patch_contract_dir = harness_dir / "patch_contracts"
-        if patch_contract_dir.exists():
-            rule_files.extend(sorted(patch_contract_dir.glob("*.yaml")))
+        rule_files = harness_rule_files(harness_dir)
         detailed_rule_items = 0
 
         def require_rule_fields(path, item, fields, item_label):
@@ -2450,6 +3211,16 @@ def validate_rule_specs(args):
             "human_review_stage": bool(review_stage.get("required")),
         }
 
+    for extra_asset in [
+        harness_path("product-spec", "component-binding-map.yaml"),
+        harness_path("product-spec", "design-semantic-library.json"),
+        harness_path("prd_orchestrator", "patch_control_v2.yaml"),
+        harness_path("prd_orchestrator", "automation_policy.yaml"),
+        harness_path("prd_orchestrator", "document_registry.yaml"),
+    ]:
+        if extra_asset.exists():
+            collect_rule_ids(yload(extra_asset))
+
     review_doc = harness_path("prd_orchestrator", "HARNESS_RULE_REVIEW.md")
     crosswalk_path = harness_path("prd_orchestrator", "harness_rule_review_crosswalk.yaml")
     crosswalk = yload(crosswalk_path).get("harness_rule_review_crosswalk", {})
@@ -2546,6 +3317,90 @@ def init_instance(args):
     ywrite(target / "instance.yaml", manifest)
     print(f"Initialized PRD instance at {target}")
 
+def run_prd_loop(args):
+    ensure_instance_write_allowed("run-prd-loop")
+    state = prd_run_state()
+    print(json.dumps({"prd_run_loop_state": state}, ensure_ascii=False, indent=2))
+
+    baseline_path = current_source_baseline_path()
+    if not baseline_path.exists():
+        source = resolve_input_path(args.source) if args.source else None
+        if source is None:
+            inputs = discover_prd_input_files()
+            if len(inputs) == 1:
+                source = inputs[0]
+            elif len(inputs) > 1:
+                raise SystemExit(
+                    "BLOCKED: multiple PRD inputs found. Re-run with --source and choose one: "
+                    + ", ".join(str(path.relative_to(INSTANCE_ROOT)) for path in inputs)
+                )
+        if source is None or not source.exists() or not text_file_has_content(source):
+            out = write_stop_report(
+                stage="prd_input",
+                reason="No real PRD input was found for this run.",
+                required_next_action="Place a source PRD markdown file under <instance-root>/inputs/ and rerun run-prd-loop --source inputs/<file>.md.",
+                resume_condition="discover_prd_input_files returns exactly one selected non-empty source PRD file.",
+                sub_harness="prd_orchestrator",
+            )
+            raise SystemExit(f"{prd_input_blocker('run-prd-loop')}\nWrote stop-the-line report: {display_path(out)}")
+        args.markdown = str(source)
+        extract_source_baseline(args)
+        out = write_stop_report(
+            stage="source_extraction_review",
+            reason="Source extraction was generated and requires human review before downstream harness stages.",
+            required_next_action=f"Review and approve `{artifact_relpath(current_source_baseline_path())}` with review-decision.",
+            resume_condition="An approved review_decision exists for the structured_source_baseline artifact and matching sha256.",
+            sub_harness="prd_orchestrator",
+            source_artifacts=[artifact_relpath(current_source_baseline_path())],
+        )
+        raise SystemExit(
+            f"BLOCKED: source extraction was generated and now requires human review before downstream harness stages.\n"
+            f"Wrote stop-the-line report: {display_path(out)}"
+        )
+
+    approved_path, _decision = find_approved_decision(baseline_path)
+    if not approved_path:
+        out = write_stop_report(
+            stage="source_extraction_review",
+            reason="Structured source baseline exists but has no approved review decision.",
+            required_next_action=f"Review and approve `{artifact_relpath(baseline_path)}` with review-decision.",
+            resume_condition="find_approved_decision(structured_source_baseline) returns a matching approved decision.",
+            sub_harness="prd_orchestrator",
+            source_artifacts=[artifact_relpath(baseline_path)],
+        )
+        raise SystemExit(
+            "BLOCKED: source baseline exists but is not approved. "
+            f"Review and approve `{artifact_relpath(baseline_path)}` before continuing the loop.\n"
+            f"Wrote stop-the-line report: {display_path(out)}"
+        )
+
+    if not has_product_spec_material():
+        out = write_stop_report(
+            stage="downstream_fact_generation",
+            reason="Approved source baseline exists, but requirement/screen generation has not produced product-spec material.",
+            required_next_action="Run the downstream requirement_harness and screen_state_harness generators before quality-gate.",
+            resume_condition="product-spec/requirements.yaml or product-spec/screens.yaml contains generated candidate material.",
+            sub_harness="prd_orchestrator",
+            source_artifacts=[artifact_relpath(baseline_path), approved_path.relative_to(INSTANCE_ROOT).as_posix()],
+        )
+        raise SystemExit(
+            "BLOCKED: approved source baseline exists, but requirement/screen generation has not produced product-spec material. "
+            "This is the current downstream generation breakpoint.\n"
+            f"Wrote stop-the-line report: {display_path(out)}"
+        )
+
+    out = write_stop_report(
+        stage="prototype_runtime_generation",
+        reason="Product-spec has material, but prototype runtime/render payload generation loop is not implemented yet.",
+        required_next_action="Implement and run prototype runtime plus render payload generation before Figma materialization.",
+        resume_condition="validate-render-readiness passes with a non-empty runtime and render payload.",
+        sub_harness="prototype_projection_harness",
+    )
+    raise SystemExit(
+        "BLOCKED: product-spec has material, but prototype runtime/render payload generation loop is not implemented yet.\n"
+        f"Wrote stop-the-line report: {display_path(out)}"
+    )
+
 def search(args):
     q = args.query
     search_roots = [
@@ -2578,6 +3433,7 @@ def main():
         ("status", status),
         ("validate-prd-template", validate_prd_template),
         ("check-prd-sync", check_prd_sync),
+        ("preflight-prd-run", preflight_prd_run),
         ("quality-gate", quality_gate),
         ("validate-rule-specs", validate_rule_specs),
         ("validate-fixtures", validate_fixtures),
@@ -2637,6 +3493,69 @@ def main():
     p.add_argument("--promoter")
     p.add_argument("--force", action="store_true")
     p.set_defaults(func=promote_approved)
+
+    p = sub.add_parser("write-patch-report")
+    p.add_argument("--patch-id")
+    p.add_argument("--summary", required=True)
+    p.add_argument("--root-cause", required=True)
+    p.add_argument("--status", choices=["candidate", "applied", "blocked", "changes_requested", "superseded"], default="candidate")
+    p.add_argument("--sub-harness", default="orchestrator")
+    p.add_argument("--source-artifact", action="append")
+    p.add_argument("--changed-file", action="append", required=True)
+    p.add_argument("--validation", action="append", required=True)
+    p.add_argument("--remaining-gap", action="append")
+    p.add_argument("--stop-the-line-ref", action="append")
+    p.add_argument("--output")
+    p.set_defaults(func=write_patch_report)
+
+    p = sub.add_parser("validate-patch-report")
+    p.add_argument("artifact", help="Run artifact path relative to <instance-root>/runs/<run-id>")
+    p.set_defaults(func=validate_patch_report)
+
+    p = sub.add_parser("stop-the-line")
+    p.add_argument("--stage", required=True)
+    p.add_argument("--reason", required=True)
+    p.add_argument("--next-action", required=True)
+    p.add_argument("--resume-condition", required=True)
+    p.add_argument("--severity", choices=["blocker", "critical", "high"], default="blocker")
+    p.add_argument("--sub-harness", default="orchestrator")
+    p.add_argument("--owner", default="")
+    p.add_argument("--source-artifact", action="append")
+    p.add_argument("--notes", default="")
+    p.add_argument("--stop-id")
+    p.add_argument("--output")
+    p.set_defaults(func=stop_the_line)
+
+    p = sub.add_parser("validate-stop-the-line")
+    p.add_argument("artifact", help="Run artifact path relative to <instance-root>/runs/<run-id>")
+    p.set_defaults(func=validate_stop_the_line)
+
+    p = sub.add_parser("write-loop-gate")
+    p.add_argument("--gate-id")
+    p.add_argument("--stage", required=True)
+    p.add_argument(
+        "--trigger-source",
+        required=True,
+        choices=[
+            "validator_result",
+            "logic_sidecar_audit",
+            "projection_report",
+            "layout_analyzer",
+            "skill_trace",
+            "manual_review",
+        ],
+    )
+    p.add_argument("--severity", required=True, choices=["info", "minor", "major", "blocker", "semantic_defect"])
+    p.add_argument("--failure-class", required=True)
+    p.add_argument("--affected-artifact", action="append")
+    p.add_argument("--source-ref", action="append")
+    p.add_argument("--repair-hint", required=True)
+    p.add_argument("--profile", required=True, choices=["LOOP_PROFILE_SIMPLE", "LOOP_PROFILE_STANDARD", "LOOP_PROFILE_COMPLEX"])
+    p.set_defaults(func=write_loop_gate)
+
+    p = sub.add_parser("run-prd-loop")
+    p.add_argument("--source", help="Source PRD markdown under <instance-root>/inputs or an absolute path")
+    p.set_defaults(func=run_prd_loop)
 
     p = sub.add_parser("search")
     p.add_argument("query")

@@ -1,0 +1,27 @@
+schema:
+  id: loop_manifest_schema
+  id_zh: 回路清单 Schema
+  type: object
+  required:
+    - run_id
+    - loop_version
+    - loop_profile
+    - input_lock_hash
+    - iterations
+    - final_status
+    - final_exit_reason
+  properties:
+    run_id:
+      type: string
+    loop_version:
+      type: string
+    loop_profile:
+      type: string
+    input_lock_hash:
+      type: string
+    iterations:
+      type: array
+    final_status:
+      type: string
+    final_exit_reason:
+      type: string

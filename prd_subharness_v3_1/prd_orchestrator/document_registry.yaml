@@ -206,6 +206,168 @@ document_registry:
         - "prototype_projection_harness"
       forbidden_as_fact_source: true
 
+    - document_id: "DOC-PATCH-REPORTS"
+      path: "runs/<run-id>/prd_orchestrator/patch_reports/*.patch_report.yaml"
+      doc_type: "patch_report"
+      authority_role: "patch_execution_evidence"
+      writable_by:
+        - "prd_orchestrator"
+        - "owner_sub_harness"
+      fact_promotion_requires_review_decision: true
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-PATCH-REPORTS-MD"
+      path: "runs/<run-id>/prd_orchestrator/patch_reports/*.patch_report.md"
+      doc_type: "patch_report_markdown"
+      authority_role: "human_readable_patch_execution_review"
+      companion_for: "runs/<run-id>/prd_orchestrator/patch_reports/*.patch_report.yaml"
+      writable_by:
+        - "prd_orchestrator"
+        - "owner_sub_harness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-STOP-THE-LINE"
+      path: "runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.yaml"
+      doc_type: "stop_the_line_report"
+      authority_role: "blocking_gate_evidence"
+      writable_by:
+        - "prd_orchestrator"
+        - "owner_sub_harness"
+      consumed_by:
+        - "run-prd-loop"
+        - "human_review"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-STOP-THE-LINE-MD"
+      path: "runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.md"
+      doc_type: "stop_the_line_markdown"
+      authority_role: "human_readable_blocking_gate_review"
+      companion_for: "runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.yaml"
+      writable_by:
+        - "prd_orchestrator"
+        - "owner_sub_harness"
+      consumed_by:
+        - "human_review"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-LOOP-FINDING"
+      path: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/loop_finding.yaml"
+      doc_type: "loop_gate_finding"
+      authority_role: "gate_only_loop_evidence"
+      writable_by:
+        - "prd_orchestrator"
+      consumed_by:
+        - "human_review"
+        - "stop_the_line"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-LOOP-REPAIR-PLAN"
+      path: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/repair_plan.yaml"
+      doc_type: "loop_gate_repair_plan"
+      authority_role: "gate_only_repair_recommendation"
+      writable_by:
+        - "prd_orchestrator"
+      consumed_by:
+        - "human_review"
+      automatic_patch_apply_allowed: false
+      automatic_rerun_allowed: false
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-LOOP-MANIFEST"
+      path: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/loop_manifest.yaml"
+      doc_type: "loop_gate_manifest"
+      authority_role: "machine_validated_loop_gate_record"
+      writable_by:
+        - "prd_orchestrator"
+      consumed_by:
+        - "human_review"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-FINAL-LOOP-REPORT-MD"
+      path: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/final_loop_report.md"
+      doc_type: "final_loop_report_markdown"
+      authority_role: "human_readable_loop_gate_review"
+      companion_for: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/*.yaml"
+      writable_by:
+        - "prd_orchestrator"
+      consumed_by:
+        - "human_review"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-PROTOTYPE-SOURCE-BRIEF"
+      path: "runs/<run-id>/io/output/prototype_source_brief.yaml"
+      doc_type: "prototype_source_brief"
+      authority_role: "prototype_generator_source_slice"
+      writable_by:
+        - "prototype_projection_harness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-PROTOTYPE-RUNTIME-CANDIDATE"
+      path: "runs/<run-id>/io/output/prototype.runtime.candidate.json"
+      doc_type: "prototype_runtime_candidate"
+      authority_role: "derived_projection_intermediate"
+      writable_by:
+        - "prototype_projection_harness"
+      consumed_by:
+        - "validate-render-readiness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-PROTOTYPE-RENDER-PAYLOAD"
+      path: "runs/<run-id>/io/output/prototype-render-payload.yaml"
+      doc_type: "prototype_render_payload"
+      authority_role: "final_figma_writer_input_candidate"
+      writable_by:
+        - "prototype_projection_harness"
+      consumed_by:
+        - "validate-render-readiness"
+        - "final_figma_writer"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-PROTOTYPE-GENERATION-REPORT"
+      path: "runs/<run-id>/prd_orchestrator/prototype_projection_reports/prototype_projection_report.yaml"
+      doc_type: "prototype_generation_report"
+      authority_role: "machine_validated_generation_evidence"
+      writable_by:
+        - "prototype_projection_harness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-PROTOTYPE-GENERATION-REPORT-MD"
+      path: "runs/<run-id>/prd_orchestrator/prototype_projection_reports/prototype_projection_report.md"
+      doc_type: "prototype_generation_report_markdown"
+      authority_role: "human_readable_generation_review"
+      companion_for: "runs/<run-id>/prd_orchestrator/prototype_projection_reports/prototype_projection_report.yaml"
+      writable_by:
+        - "prototype_projection_harness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-PATCH-REPORT-SCHEMA"
+      path: "schemas/patch_report.schema.json"
+      doc_type: "patch_report_schema"
+      authority_role: "validation_schema"
+      writable_by:
+        - "prd_orchestrator"
+
+    - document_id: "DOC-PATCH-REPORT-MD-TEMPLATE"
+      path: "prd_orchestrator/templates/patch_report.template.md"
+      doc_type: "patch_report_markdown_template"
+      authority_role: "human_review_template"
+      writable_by:
+        - "prd_orchestrator"
+
+    - document_id: "DOC-STOP-THE-LINE-SCHEMA"
+      path: "schemas/stop_the_line.schema.json"
+      doc_type: "stop_the_line_schema"
+      authority_role: "validation_schema"
+      writable_by:
+        - "prd_orchestrator"
+
+    - document_id: "DOC-STOP-THE-LINE-MD-TEMPLATE"
+      path: "prd_orchestrator/templates/stop_the_line.template.md"
+      doc_type: "stop_the_line_markdown_template"
+      authority_role: "human_review_template"
+      writable_by:
+        - "prd_orchestrator"
+
     - document_id: "DOC-DRD-V3-RULES"
       path: "sub_harnesses/prototype_projection_harness/drd_v3_1/rules/12_complete_deductive_rules.yaml"
       doc_type: "drd_deductive_rules_entrypoint"
@@ -234,6 +396,30 @@ document_registry:
       path: "sub_harnesses/prototype_projection_harness/drd_v3_1/examples/*.sample.yaml"
       doc_type: "drd_projection_artifact_examples"
       authority_role: "projection_validation_example"
+      writable_by:
+        - "prototype_projection_harness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-LOOP-V3-RULES"
+      path: "sub_harnesses/prototype_projection_harness/drd_v3_1/loop_v3_1/rules/*.yaml"
+      doc_type: "loop_gate_only_rule_package"
+      authority_role: "projection_loop_gate_rule_archive"
+      writable_by:
+        - "prototype_projection_harness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-LOOP-V3-SCHEMAS"
+      path: "sub_harnesses/prototype_projection_harness/drd_v3_1/loop_v3_1/schemas/*.schema.json"
+      doc_type: "loop_gate_only_executable_schema_set"
+      authority_role: "projection_loop_validator_contract"
+      writable_by:
+        - "prototype_projection_harness"
+      forbidden_as_fact_source: true
+
+    - document_id: "DOC-LOOP-V3-SAMPLE-ARTIFACTS"
+      path: "sub_harnesses/prototype_projection_harness/drd_v3_1/loop_v3_1/examples/*.sample.yaml"
+      doc_type: "loop_gate_only_examples"
+      authority_role: "projection_loop_validator_example"
       writable_by:
         - "prototype_projection_harness"
       forbidden_as_fact_source: true

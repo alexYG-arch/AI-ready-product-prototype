@@ -1,0 +1,81 @@
+rerun_scope_rules:
+  version: '3.1'
+  name_zh: 重跑范围规则
+
+  scope_types:
+    - scope: stage_only
+      scope_zh: 只重跑当前阶段
+      use_when_zh: 结构字段缺失、局部格式错误、单 stage 可修复。
+    - scope: stage_and_downstream
+      scope_zh: 当前阶段及下游阶段
+      use_when_zh: 当前阶段输出影响后续 artifact。
+    - scope: affected_board_only
+      scope_zh: 只重跑受影响画布
+      use_when_zh: finding 指向单个 board 或 page shard。
+    - scope: affected_flow_only
+      scope_zh: 只重跑受影响流程
+      use_when_zh: finding 跨多个 board 但属于同一 flow。
+    - scope: all_dependent_boards
+      scope_zh: 重跑所有依赖画布
+      use_when_zh: 公共库、surface rule、component primitive 变更。
+    - scope: full_harness
+      scope_zh: 重跑完整 harness
+      use_when_zh: 输入源 hash 变化或 run lock 失效。
+    - scope: stop_auto_patch
+      scope_zh: 停止自动修补
+      use_when_zh: PRD 语义缺陷或超出安全边界。
+
+  rerun_resolution_rules:
+    - id: RERUN-001
+      if_zh: patch_type 是 schema_patch 且只影响单文件格式
+      then: stage_only
+    - id: RERUN-002
+      if_zh: patch_type 是 materialization_patch 且有 affected_board
+      then: affected_board_only
+    - id: RERUN-003
+      if_zh: patch_type 是 design_kernel_patch
+      then: stage_and_downstream
+    - id: RERUN-004
+      if_zh: patch_type 是 layout_patch 且公共布局规则变更
+      then: all_dependent_boards
+    - id: RERUN-005
+      if_zh: run_input_lock hash 改变
+      then: full_harness
+    - id: RERUN-006
+      if_zh: patch_type 是 semantic_defect_candidate
+      then: stop_auto_patch
+
+  downstream_stage_map:
+    ROLE-01:
+      - DK-01
+      - COMP-01
+      - HOT-01
+      - AUD-01
+      - PATCH-01
+      - RND-06B
+      - RND-08A
+      - RND-09
+    DK-01:
+      - COMP-01
+      - HOT-01
+      - AUD-01
+      - PATCH-01
+      - RND-06B
+      - RND-09
+    COMP-01:
+      - HOT-01
+      - AUD-01
+      - PATCH-01
+      - RND-06B
+      - RND-08A
+      - RND-09
+    HOT-01:
+      - RND-06
+      - RND-06B
+      - RND-08A
+      - RND-09
+    RND-06B:
+      - RND-08A
+      - RND-09
+    RND-08A:
+      - RND-09

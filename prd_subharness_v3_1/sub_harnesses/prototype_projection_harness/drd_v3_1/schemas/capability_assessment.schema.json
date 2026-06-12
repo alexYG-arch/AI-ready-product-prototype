@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Capability Assessment",
+  "type": "object",
+  "required": ["capability_assessment"],
+  "properties": {
+    "capability_assessment": {
+      "type": "object",
+      "required": ["version", "mode", "run_id", "status", "source_refs", "capabilities"],
+      "properties": {
+        "version": { "const": "3.1.2" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["pass", "pass_with_review_required", "blocked"] },
+        "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "official_docs_search_enabled": { "type": "boolean" },
+        "capabilities": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

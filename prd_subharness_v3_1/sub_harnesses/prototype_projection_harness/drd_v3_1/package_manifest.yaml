@@ -22,6 +22,7 @@ package:
       - rules/10_inductive_support_rules.yaml
       - rules/11_validators.yaml
       - rules/12_complete_deductive_rules.yaml
+      - rules/13_rule_projection_map.yaml
     profile:
       - profile.yaml
     libs:
@@ -29,7 +30,6 @@ package:
       - libs/sidecar_card_template_library.yaml
       - libs/obligation_primitive_library.yaml
     examples:
-      - examples/image_upload_3_5_walkthrough.yaml
       - examples/sidecar_cards_sample.yaml
       - examples/skill_pack_methodology_sample.yaml
     executable_schemas:

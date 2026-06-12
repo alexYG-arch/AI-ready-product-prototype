@@ -1,0 +1,37 @@
+package:
+  id: prototype_harness_generation_lifecycle_upgrade_v3_1_1_harness_aligned
+  name: Prototype Harness Generation Lifecycle Upgrade Harness Alignment
+  name_zh: 原型 Harness 生成生命周期升级包工程对齐层
+  version: "3.1.1"
+  source_package: prototype_harness_generation_lifecycle_upgrade_v3_1_1
+  naming_policy:
+    use_current_harness_artifact_names: true
+    mappings:
+      screen_role_obligation_map.yaml: screen_role_obligations.yaml
+      role_derivation_report.yaml: role_inference_report.yaml
+      frame_packets.yaml: composition_plan.frames
+      anchor_badge_requirements.yaml: hotspot_annotation_requirements.yaml
+      leader_line_map.yaml: anchor_leader_line_map.yaml
+  production_rule:
+    image_upload_3_5_first_pass_generation.sample.yaml: removed_from_production_package
+    generic_boundary_algorithm_required: true
+    sample_files_not_read_by_generator: true
+    generation_job_queue_required: true
+    generation_job_completion_criteria_required: true
+    deterministic_and_model_generators_must_be_separate: true
+    model_execution_contract_required: true
+    model_invocation_trace_required: true
+  output_policy:
+    write_root: runs/<run-id>/
+    allowed_paths:
+      - io/output/
+      - io/state/
+      - prd_orchestrator/prototype_projection_reports/
+    forbidden_paths:
+      - product-spec/
+      - inputs/
+      - PRD.md
+      - requirements.yaml
+      - screens.yaml
+      - metrics.yaml
+      - events.yaml

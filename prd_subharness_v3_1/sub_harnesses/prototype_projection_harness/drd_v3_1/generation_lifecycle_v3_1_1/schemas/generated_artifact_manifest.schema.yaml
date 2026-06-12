@@ -1,0 +1,19 @@
+schema:
+  id: generated_artifact_manifest.schema
+  name_zh: 生成产物清单 Schema
+  required:
+    - run_id
+    - artifacts
+  properties:
+    run_id:
+      type: string
+    artifacts:
+      type: list
+      items_type: object
+      required_item_fields:
+        - artifact_id
+        - path
+        - generator_id
+        - trace_id
+        - hash
+        - status

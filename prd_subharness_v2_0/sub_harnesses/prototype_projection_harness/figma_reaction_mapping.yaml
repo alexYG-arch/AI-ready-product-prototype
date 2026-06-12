@@ -1,0 +1,82 @@
+figma_reaction_mapping:
+  version: "2.0"
+  purpose: "Runtime trigger/action 到 Figma prototype reaction 的抽象映射。实际插件实现应适配当前 Figma API typings。"
+
+  trigger_mapping:
+    ON_CLICK:
+      figma_label: "On click / On tap"
+      target: "source node reaction trigger"
+    ON_HOVER:
+      figma_label: "While hovering"
+      target: "source node reaction trigger"
+    ON_PRESS:
+      figma_label: "While pressing"
+      target: "source node reaction trigger"
+    AFTER_DELAY:
+      figma_label: "After delay"
+      target: "frame or overlay node reaction trigger"
+      requires: ["delay_ms"]
+    DRAG:
+      figma_label: "On drag"
+      target: "source node reaction trigger"
+
+  action_mapping:
+    NAVIGATE:
+      figma_action: "NAVIGATE"
+      requires: ["destination_node_id"]
+      semantic_destination: "screen_id + state_id"
+    OPEN_OVERLAY:
+      figma_action: "OVERLAY"
+      requires: ["overlay_node_id"]
+      semantic_destination: "overlay_id"
+    SWAP_OVERLAY:
+      figma_action: "SWAP"
+      requires: ["overlay_node_id"]
+    CLOSE_OVERLAY:
+      figma_action: "CLOSE"
+      requires: []
+    BACK:
+      figma_action: "BACK"
+      requires: []
+    SCROLL_TO:
+      figma_action: "SCROLL_TO"
+      requires: ["destination_node_id"]
+    CHANGE_VARIANT:
+      figma_action: "CHANGE_TO"
+      requires: ["variant_node_id"]
+    SET_VARIABLE:
+      figma_action: "SET_VARIABLE"
+      requires: ["variable_id", "value"]
+    CONDITIONAL:
+      figma_action: "CONDITIONAL"
+      requires: ["condition", "then_actions", "else_actions"]
+    OPEN_URL:
+      figma_action: "URL"
+      requires: ["url"]
+      human_review_required: true
+    NO_OP_ANNOTATION:
+      figma_action: null
+      documentation_only: true
+
+  transition_defaults:
+    default_navigation_transition:
+      type: "SMART_ANIMATE"
+      duration_ms: 300
+      easing: "EASE_OUT"
+    default_overlay_transition:
+      type: "DISSOLVE"
+      duration_ms: 200
+    default_toast_transition:
+      type: "MOVE_IN"
+      duration_ms: 150
+
+  conflict_rules:
+    same_source_same_trigger_duplicate:
+      block: true
+      allowed_resolution:
+        - "merge as multiple actions"
+        - "convert to conditional"
+        - "split hotspot"
+    component_variant_and_page_navigation_same_trigger:
+      block: true
+      preferred_resolution: "put navigation on parent hotspot or use different trigger"

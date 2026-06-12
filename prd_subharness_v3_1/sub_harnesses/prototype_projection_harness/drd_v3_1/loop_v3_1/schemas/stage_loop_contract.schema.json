@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/stage_loop_contract.schema.json",
+  "title": "Stage Loop Contracts",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "harness_aligned_stage_loop_contracts"
+  ],
+  "properties": {
+    "harness_aligned_stage_loop_contracts": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "version",
+        "mode",
+        "gate_only",
+        "contracts"
+      ],
+      "properties": {
+        "version": {
+          "const": "3.1"
+        },
+        "mode": {
+          "const": "DRD_MODE"
+        },
+        "gate_only": {
+          "const": true
+        },
+        "automatic_patch_apply_enabled": {
+          "const": false
+        },
+        "automatic_rerun_enabled": {
+          "const": false
+        },
+        "contracts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/stage_contract"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stage_contract": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "stage_id",
+        "loop_enabled",
+        "loop_layer",
+        "triggers",
+        "diagnose",
+        "repair_actions",
+        "writes",
+        "forbidden_writes",
+        "rerun_scope",
+        "revalidate",
+        "exit_conditions",
+        "max_iterations"
+      ],
+      "properties": {
+        "stage_id": {
+          "type": "string"
+        },
+        "loop_enabled": {
+          "type": "boolean"
+        },
+        "loop_layer": {
+          "type": "string"
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "diagnose": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "repair_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "writes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbidden_writes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rerun_scope": {
+          "type": "object"
+        },
+        "revalidate": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exit_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

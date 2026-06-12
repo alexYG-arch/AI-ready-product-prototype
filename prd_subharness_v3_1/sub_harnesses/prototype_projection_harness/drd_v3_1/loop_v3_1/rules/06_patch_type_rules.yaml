@@ -1,0 +1,132 @@
+patch_type_rules:
+  version: '3.1'
+  name_zh: 修补类型规则
+
+  patch_types:
+    - patch_type: inference_patch
+      patch_type_zh: 推理修补
+      target_artifacts:
+        - screen_role_obligation_map.yaml
+        - role_derivation_report.yaml
+      allowed_ops:
+        - add_missing_obligation
+        - split_interaction_only_state_into_hotspot
+        - add_boundary_obligation
+        - add_surface_return_obligation
+      forbidden_ops:
+        - direct_prd_write
+        - create_confirmed_fact
+
+    - patch_type: design_kernel_patch
+      patch_type_zh: 设计内核修补
+      target_artifacts:
+        - design_kernel.yaml
+        - kernel_constraint_report.yaml
+      allowed_ops:
+        - add_feedback_timing
+        - add_earliest_fix_surface
+        - add_commit_control_state_rule
+        - add_forbidden_realization
+      forbidden_ops:
+        - change_prd_constraint_value
+        - invent_new_business_policy
+
+    - patch_type: materialization_patch
+      patch_type_zh: 物化修补
+      target_artifacts:
+        - composition_plan.yaml
+        - frame_packets.yaml
+        - component_instance_packets.yaml
+        - board_manifest.yaml
+      allowed_ops:
+        - add_frame_packet
+        - add_surface_placeholder
+        - collapse_state_to_sidecar
+        - split_board
+        - add_state_display_reason
+      forbidden_ops:
+        - render_unapproved_inferred_fact
+        - remove_prd_declared_state
+
+    - patch_type: hotspot_patch
+      patch_type_zh: 热点修补
+      target_artifacts:
+        - interaction_hotspot_map.yaml
+        - anchor_badge_requirements.yaml
+      allowed_ops:
+        - add_hotspot
+        - retarget_hotspot_to_region
+        - add_anchor_badge_requirement
+        - add_folded_summary_hotspot
+      forbidden_ops:
+        - create_unsourced_interaction
+
+    - patch_type: sidecar_patch
+      patch_type_zh: 侧车说明修补
+      target_artifacts:
+        - logic_sidecar_card_map.yaml
+        - annotation_stub_map.yaml
+        - anchor_badge_map.yaml
+      allowed_ops:
+        - add_sidecar_card
+        - split_sidecar_card
+        - merge_duplicate_sidecar_cards
+        - add_annotation_stub
+        - add_source_refs_to_card
+      forbidden_ops:
+        - put_audit_content_inside_product_ui
+
+    - patch_type: layout_patch
+      patch_type_zh: 布局修补
+      target_artifacts:
+        - board_layout_plan.yaml
+        - sidecar_layout_plan.yaml
+        - leader_line_map.yaml
+        - anchor_badge_map.yaml
+      allowed_ops:
+        - rebalance_sidecar_columns
+        - move_badge_to_region_corner
+        - remove_long_leader_line_keep_badge_pairing
+        - split_board
+        - collapse_cards_to_summary
+      forbidden_ops:
+        - use_long_lines_for_dense_logic
+        - cover_product_ui
+
+    - patch_type: schema_patch
+      patch_type_zh: 结构修补
+      target_artifacts:
+        - any_materialization_artifact
+      allowed_ops:
+        - fill_required_field_from_source_refs
+        - add_hash
+        - normalize_id
+        - fix_yaml_shape
+      forbidden_ops:
+        - change_semantic_meaning
+
+    - patch_type: semantic_defect_candidate
+      patch_type_zh: PRD 语义缺陷候选
+      target_artifacts:
+        - semantic_defect_candidate.yaml
+        - projection_report.yaml
+      allowed_ops:
+        - emit_candidate
+        - stop_auto_patch
+        - request_human_review
+      forbidden_ops:
+        - direct_prd_write
+        - auto_apply_fact_change
+
+  required_patch_fields:
+    - patch_id
+    - patch_type
+    - patch_type_zh
+    - source_finding_id
+    - source_validator_id
+    - affected_artifacts
+    - before_hash
+    - operations
+    - after_hash
+    - writes_prd
+    - review_status

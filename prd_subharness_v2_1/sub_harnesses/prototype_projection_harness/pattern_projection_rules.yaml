@@ -1,0 +1,66 @@
+pattern_projection_rules:
+  version: "2.1"
+  purpose: "定义页面和区域 pattern 的识别、绑定、fallback 和 gap 规则。"
+
+  pattern_resolution_inputs:
+    - "screen purpose"
+    - "task type"
+    - "required state coverage"
+    - "required component roles"
+    - "journey step"
+    - "interaction graph degree"
+
+  pattern_priority:
+    - "exact_figma_template_binding"
+    - "compatible_figma_pattern_binding"
+    - "semantic_library_pattern_composition"
+    - "manual_layout_placeholder"
+
+  pattern_types:
+    form_submit:
+      semantic_role: "form"
+      required_slots:
+        - "input_group"
+        - "submit_button"
+        - "feedback"
+      required_states:
+        - "ready"
+        - "input_invalid"
+        - "submitting"
+        - "submit_failed"
+        - "success"
+    confirmation_modal:
+      semantic_role: "confirmation_modal"
+      required_slots:
+        - "title"
+        - "body"
+        - "primary_action"
+        - "secondary_action"
+      required_interactions:
+        - "confirm"
+        - "cancel_or_close"
+    list_detail:
+      semantic_role: "list_detail_flow"
+      required_slots:
+        - "list_item"
+        - "detail_navigation"
+        - "empty_state"
+        - "error_state"
+    toast_feedback:
+      semantic_role: "non_blocking_feedback"
+      required_slots:
+        - "message"
+      required_interactions:
+        - "open"
+        - "auto_dismiss"
+
+  gap_rules:
+    pattern_state_coverage_missing:
+      severity: "review_required"
+      action: "create pattern gap card"
+    required_slot_missing:
+      severity: "blocker"
+      action: "block pattern projection unless placeholder allowed"
+    figma_template_not_found:
+      severity: "warning"
+      action: "fallback to semantic composition"

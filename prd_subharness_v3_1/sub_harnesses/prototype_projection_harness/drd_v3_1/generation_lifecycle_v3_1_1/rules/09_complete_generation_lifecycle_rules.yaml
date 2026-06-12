@@ -1,0 +1,57 @@
+complete_generation_lifecycle_rules:
+  id: COMPLETE-GEN-LIFECYCLE-3-1-1
+  name: Complete Generation Lifecycle Rules
+  name_zh: 完整生成生命周期规则
+  version: "3.1.1"
+
+  include_rules:
+    - 00_stage_generation_controller.yaml
+    - 01_build_crew_generator_rules.yaml
+    - 02_stage_generate_contract.yaml
+    - 03_generation_worker_contracts.yaml
+    - 04_generation_trace_rules.yaml
+    - 05_generate_validate_repair_lifecycle.yaml
+    - 06_missing_artifact_bootstrap_rules.yaml
+    - 07_regeneration_policy.yaml
+    - 08_validator_behavior_update.yaml
+    - 10_repair_crew_integration_rules.yaml
+    - 11_stage_generator_matrix.yaml
+    - 12_generation_safety_rules.yaml
+
+  contract_summary_zh: >
+    v3.1.1 将每个 stage 从“规则 + 校验 + 修补”升级为“生成 + 自检 + 校验 + 修补 + 复验”。
+    缺失产物必须先由 Build Crew 生成最小可校验产物，再交给 validator；已有产物不合格才交给 Repair Crew。
+
+  mandatory_pipeline:
+    - prepare_inputs
+    - bootstrap_missing_artifacts
+    - build_crew_generate
+    - generation_self_check
+    - validator_validate
+    - loop_controller_diagnose
+    - repair_crew_patch_if_needed
+    - revalidate
+    - projection_report
+
+  key_invariants:
+    - id: INV-GEN-001
+      invariant_zh: validator 不能承担生成职责。
+    - id: INV-GEN-002
+      invariant_zh: Repair Crew 不能承担首轮构建职责。
+    - id: INV-GEN-003
+      invariant_zh: 每个 generated artifact 必须有 generation trace。
+    - id: INV-GEN-004
+      invariant_zh: 所有生成和修补都不得直接写 PRD fact store。
+    - id: INV-GEN-005
+      invariant_zh: 生成失败必须输出 generation_gap，不能用空 artifact 伪装成功。
+
+  codex_execution_order:
+    - read_existing_stage_rules
+    - install_generation_controller
+    - add_generate_contract_to_each_stage
+    - add_build_crew_generator
+    - add_generation_workers
+    - update_validator_missing_artifact_behavior
+    - wire_build_crew_to_repair_crew
+    - add_generation_trace
+    - add_examples_and_tests

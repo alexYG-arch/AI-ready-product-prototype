@@ -1,0 +1,42 @@
+package:
+  id: prototype_harness_loop_upgrade_v3_1
+  id_zh: 原型 Harness 反馈回路升级包 v3.1
+  version: '3.1'
+  owner: prototype_projection_harness
+  purpose: controlled_feedback_loop_upgrade
+  purpose_zh: 将原型 Harness 升级为受控反馈回路系统
+  default_language_policy:
+    machine_keys: english_snake_case
+    human_explanations: zh_fields_and_yaml_comments
+  core_files:
+    - docs/LOOP_ENGINEERING_DESIGN_GUIDE_v3_1.md
+    - rules/15_complete_loop_rules.yaml
+    - codex/CODEX_LOOP_UPGRADE_PROMPT.md
+  rules:
+    - rules/00_loop_engineering_principles.yaml
+    - rules/01_loop_taxonomy_layers.yaml
+    - rules/02_loop_profile_policy.yaml
+    - rules/03_loop_trigger_detection_rules.yaml
+    - rules/04_failure_classification_rules.yaml
+    - rules/05_loop_router_rules.yaml
+    - rules/06_patch_type_rules.yaml
+    - rules/07_rerun_scope_rules.yaml
+    - rules/08_stage_loop_contracts.yaml
+    - rules/09_revalidation_exit_rules.yaml
+    - rules/10_loop_manifest_rules.yaml
+    - rules/11_loop_safety_governance_rules.yaml
+    - rules/12_harness_macro_loop_rules.yaml
+    - rules/13_skill_loop_influence_rules.yaml
+    - rules/14_loop_observability_rules.yaml
+    - rules/15_complete_loop_rules.yaml
+  schemas:
+    - schemas/loop_manifest.schema.yaml
+    - schemas/loop_finding.schema.yaml
+    - schemas/repair_plan.schema.yaml
+    - schemas/stage_loop_contract.schema.yaml
+    - schemas/loop_profile.schema.yaml
+    - schemas/local_patch.schema.yaml
+  examples:
+    - examples/simple_static_page_loop.sample.yaml
+    - examples/standard_form_loop.sample.yaml
+    - examples/loop_manifest.sample.yaml

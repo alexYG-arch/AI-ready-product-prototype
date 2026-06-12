@@ -1,0 +1,83 @@
+validator_spec_version: "1.0"
+review_status: "approved_by_human_review"
+intent: "保护 PRD 核心事实边界：背景、问题、用户、目标、范围、非目标、风险和开放问题只能来自可追溯输入，不能替需求、页面、指标或发布 harness 做决策。"
+
+validators:
+  - id: "prd_core_harness_contract_validator"
+    severity: "blocker"
+    natural_language: "PRD Core 只能修改自己负责的核心事实和开放问题；如果变更开始写 C-EARS、页面状态、指标或发布计划，应被路由到对应 sub-harness。"
+    applies_to:
+      documents:
+        - "product-spec/requirements.yaml"
+        - "prd_orchestrator/open_questions/"
+        - "prd_orchestrator/patch_reports/"
+      owned_fields:
+        - "product"
+        - "feature"
+        - "goals"
+        - "non_goals"
+        - "dependencies"
+        - "risks"
+        - "unknowns"
+    machine_rule:
+      check_type: "ownership_boundary"
+      pass_when:
+        - "Patch touches only owned_fields or orchestrator review artifacts."
+        - "Patch report names downstream harnesses when core facts affect requirements, traceability, or PRD projection."
+      fail_when:
+        - "Core patch confirms requirement acceptance, screen states, numeric metric targets, or rollout decisions."
+        - "Patch writes product-spec/PRD.md directly instead of routing projection work to projection_sync_harness."
+    human_review:
+      reviewer_prompt: "这些核心事实是否只是描述问题和边界，而没有替其他 harness 做产品决策？"
+      evidence:
+        - "diff of product-spec/requirements.yaml"
+        - "patch_report"
+        - "impact_analysis"
+
+  - id: "prd_core_harness_source_ref_validator"
+    severity: "blocker"
+    natural_language: "任何被标为 confirmed 的目标、范围、风险或依赖都必须有来源；没有来源的信息只能进入 unknowns/open_questions。"
+    applies_to:
+      documents:
+        - "product-spec/requirements.yaml"
+        - "product-spec/legacy_prd.md"
+        - "prd_orchestrator/open_questions/"
+      required_source_for_status:
+        - "confirmed"
+        - "approved"
+    machine_rule:
+      check_type: "source_reference_required"
+      pass_when:
+        - "Confirmed core facts include source_refs or explicit review_decision references."
+        - "Unverified assumptions are recorded as unknown/open_question."
+      fail_when:
+        - "A confirmed core fact has no source_refs."
+        - "An assumption is written as a confirmed goal, non-goal, dependency, or risk."
+    human_review:
+      reviewer_prompt: "每条核心事实能否追溯到旧 PRD、变更请求或人工 review decision？"
+      evidence:
+        - "source_refs"
+        - "legacy_prd excerpts"
+        - "review_decisions"
+
+  - id: "prd_core_harness_gap_validator"
+    severity: "major"
+    natural_language: "如果核心事实不足以进入后续需求、页面或指标拆分，必须留下明确 gap/open question，而不是用空白或泛化表述带过。"
+    applies_to:
+      documents:
+        - "product-spec/requirements.yaml"
+        - "prd_orchestrator/open_questions/"
+    machine_rule:
+      check_type: "gap_capture"
+      pass_when:
+        - "Missing audience, scope, success criteria, constraints, or risk owner is captured as unknown/open_question."
+        - "Each gap has owner_candidate or target_harness_candidate when known."
+      fail_when:
+        - "Core fields are empty while no gap/open_question explains why."
+        - "Patch proceeds downstream with unresolved blocker gaps hidden in prose."
+    human_review:
+      reviewer_prompt: "哪些缺失信息会阻塞首次 PRD 迁移？是否已经显式记录给后续处理？"
+      evidence:
+        - "unknowns"
+        - "open_questions"
+        - "partial_rerun_plan"

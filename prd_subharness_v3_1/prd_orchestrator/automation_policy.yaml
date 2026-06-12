@@ -36,10 +36,41 @@ automation_policy:
     harness_package_is_read_only: true
     instance_root_required_for_write_commands: true
     runtime_outputs_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/"
+    patch_reports_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/prd_orchestrator/patch_reports/"
+    patch_report_markdown_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/prd_orchestrator/patch_reports/"
+    stop_the_line_reports_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/prd_orchestrator/stop_the_line/"
+    stop_the_line_markdown_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/prd_orchestrator/stop_the_line/"
+    loop_gate_artifacts_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/prd_orchestrator/loop_gates/"
+    prototype_generator_outputs_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/io/output/"
+    prototype_generator_reports_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/prd_orchestrator/prototype_projection_reports/"
+    stage_review_markdown_must_write_under: "prd_instances/<instance_id>/runs/<run_id>/human_review/"
     approved_artifacts_default_write_under: "prd_instances/<instance_id>/outputs/approved_artifacts/<run_id>/"
     approved_outputs_must_write_under: "prd_instances/<instance_id>/product-spec/"
     review_decisions_must_write_under: "prd_instances/<instance_id>/prd_orchestrator/review_decisions/"
+    figma_writes_allowed_only_for_final_prototype: true
+    figma_forbidden_for_gate_or_review_results:
+      - "validator_report"
+      - "review_report"
+      - "patch_report"
+      - "stop_the_line"
+      - "run_status_dashboard"
     product_spec_write_requires_explicit_flag: true
+    loop_gate_only_policy:
+      can_write_evidence: true
+      can_write_stop_the_line: true
+      can_apply_patch_set: false
+      can_rerun_affected_scopes: false
+      can_generate_prototype_payload: false
+      can_write_figma: false
+      can_write_prd_fact_store: false
+    prototype_artifact_generator_policy:
+      can_read_inputs_prd_md: true
+      can_write_io_output_candidates: true
+      can_write_projection_report: true
+      can_write_product_spec: false
+      can_write_prd_fact_store: false
+      can_write_figma: false
+      can_read_examples_as_runtime_source: false
     forbidden_runtime_write_targets:
       - "prd_subharness_v2_0/prd_orchestrator/impact_candidates/"
       - "prd_subharness_v2_0/prd_orchestrator/change_patch_candidates/"
@@ -55,6 +86,15 @@ automation_policy:
       - "run_manifest"
       - "candidate_outputs"
       - "validator_report"
+      - "patch_report"
+      - "patch_report_markdown"
+      - "stop_the_line"
+      - "stop_the_line_markdown"
+      - "stage_review_markdown"
+      - "loop_finding"
+      - "loop_repair_plan"
+      - "loop_manifest"
+      - "final_loop_report_markdown"
       - "impact_analysis"
       - "partial_rerun_plan"
       - "review_decision"

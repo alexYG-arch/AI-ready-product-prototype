@@ -50,6 +50,7 @@ harness_contract:
     - "sub_harnesses/prototype_projection_harness/drd_v3_1/rules/12_complete_deductive_rules.yaml"
     - "sub_harnesses/prototype_projection_harness/drd_v3_1/profile.yaml"
     - "sub_harnesses/prototype_projection_harness/adapters/design_systems/sds_monochrome_adapter.yaml"
+    - "inputs/PRD.md (generate-prototype-artifacts source only)"
 
   forbidden_inputs_as_fact_source:
     - "product-spec/PRD.md"
@@ -72,6 +73,19 @@ harness_contract:
     - "prd_orchestrator/change_patch_candidates/*.candidate.yaml"
     - "sub_harnesses/prototype_projection_harness/drd_v3_1/examples/*.sample.yaml"
     - "sub_harnesses/prototype_projection_harness/adapters/design_systems/sds_monochrome_adapter.yaml"
+    - "runs/<run-id>/io/output/prototype_source_brief.yaml"
+    - "runs/<run-id>/io/output/prototype.runtime.candidate.json"
+    - "runs/<run-id>/io/output/prototype-render-payload.yaml"
+    - "runs/<run-id>/io/output/screen_role_obligations.yaml"
+    - "runs/<run-id>/io/output/design_kernel.yaml"
+    - "runs/<run-id>/io/output/composition_plan.yaml"
+    - "runs/<run-id>/io/output/interaction_hotspot_map.yaml"
+    - "runs/<run-id>/io/output/logic_sidecar_card_map.yaml"
+    - "runs/<run-id>/io/output/annotation_stub_map.yaml"
+    - "runs/<run-id>/io/output/anchor_badge_map.yaml"
+    - "runs/<run-id>/io/output/local_materialization_patch.yaml"
+    - "runs/<run-id>/prd_orchestrator/prototype_projection_reports/prototype_projection_report.yaml"
+    - "runs/<run-id>/prd_orchestrator/prototype_projection_reports/prototype_projection_report.md"
 
   forbidden_direct_writes:
     - "product-spec/requirements.yaml"
@@ -96,9 +110,18 @@ harness_contract:
     drd_v3_1_validation:
       - "screen_role_obligations.yaml"
       - "design_kernel.yaml"
+      - "composition_plan.yaml"
+      - "interaction_hotspot_map.yaml"
       - "logic_sidecar_card_map.yaml"
+      - "annotation_stub_map.yaml"
+      - "anchor_badge_map.yaml"
       - "local_materialization_patch.yaml"
       - "sds_monochrome_adapter_validation"
+    generator_v3_1:
+      - "prototype_source_brief.yaml"
+      - "prototype.runtime.candidate.json"
+      - "prototype-render-payload.yaml"
+      - "prototype_projection_report.yaml"
 
   authority_boundary:
     llm_can_generate: "candidate_or_projection"

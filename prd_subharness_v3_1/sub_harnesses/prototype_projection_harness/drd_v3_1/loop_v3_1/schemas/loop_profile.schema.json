@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/loop_profile.schema.json",
+  "title": "Loop Profile Policy",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/profile_policy"
+    },
+    {
+      "$ref": "#/$defs/profile"
+    }
+  ],
+  "$defs": {
+    "profile_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "loop_profile_policy"
+      ],
+      "properties": {
+        "loop_profile_policy": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "version",
+            "profiles"
+          ],
+          "properties": {
+            "version": {
+              "const": "3.1"
+            },
+            "profiles": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/profile"
+              }
+            }
+          }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "profile_id",
+        "profile_id_zh",
+        "enabled_loops",
+        "max_iterations"
+      ],
+      "properties": {
+        "profile_id": {
+          "enum": [
+            "LOOP_PROFILE_SIMPLE",
+            "LOOP_PROFILE_STANDARD",
+            "LOOP_PROFILE_COMPLEX"
+          ]
+        },
+        "profile_id_zh": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled_loops": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "max_iterations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

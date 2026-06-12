@@ -1,0 +1,149 @@
+stage_generator_matrix:
+  id: STAGE-GEN-MATRIX-01
+  name: Stage Generator Matrix
+  name_zh: 阶段生成器矩阵
+  version: "3.1.1"
+
+  matrix:
+    - stage_id: RUN-00
+      stage_name_zh: 隔离运行准备
+      generator_required: true
+      generator_id: GEN-RUN-MANIFEST
+      output_artifacts:
+        - run_manifest.yaml
+        - isolated_run_directory
+      validate_only: false
+
+    - stage_id: FACT-01
+      stage_name_zh: PRD 事实包校验
+      generator_required: conditional
+      generator_id: GEN-FACT-BUNDLE-IF-MISSING
+      output_artifacts:
+        - prd_fact_bundle.yaml
+        - fact_bundle_validation_report.yaml
+      validate_only: false
+      note_zh: 若已有结构化 fact bundle，则以校验为主；若没有，则生成 typed fact extraction candidate。
+
+    - stage_id: PAYLOAD-01
+      stage_name_zh: PRD 来源切片编译
+      generator_required: true
+      generator_id: GEN-SOURCE-SLICES
+      output_artifacts:
+        - source_slice_index.yaml
+        - source_slices/*.yaml
+      validate_only: false
+
+    - stage_id: SURF-01
+      stage_name_zh: 宿主表面推理
+      generator_required: true
+      generator_id: GEN-SURFACE-DECISIONS
+      output_artifacts:
+        - surface_decisions.yaml
+      validate_only: false
+
+    - stage_id: ROLE-01
+      stage_name_zh: 屏幕角色义务推导
+      generator_required: true
+      generator_id: GEN-ROLE-OBLIGATIONS
+      output_artifacts:
+        - screen_role_obligation_map.yaml
+        - role_derivation_report.yaml
+      validate_only: false
+
+    - stage_id: DK-01
+      stage_name_zh: 设计内核构建
+      generator_required: true
+      generator_id: GEN-DESIGN-KERNEL
+      output_artifacts:
+        - design_kernel.yaml
+        - kernel_constraint_report.yaml
+      validate_only: false
+
+    - stage_id: COMP-01
+      stage_name_zh: 构图生成
+      generator_required: true
+      generator_id: GEN-COMPOSITION
+      output_artifacts:
+        - composition_plan.yaml
+        - board_manifest.yaml
+        - frame_packets.yaml
+      validate_only: false
+
+    - stage_id: HOT-01
+      stage_name_zh: 交互热点提取
+      generator_required: true
+      generator_id: GEN-HOTSPOTS
+      output_artifacts:
+        - interaction_hotspot_map.yaml
+        - anchor_badge_requirements.yaml
+      validate_only: false
+
+    - stage_id: AUD-01
+      stage_name_zh: 逻辑侧车审计
+      generator_required: true
+      generator_id: GEN-LOGIC-SIDECAR-AUDIT
+      output_artifacts:
+        - logic_sidecar_audit.yaml
+        - audit_findings.yaml
+      validate_only: false
+
+    - stage_id: PATCH-01
+      stage_name_zh: 局部物化修补
+      generator_required: false
+      generator_id: none
+      output_artifacts:
+        - local_materialization_patch.yaml
+      validate_only: false
+      note_zh: PATCH-01 是 repair-driven stage，没有 finding 时不生成 patch。
+
+    - stage_id: RND-01
+      stage_name_zh: DRD 画布布局计划
+      generator_required: true
+      generator_id: GEN-BOARD-LAYOUT-PLAN
+      output_artifacts:
+        - board_layout_plan.yaml
+      validate_only: false
+
+    - stage_id: RND-02
+      stage_name_zh: 完整画布骨架
+      generator_required: true
+      generator_id: GEN-CANVAS-SKELETON
+      output_artifacts:
+        - figma_projection_plan.stage_02_skeleton.yaml
+        - figma-sync-map.yaml
+      validate_only: false
+      note_zh: 2.1 文档已有 Required Operations，这个 stage 是已有生成能力的基准样例。
+
+    - stage_id: RND-06B
+      stage_name_zh: 逻辑侧车卡片
+      generator_required: true
+      generator_id: GEN-SIDECAR-CARDS
+      output_artifacts:
+        - logic_sidecar_card_map.yaml
+        - annotation_stub_requirements.yaml
+      validate_only: false
+
+    - stage_id: RND-06
+      stage_name_zh: Dev Mode 备注短桩
+      generator_required: true
+      generator_id: GEN-ANNOTATION-STUBS
+      output_artifacts:
+        - figma_annotation_map.yaml
+      validate_only: false
+
+    - stage_id: RND-08A
+      stage_name_zh: 锚点编号与短引导线
+      generator_required: true
+      generator_id: GEN-ANCHOR-LEADER
+      output_artifacts:
+        - anchor_badge_map.yaml
+        - leader_line_map.yaml
+      validate_only: false
+
+    - stage_id: RND-09
+      stage_name_zh: 最终报告
+      generator_required: true
+      generator_id: GEN-PROJECTION-REPORT
+      output_artifacts:
+        - projection_report.yaml
+      validate_only: false

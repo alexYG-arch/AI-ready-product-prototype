@@ -1,0 +1,49 @@
+generation_safety_rules:
+  id: GEN-SAFE-01
+  name: Generation Safety Rules
+  name_zh: 生成安全规则
+  version: "3.1.1"
+
+  purpose_zh: >
+    控制 Build Crew 和 Stage Generator 的权限，防止生成层越权写事实、伪造来源、覆盖人工确认或绕过 validator。
+
+  rules:
+    - id: GEN-SAFE-001
+      rule_zh: 生成层不得直接写 PRD.md、requirements.yaml、screens.yaml、metrics.yaml、events.yaml 或 confirmed fact store。
+      severity: blocker
+    - id: GEN-SAFE-002
+      rule_zh: 生成层不得把 inferred、candidate、skill-derived 内容标记为 confirmed fact。
+      severity: blocker
+    - id: GEN-SAFE-003
+      rule_zh: 生成层产物若进入产品画布，必须有 source_refs 或 approved copy catalog ref。
+      severity: blocker
+    - id: GEN-SAFE-004
+      rule_zh: 生成层不得跳过 self_check 和 validator。
+      severity: blocker
+    - id: GEN-SAFE-005
+      rule_zh: 生成层不得覆盖人工已 review 的产物，除非 explicit_regenerate_requested 且记录 review override。
+      severity: blocker
+    - id: GEN-SAFE-006
+      rule_zh: 生成层不得在没有上游 source slice 的情况下生成用户可见业务内容。
+      severity: blocker
+    - id: GEN-SAFE-007
+      rule_zh: 生成层可以生成 projection decision，但必须标记为 projection_decision，不得写入 PRD 事实。
+      severity: major
+    - id: GEN-SAFE-008
+      rule_zh: 缺失输入时必须产生 generation_gap，不能用 hallucinated placeholder 静默补齐。
+      severity: blocker
+
+  safe_output_classes:
+    - materialization_artifact
+    - review_artifact
+    - projection_artifact
+    - validation_artifact
+    - audit_artifact
+    - trace_artifact
+
+  unsafe_output_classes:
+    - confirmed_fact
+    - approved_requirement
+    - approved_screen_fact
+    - approved_metric_event_fact
+    - human_approval

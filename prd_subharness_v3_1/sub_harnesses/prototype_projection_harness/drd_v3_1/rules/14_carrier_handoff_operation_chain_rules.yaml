@@ -1,0 +1,62 @@
+prototype_harness_carrier_handoff_operation_chain_rules:
+  id: CARRIER_HANDOFF_OPERATION_CHAIN_RULES_V3_1_2
+  id_zh: 原型 Harness 承载面、系统交接、真实操作链通用演绎规则 v3.1.2
+  version: "3.1.2"
+  mode: DRD_MODE
+  purpose_zh: >
+    把交互发生在哪里、是否需要系统交接、真实操作链如何展开、能力前提是否充足，
+    从隐含语义提升为可校验 artifact。规则不得针对相册、输入法、截图等业务场景写死。
+
+  rules:
+    - rule_id: CARRIER_DED_001
+      name_zh: 承载面必须显式判断
+      rule_zh: 每个页面、状态、组件、交互都必须声明 carrier_type、carrier_zh、source_refs 和 rule_ids。
+      blocks_when_zh: 生成物只有 screen/state/component/interaction，没有说明发生在宿主页面、嵌入区域、系统面、弹窗或 SDK 面。
+
+    - rule_id: CARRIER_DED_002
+      name_zh: 嵌入面和系统面不得默认提升为独立业务页面
+      rule_zh: >
+        只要 source 表达出 toolbar、panel、picker、sheet、dialog、SDK、webview、extension、host surface、
+        输入法、键盘、系统选择、系统授权等承载面信号，generator 必须先归类为承载面，
+        不得默认当作独立 app page。
+      blocks_when_zh: 非 app_page 承载面被标记 standalone_page_allowed=true。
+
+    - rule_id: HANDOFF_DED_001
+      name_zh: 外部能力触发系统交接面
+      rule_zh: >
+        当动作依赖媒体选择、文件选择、联系人、定位、授权、支付、登录、分享、剪贴板等外部能力时，
+        必须生成 system_handoff_map 条目，并关联 interaction、capability 和返回状态。
+      blocks_when_zh: interaction 标记 requires_system_handoff=true 但没有 handoff 或 capability_ids。
+
+    - rule_id: HANDOFF_DED_002
+      name_zh: 系统交接必须含完整路径
+      rule_zh: 系统交接必须包含进入、系统操作、校验或取消、返回宿主承载面，同时说明取消路径和失败路径。
+      blocks_when_zh: handoff 缺 enter_handoff_surface、perform_system_operation、validate_or_cancel、return_to_host_surface 任一步。
+
+    - rule_id: OPS_DED_001
+      name_zh: 禁止操作结果二段式
+      rule_zh: >
+        用户真实链路不得只写成“操作 -> 结果”。每条 interaction 必须生成 user_operation_chain，
+        至少包含用户动作、系统检查或交接、状态展示或返回三个步骤。
+      blocks_when_zh: operation chain 少于 3 步，或 payload interaction 没有对应 chain。
+
+    - rule_id: CAPABILITY_DED_001
+      name_zh: 能力前提四层判断
+      rule_zh: >
+        能力是否可在目标承载面完成，必须按 PRD/source atoms、本地能力库、instance 平台上下文、
+        官方文档证据四层判断。官方文档默认关闭；未知时必须 review_required=true。
+      blocks_when_zh: capability_status=unknown 但没有 review_required=true，或四层判断缺失。
+
+    - rule_id: REVIEW_DED_001
+      name_zh: Review MD 只能消费 review view model
+      rule_zh: >
+        人工 review MD 不得直接扫描 payload/runtime，不得展示 frame_id、component_id、interaction_id、
+        source_atom_id、hash 等机器字段；只能消费 prototype_review_view_model.yaml。
+      blocks_when_zh: review view model 或 MD 暴露机器字段，或同页状态变化被画进页面流转图。
+
+    - rule_id: CONTRACT_DED_001
+      name_zh: 模型 contract 自动晋升
+      rule_zh: >
+        当 source 触发承载面、系统交接、真实操作链或能力前提规则时，必须把模型 contract 晋升为
+        carrier_handoff_operation_chain_v2，并要求四段模型输出增强字段。
+      blocks_when_zh: 晋升触发后缺 required_artifacts、required_model_fields 或 resolved execution contract。

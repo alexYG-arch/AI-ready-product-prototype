@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-ready Event",
+  "type": "object",
+  "required": ["id", "event_name", "trigger_timing", "requirement_refs", "verification_method", "status"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "event_name": { "type": "string" },
+    "trigger_timing": { "type": "string" },
+    "properties": { "type": "array" },
+    "requirement_refs": { "type": "array", "items": { "type": "string" } },
+    "screen_refs": { "type": "array", "items": { "type": "string" } },
+    "metric_refs": { "type": "array", "items": { "type": "string" } },
+    "verification_method": { "type": "string" },
+    "status": { "enum": ["proposed", "candidate", "approved", "confirmed", "deprecated", "blocked"] },
+    "data_source_status": { "type": "string" }
+  }
+}

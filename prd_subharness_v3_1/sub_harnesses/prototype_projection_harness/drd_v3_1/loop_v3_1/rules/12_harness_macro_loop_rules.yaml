@@ -1,0 +1,73 @@
+harness_macro_loop_rules:
+  version: '3.1'
+  name_zh: 整体 Harness 大回路规则
+
+  controller:
+    id: LOOP-00
+    name: Feedback Loop Controller
+    name_zh: 反馈回路控制器
+    purpose_zh: 接收 validator、audit、projection report、skill trace 的发现，路由到最小责任 stage，生成局部修补并重跑受影响范围。
+
+  macro_loop_sequence:
+    - step: run_all_enabled_stages_once
+      step_zh: 首轮运行所有启用阶段
+    - step: collect_findings
+      step_zh: 收集 validator/audit/report finding
+    - step: classify_findings
+      step_zh: 失败分类
+    - step: select_loop_profile
+      step_zh: 选择回路档位
+    - step: create_repair_plan
+      step_zh: 生成修补计划
+    - step: apply_allowed_patches
+      step_zh: 应用允许的局部修补
+    - step: rerun_affected_scopes
+      step_zh: 重跑受影响范围
+    - step: revalidate
+      step_zh: 复验
+    - step: update_loop_manifest
+      step_zh: 更新回路清单
+    - step: decide_exit_or_next_iteration
+      step_zh: 判断退出或进入下一轮
+
+  finding_queue_policy:
+    priority_order:
+      - semantic_defect
+      - blocker
+      - major
+      - minor
+      - info
+    dedupe_key:
+      - failure_class
+      - affected_artifact
+      - source_refs
+    batch_policy_zh: 同一 board 内同类 finding 可以批处理修补；跨 board finding 按 shard 隔离处理。
+
+  repair_plan_required_fields:
+    - plan_id
+    - findings
+    - selected_profile
+    - route_targets
+    - patch_set
+    - rerun_scope
+    - revalidate
+    - stop_conditions
+
+  max_iterations:
+    default_harness: 3
+    default_stage: 2
+    default_board: 3
+
+  exit_decision_order:
+    - semantic_defect_requires_human_review
+    - circuit_breaker_triggered
+    - max_iterations_reached
+    - all_blockers_resolved
+    - no_new_patch_generated
+
+  output_artifacts:
+    - loop_manifest.yaml
+    - repair_plan.yaml
+    - local_materialization_patch.yaml
+    - rerun_scope.yaml
+    - final_loop_report.yaml

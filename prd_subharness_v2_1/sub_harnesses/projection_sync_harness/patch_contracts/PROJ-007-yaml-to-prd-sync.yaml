@@ -1,0 +1,16 @@
+patch_contract:
+  patch_id: "PROJ-007-yaml-to-prd-sync"
+  title: "PROJ-007: 将 YAML 事实投影到完整 PRD.md。"
+  status: "draft"
+  goal:
+    - "PROJ-007: 将 YAML 事实投影到完整 PRD.md。"
+  allowed_files:
+    - "product-spec/"
+    - "prd_orchestrator/"
+    - "sub_harnesses/"
+  forbidden_files:
+    - "product-spec/legacy_prd.md"
+  done_when:
+    - "patch_report written"
+    - "change_patch written"
+    - "impact_analysis written"

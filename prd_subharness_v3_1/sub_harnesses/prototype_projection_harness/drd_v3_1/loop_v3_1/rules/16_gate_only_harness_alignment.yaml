@@ -1,0 +1,62 @@
+gate_only_harness_alignment:
+  version: "3.1"
+  mode: DRD_MODE
+  name_zh: Loop gate-only 工程对齐规则
+  authority_zh: >
+    原始 loop 升级包作为规则归档保留；本文件是 v3.1 harness 当前阶段的可执行对齐层。
+    当原始包命名与当前 DRD artifact 命名冲突时，以本文件为准。
+
+  execution_boundary:
+    gate_only_enabled: true
+    automatic_patch_apply_enabled: false
+    automatic_rerun_enabled: false
+    prototype_payload_generation_enabled: false
+    figma_write_enabled: false
+    allowed_writes:
+      - runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/loop_finding.yaml
+      - runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/repair_plan.yaml
+      - runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/loop_manifest.yaml
+      - runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/final_loop_report.md
+      - runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.yaml
+      - runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.md
+    forbidden_writes:
+      - product-spec/PRD.md
+      - product-spec/requirements.yaml
+      - product-spec/screens.yaml
+      - product-spec/metrics.yaml
+      - product-spec/events.yaml
+      - product-spec/prototype.runtime.json
+      - product-spec/prototype.runtime.base.json
+      - product-spec/figma-sync-map.yaml
+      - product-spec/figma-interaction-map.yaml
+      - Figma gate page
+      - Figma review dashboard
+
+  artifact_name_mapping:
+    - package_name: screen_role_obligation_map.yaml
+      harness_name: screen_role_obligations.yaml
+    - package_name: role_derivation_report.yaml
+      harness_name: role_inference_report.yaml
+    - package_name: frame_packets.yaml
+      harness_name: board_frame_packets.yaml
+    - package_name: anchor_badge_requirements.yaml
+      harness_name: hotspot_annotation_requirements.yaml
+    - package_name: leader_line_map.yaml
+      harness_name: anchor_leader_line_map.yaml
+    - package_name: sidecar_layout_plan.yaml
+      harness_name: annotation_stub_map.yaml
+      applies_to_stage: RND-06B
+
+  figma_policy:
+    final_prototype_canvas_only: true
+    requires_validate_render_readiness_pass: true
+    forbidden_for_gate_review_stop_line: true
+    review_and_stop_line_surface: markdown_and_yaml_only
+
+  repair_plan_policy:
+    may_record_route_targets: true
+    may_record_patch_recommendations: true
+    must_not_apply_patch_set: true
+    must_not_rerun_affected_scopes: true
+    local_patch_writes_prd_must_be_false: true
+    semantic_defect_must_stop_the_line: true

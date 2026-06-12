@@ -1,0 +1,73 @@
+figma_reaction_mapping:
+  version: "2.1"
+  source_of_truth: "prototype.runtime.json.interaction_graph.edges"
+  real_clickable_behavior: "Figma node.reactions"
+  visual_lines_are_not_clickable_behavior: true
+
+  mapping:
+    NAVIGATE:
+      figma_action: "NODE"
+      navigation: "NAVIGATE"
+      requires_destination_node_id: true
+    OPEN_OVERLAY:
+      figma_action: "NODE"
+      navigation: "OVERLAY"
+      requires_destination_node_id: true
+      overlay_options_supported:
+        - position
+        - relative_position
+        - background
+        - close_when_clicking_outside
+    SWAP_OVERLAY:
+      figma_action: "NODE"
+      navigation: "SWAP"
+      requires_destination_node_id: true
+    CLOSE_OVERLAY:
+      figma_action: "NODE"
+      navigation: "CLOSE"
+    BACK:
+      figma_action: "NODE"
+      navigation: "BACK"
+    SCROLL_TO:
+      figma_action: "NODE"
+      navigation: "SCROLL_TO"
+      requires_destination_node_id: true
+    CHANGE_VARIANT:
+      figma_action: "NODE"
+      navigation: "CHANGE_TO"
+      requires_destination_variant_node_id: true
+    SET_VARIABLE:
+      figma_action: "SET_VARIABLE"
+      requires_variable_resolution: true
+    CONDITIONAL:
+      figma_action: "CONDITIONAL"
+      requires_boolean_or_comparable_expression: true
+    OPEN_URL:
+      figma_action: "URL"
+      requires_url: true
+    NO_OP_ANNOTATION:
+      figma_action: "NONE"
+      create_comment_only: true
+
+  reaction_build_rules:
+    attach_to_source_node: true
+    preserve_action_order: true
+    one_primary_reaction_per_source_trigger: true
+    duplicate_same_source_trigger_policy: "merge_as_conditional_or_block"
+    reaction_metadata:
+      write_to_figma_interaction_map: true
+      include_runtime_hash: true
+      include_interaction_id: true
+      include_edge_id: true
+      include_source_refs: true
+
+  comment_integration:
+    comment_created_before_or_after_reaction: "before_reaction_preferred"
+    comment_id_stored_in_interaction_map: true
+    comment_anchor_must_match_source_node_or_region: true
+
+  unsupported_behavior_policy:
+    if_action_not_supported_by_current_figma_api:
+      - create_gap
+      - create_comment_with_manual_instruction
+      - do_not_fake_behavior_with_visual_line_only

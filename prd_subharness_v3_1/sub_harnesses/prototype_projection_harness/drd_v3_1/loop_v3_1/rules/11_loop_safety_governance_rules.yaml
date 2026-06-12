@@ -1,0 +1,53 @@
+loop_safety_governance_rules:
+  version: '3.1'
+  name_zh: 回路安全与治理规则
+
+  idempotency:
+    name_zh: 幂等性
+    rules:
+      - id: SAFE-IDEMP-001
+        rule_zh: 同一 patch 在同一 artifact hash 上重复应用，结果必须相同。
+      - id: SAFE-IDEMP-002
+        rule_zh: patch operation 必须有 stable target path，不得使用模糊自然语言定位。
+      - id: SAFE-IDEMP-003
+        rule_zh: 非幂等 patch 必须进入人工评审。
+
+  retry_limits:
+    name_zh: 重试限制
+    rules:
+      - id: SAFE-RETRY-001
+        rule_zh: 每个 stage 必须有 max_iterations。
+      - id: SAFE-RETRY-002
+        rule_zh: 每个 board 必须有 max_iterations。
+      - id: SAFE-RETRY-003
+        rule_zh: 整体 harness 必须有 max_harness_iterations。
+
+  circuit_breaker:
+    name_zh: 熔断器
+    rules:
+      - id: SAFE-CB-001
+        rule_zh: 同一 finding 重复出现超过阈值，停止自动修补。
+      - id: SAFE-CB-002
+        rule_zh: artifact hash 在两个状态间反复震荡，停止自动修补。
+      - id: SAFE-CB-003
+        rule_zh: patch 会写 forbidden artifact，立即熔断。
+
+  authority_boundary:
+    name_zh: 权威边界
+    rules:
+      - id: SAFE-AUTH-001
+        rule_zh: loop 不能直接写 PRD.md、requirements.yaml、screens.yaml、metrics.yaml、events.yaml。
+      - id: SAFE-AUTH-002
+        rule_zh: semantic defect 只能生成 candidate，不能自动修改事实源。
+      - id: SAFE-AUTH-003
+        rule_zh: skill influence 不能覆盖 PRD fact 或 validator。
+
+  observability:
+    name_zh: 可观测性
+    rules:
+      - id: SAFE-OBS-001
+        rule_zh: 每次 loop 必须记录 input_hash 和 output_hash。
+      - id: SAFE-OBS-002
+        rule_zh: 每个 repair action 必须记录 reason_zh。
+      - id: SAFE-OBS-003
+        rule_zh: 每个 stop decision 必须生成 human-readable explanation。

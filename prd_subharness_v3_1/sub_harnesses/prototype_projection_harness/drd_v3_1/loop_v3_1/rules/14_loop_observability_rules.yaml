@@ -1,0 +1,60 @@
+loop_observability_rules:
+  version: '3.1'
+  name_zh: 回路可观测性规则
+
+  logs:
+    required_logs:
+      - loop_manifest.yaml
+      - repair_plan.yaml
+      - patch_trace.yaml
+      - validator_results_after_patch.yaml
+      - final_loop_report.yaml
+
+  metrics:
+    - metric_id: loop_iteration_count
+      metric_zh: 回路迭代次数
+    - metric_id: findings_by_class
+      metric_zh: 按失败类型统计 finding
+    - metric_id: patches_by_type
+      metric_zh: 按修补类型统计 patch
+    - metric_id: rerun_scope_count
+      metric_zh: 重跑范围统计
+    - metric_id: unresolved_blocker_count
+      metric_zh: 未解决阻塞问题数量
+    - metric_id: semantic_defect_candidate_count
+      metric_zh: PRD 语义缺陷候选数量
+
+  debug_views:
+    - view_id: loop_timeline
+      view_zh: 回路时间线
+      contents:
+        - iteration_id
+        - finding_ids
+        - patch_ids
+        - revalidation_status
+    - view_id: route_graph
+      view_zh: 路由图
+      contents:
+        - finding_class
+        - route_to_stage
+        - rerun_scope
+    - view_id: patch_diff_summary
+      view_zh: 修补差异摘要
+      contents:
+        - before_hash
+        - after_hash
+        - changed_paths
+    - view_id: exit_reason_summary
+      view_zh: 退出原因摘要
+      contents:
+        - final_status
+        - final_exit_reason
+        - human_review_required
+
+  report_requirements:
+    - id: OBS-REPORT-001
+      rule_zh: final_loop_report 必须解释每个 blocker 是如何解决或为何转人工评审。
+    - id: OBS-REPORT-002
+      rule_zh: final_loop_report 必须列出每个被跳过的 loop 及原因。
+    - id: OBS-REPORT-003
+      rule_zh: 如果选择 simple profile，必须记录为什么不启用 complex loop。

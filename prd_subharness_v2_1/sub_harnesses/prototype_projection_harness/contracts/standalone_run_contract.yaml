@@ -1,0 +1,74 @@
+standalone_run_contract:
+  version: "2.1"
+
+  command_shape:
+    generate_runtime:
+      input:
+        prd_fact_bundle: "io/input/prd_fact_bundle.yaml"
+        component_binding_map: "io/input/component-binding-map.yaml"
+        design_semantic_library: "io/input/design-semantic-library.json"
+        renderer_skill_pack: "io/input/renderer_skill_pack.yaml optional"
+      output:
+        base_runtime: "io/output/prototype.runtime.base.json"
+        prototype_runtime: "io/output/prototype.runtime.json"
+        reasoning_report: "io/output/prototype_runtime_reasoning_report.yaml"
+
+    optimize_copy:
+      input:
+        prototype_runtime: "io/output/prototype.runtime.json"
+        brand_voice_profile: "io/input/brand_voice_profile.yaml optional"
+        renderer_skill_pack: "io/input/renderer_skill_pack.yaml optional"
+      output:
+        uxwriter_copy_catalog: "io/output/uxwriter-copy-catalog.yaml"
+        uxwriter_validation_report: "io/output/uxwriter_validation_report.yaml"
+
+    plan_layout:
+      input:
+        prototype_runtime: "io/output/prototype.runtime.json"
+        uxwriter_copy_catalog: "io/output/uxwriter-copy-catalog.yaml"
+      output:
+        layout_route_plan: "io/output/layout_route_plan.yaml"
+
+    project_figma:
+      input:
+        prototype_runtime: "io/output/prototype.runtime.json"
+        uxwriter_copy_catalog: "io/output/uxwriter-copy-catalog.yaml"
+        layout_route_plan: "io/output/layout_route_plan.yaml"
+        component_binding_map: "io/input/component-binding-map.yaml"
+        design_semantic_library: "io/input/design-semantic-library.json"
+        previous_figma_sync_map: "io/state/figma-sync-map.yaml"
+      output:
+        figma_projection_plan: "io/output/figma_projection_plan.yaml"
+        figma_sync_map: "io/output/figma-sync-map.yaml"
+        figma_interaction_map: "io/output/figma-interaction-map.yaml"
+        figma_comment_map: "io/output/figma-comment-map.yaml"
+        visual_flow_line_map: "io/output/visual_flow_line_map.yaml"
+        projection_report: "io/output/prototype_projection_report.yaml"
+
+    ingest_figma_diff:
+      input:
+        last_projected_runtime: "io/state/last_projected_prototype.runtime.json"
+        current_figma_semantic_extract: "io/input/current_figma_semantic_extract.yaml"
+        current_figma_comment_extract: "io/input/current_figma_comment_extract.yaml optional"
+        current_prd_runtime: "io/output/prototype.runtime.json"
+      output:
+        figma_diff_report: "io/output/figma_diff_report.yaml"
+        figma_comment_diff_report: "io/output/figma_comment_diff_report.yaml"
+        change_patch_candidate: "io/output/change_patch_candidate.yaml"
+
+  forbidden:
+    - direct_write_to_prd_fact_store
+    - direct_write_to_PRD_md
+    - treating_figma_layer_name_as_fact
+    - treating_flow_map_annotation_as_fact
+    - treating_figma_comment_as_fact_without_patch_candidate
+    - using_visual_pen_line_as_clickable_behavior
+
+  required_guards:
+    - validate_runtime_before_projection
+    - validate_uxwriter_copy_before_projection
+    - create_layout_route_plan_before_page_render
+    - validate_interactions_before_figma_write
+    - validate_comments_before_posting
+    - classify_figma_diff_before_patch_candidate
+    - require_human_review_for_semantic_or_high_risk_diffs

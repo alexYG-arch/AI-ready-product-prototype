@@ -1,0 +1,107 @@
+loop_profile_policy:
+  version: '3.1'
+  name_zh: 回路配置档位策略
+
+  status_zh: >
+    三档 Loop Profile 是由复杂度推导出的默认策略，并非不可变硬编码规则。实现时应先分类，再选择 profile；项目可通过配置覆盖默认阈值。
+
+  profile_selection_algorithm:
+    name_zh: 回路档位选择算法
+    inputs:
+      - source_slices
+      - fact_bundle
+      - design_kernel
+      - host_surface_decisions
+      - risk_flags
+    rules:
+      - id: PROFILE-SEL-001
+        if_zh: 无 min/max、无系统交接、无异步、无权限、无恢复路径、单页面或静态说明
+        then: LOOP_PROFILE_SIMPLE
+        then_zh: 选择简单回路
+      - id: PROFILE-SEL-002
+        if_zh: 存在普通表单、多状态、轻量错误、常规分支，但无外部系统交接和高风险动作
+        then: LOOP_PROFILE_STANDARD
+        then_zh: 选择标准回路
+      - id: PROFILE-SEL-003
+        if_zh: 存在系统交接、权限、min/max 边界、异步、恢复、支付、删除、隐私、宿主表面依附
+        then: LOOP_PROFILE_COMPLEX
+        then_zh: 选择复杂回路
+
+  profiles:
+    - profile_id: LOOP_PROFILE_SIMPLE
+      profile_id_zh: 简单回路
+      use_when_zh: 单页面、少状态、无约束、无系统交接。
+      enabled_loops:
+        - validation_repair_loop
+        - governance_loop
+      max_iterations:
+        harness: 1
+        stage: 1
+        board: 1
+      allowed_repairs:
+        - fill_missing_source_refs
+        - add_missing_annotation_stub
+        - fix_schema_error
+      forbidden_repairs:
+        - infer_new_usage_chain
+        - add_new_business_state
+
+    - profile_id: LOOP_PROFILE_STANDARD
+      profile_id_zh: 标准回路
+      use_when_zh: 多状态、普通分支、轻量反馈、常规表单。
+      enabled_loops:
+        - inference_loop
+        - design_kernel_loop
+        - materialization_loop
+        - annotation_sidecar_loop
+        - validation_repair_loop
+        - governance_loop
+      max_iterations:
+        harness: 2
+        stage: 2
+        board: 2
+      allowed_repairs:
+        - add_missing_frame_packet
+        - add_sidecar_card
+        - add_anchor_badge
+        - adjust_feedback_timing
+        - collapse_duplicate_state
+      forbidden_repairs:
+        - direct_prd_write
+        - invent_unsourced_product_rule
+
+    - profile_id: LOOP_PROFILE_COMPLEX
+      profile_id_zh: 复杂回路
+      use_when_zh: 系统交接、权限、数量边界、异步、恢复、高风险动作。
+      enabled_loops:
+        - inference_loop
+        - design_kernel_loop
+        - materialization_loop
+        - annotation_sidecar_loop
+        - layout_loop
+        - validation_repair_loop
+        - governance_loop
+      max_iterations:
+        harness: 3
+        stage: 3
+        board: 3
+      required_artifacts:
+        - loop_manifest
+        - repair_plan
+        - local_materialization_patch
+        - rerun_scope
+        - final_loop_report
+      allowed_repairs:
+        - add_boundary_state_frames
+        - add_system_surface_placeholder
+        - add_permission_gate_state
+        - add_before_confirm_feedback
+        - add_commit_control_state
+        - add_recovery_state
+        - split_board
+        - rebalance_sidecar_cards
+      escalation_conditions:
+        - semantic_prd_defect_detected
+        - max_iterations_reached
+        - conflicting_skill_and_prd
+        - non_idempotent_patch_detected

@@ -1,0 +1,13 @@
+patch_contract:
+  schema_version: '2.1'
+  id: PROTO-014
+  name: Figma comment interaction annotations
+  version: '2.1'
+  summary: Uses Figma comments anchored to source components/regions for interaction
+    explanations.
+  required_outputs:
+  - figma-comment-map.yaml
+  blocks_if:
+  - semantic interaction lacks comment or collapsed summary
+  - comment anchor target cannot be resolved
+  owner: prototype_projection_harness

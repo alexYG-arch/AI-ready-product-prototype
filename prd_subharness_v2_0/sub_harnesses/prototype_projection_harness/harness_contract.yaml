@@ -1,0 +1,88 @@
+harness_contract:
+  id: "prototype_projection_harness"
+  name: "Prototype Projection Harness"
+  version: "2.0"
+  type: "projection_harness"
+
+  owns:
+    - "prototype_runtime_model"
+    - "figma_forward_projection"
+    - "figma_node_map"
+    - "figma_interaction_map"
+    - "interaction_graph_projection"
+    - "component_binding"
+    - "pattern_binding"
+    - "figma_diff_ingest"
+    - "prototype_projection_reports"
+
+  not_owns:
+    - "confirmed_product_requirements"
+    - "screen_fact_store"
+    - "metric_or_event_fact_store"
+    - "PRD.md narrative projection"
+    - "human approval of patch"
+    - "Figma design system source components"
+
+  allowed_inputs:
+    - "product-spec/requirements.yaml"
+    - "product-spec/screens.yaml"
+    - "product-spec/metrics.yaml"
+    - "product-spec/events.yaml"
+    - "product-spec/traceability.md"
+    - "product-spec/component-binding-map.yaml"
+    - "product-spec/design-semantic-library.json"
+    - "prd_orchestrator/patch_control_v2.yaml"
+
+  forbidden_inputs_as_fact_source:
+    - "product-spec/PRD.md"
+    - "Figma frame text"
+    - "Figma layer name"
+    - "Flow Map annotation"
+    - "Interaction Spec annotation"
+
+  allowed_outputs:
+    - "product-spec/prototype.runtime.json"
+    - "product-spec/figma-sync-map.yaml"
+    - "product-spec/figma-interaction-map.yaml"
+    - "prd_orchestrator/figma_diff_reports/*.yaml"
+    - "prd_orchestrator/prototype_projection_reports/*.yaml"
+    - "prd_orchestrator/change_patch_candidates/*.candidate.yaml"
+
+  forbidden_direct_writes:
+    - "product-spec/requirements.yaml"
+    - "product-spec/screens.yaml"
+    - "product-spec/metrics.yaml"
+    - "product-spec/events.yaml"
+    - "product-spec/PRD.md"
+
+  required_outputs:
+    forward_projection:
+      - "prototype.runtime.json"
+      - "figma-sync-map.yaml"
+      - "figma-interaction-map.yaml"
+      - "prototype_projection_report"
+    reverse_sync:
+      - "figma_diff_report"
+      - "change_patch_candidate"
+
+  authority_boundary:
+    llm_can_generate: "candidate_or_projection"
+    validator_can_block: true
+    human_review_required_for_high_risk: true
+    figma_diff_requires_human_review: true
+
+  run_lifecycle:
+    human_review_stage:
+      required: true
+      review_artifacts:
+        - "product-spec/prototype.runtime.json"
+        - "product-spec/figma-sync-map.yaml"
+        - "product-spec/figma-interaction-map.yaml"
+        - "prd_orchestrator/figma_diff_reports/*.yaml"
+        - "prd_orchestrator/prototype_projection_reports/*.yaml"
+        - "prd_orchestrator/change_patch_candidates/*.candidate.yaml"
+      approval_required_before:
+        - "writing Figma fact-change candidates into owner fact stores"
+        - "accepting high-risk Figma diff candidates"
+        - "deleting or tombstoning previously projected semantic ids"
+        - "changing component role, binding key, or interaction destination"

@@ -1,0 +1,89 @@
+loop_router_rules:
+  version: '3.1'
+  name_zh: 回路路由规则
+
+  router:
+    id: LOOP-ROUTER-01
+    id_zh: 回路路由器
+    purpose_zh: 根据 failure_class、severity、affected_artifact 将问题路由到最小责任 stage。
+
+  routing_principles:
+    - id: ROUTE-001
+      rule_zh: 路由到最小责任 stage，而不是默认重跑全链路。
+    - id: ROUTE-002
+      rule_zh: 如果下游问题由上游推理漏项导致，必须回到推理或设计内核阶段。
+    - id: ROUTE-003
+      rule_zh: 如果只是卡片、锚点、布局问题，不得回到 PRD 或事实层。
+    - id: ROUTE-004
+      rule_zh: PRD 语义缺陷停止自动修补，生成 semantic defect candidate。
+
+  route_table:
+    FC-INFERENCE-MISSING:
+      route_to:
+        - ROLE-01
+        - DK-01
+      rerun_after:
+        - COMP-01
+        - HOT-01
+        - RND-06B
+        - RND-08A
+        - RND-09
+    FC-KERNEL-INCOMPLETE:
+      route_to:
+        - DK-01
+      rerun_after:
+        - COMP-01
+        - HOT-01
+        - RND-06B
+        - RND-09
+    FC-MATERIALIZATION-MISSING:
+      route_to:
+        - COMP-01
+        - PATCH-01
+      rerun_after:
+        - HOT-01
+        - RND-06B
+        - RND-08A
+        - RND-09
+    FC-HOTSPOT-ANCHOR-MISSING:
+      route_to:
+        - HOT-01
+      rerun_after:
+        - RND-06
+        - RND-06B
+        - RND-08A
+        - RND-09
+    FC-SIDECAR-MISSING:
+      route_to:
+        - RND-06B
+      rerun_after:
+        - RND-08A
+        - RND-09
+    FC-LAYOUT-READABILITY:
+      route_to:
+        - RND-01
+        - RND-08A
+      rerun_after:
+        - RND-06B
+        - RND-09
+    FC-SCHEMA-INTEGRITY:
+      route_to:
+        - owning_stage
+      rerun_after:
+        - RND-09
+    FC-SEMANTIC-PRD-DEFECT:
+      route_to:
+        - human_review
+      emit:
+        - semantic_defect_candidate
+      stop_auto_patch: true
+
+  rerun_scope_resolution:
+    - if_zh: finding 有 affected_board
+      then: affected_board_only
+    - if_zh: finding 跨多个 board 但同一 flow
+      then: affected_flow_only
+    - if_zh: finding 是公共库或规则错误
+      then: all_dependent_boards
+    - if_zh: finding 是 PRD 语义缺陷
+      then: stop_auto_patch

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "User Operation Chain",
+  "type": "object",
+  "required": ["user_operation_chain"],
+  "properties": {
+    "user_operation_chain": {
+      "type": "object",
+      "required": ["version", "mode", "run_id", "source_refs", "chains"],
+      "properties": {
+        "version": { "const": "3.1.2" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "chains": { "type": "array", "minItems": 1, "items": { "type": "object" } }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

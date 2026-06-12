@@ -1,0 +1,65 @@
+skill_loop_influence_rules:
+  version: '3.1'
+  name_zh: Skill 对反馈回路的影响规则
+
+  principle_zh: >
+    Skill 只能提供方法论和修补建议，不能成为事实源，不能绕过 validator，不能自动批准 PRD 语义变化。
+
+  allowed_influence:
+    - area: failure_classification_hint
+      area_zh: 失败分类提示
+      example_zh: 根据边界值分析提醒 min/max 应触发 FC-INFERENCE-MISSING。
+    - area: repair_recommendation
+      area_zh: 修补建议
+      example_zh: 建议把选择不足反馈移到 before_confirm。
+    - area: layout_repair_hint
+      area_zh: 布局修补建议
+      example_zh: 侧车卡过密时建议拆分 summary card。
+    - area: sidecar_explanation_style
+      area_zh: 侧车说明风格
+      example_zh: 建议用“规则/当前/处理/来源”结构。
+    - area: loop_profile_hint
+      area_zh: 回路档位提示
+      example_zh: 发现系统交接和 min/max 时建议使用 complex profile。
+
+  forbidden_influence:
+    - create_confirmed_requirement
+    - remove_prd_requirement
+    - change_constraint_value
+    - bypass_validator
+    - approve_semantic_defect
+    - treat_personal_experience_as_fact
+    - expand_loop_beyond_max_iterations
+
+  required_trace:
+    - skill_id
+    - method_id
+    - affected_finding_id
+    - affected_stage
+    - before_decision_zh
+    - after_decision_zh
+    - reason_zh
+    - validator_result
+    - accepted_or_rejected
+
+  methodology_examples:
+    - method_id: boundary_value_analysis
+      method_id_zh: 边界值分析
+      abstraction_level: general
+      abstraction_level_zh: 通用方法，不写死业务场景
+      rule_zh: 遇到数量、金额、时间、文件大小、长度等上下限约束，应检查最小非法值、最小合法值、最大合法值、最大非法值。
+
+    - method_id: earliest_fix_point_analysis
+      method_id_zh: 最早可修正点分析
+      abstraction_level: general
+      rule_zh: 如果用户能在当前表面修正错误，反馈不应延迟到返回或提交后。
+
+    - method_id: external_surface_expansion
+      method_id_zh: 外部表面展开
+      abstraction_level: general
+      rule_zh: 系统选择器、权限页、支付、分享、通知、文件选择等外部表面应展示入口、取消、返回成功、返回失败路径。
+
+    - method_id: disabled_affordance_explanation
+      method_id_zh: 禁用态解释
+      abstraction_level: general
+      rule_zh: 置灰确认、提交、下一步等控件时，必须有原因说明或侧车卡片解释。

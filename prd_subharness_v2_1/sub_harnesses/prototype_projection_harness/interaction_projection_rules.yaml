@@ -1,0 +1,93 @@
+interaction_projection_rules:
+  version: "2.1"
+  principle: >-
+    Runtime interaction_graph.edges are the source of truth for prototype interactions. Figma reactions implement
+    clickable behavior; Figma comments explain logic; visual pen lines document flow only.
+
+  source_resolution:
+    order:
+      - component_instance_by_semantic_id
+      - named_hotspot_by_semantic_id
+      - frame_region_by_semantic_role
+      - generated_transparent_hotspot
+    require_source_ref: true
+    missing_source: "block_projection_and_emit_gap"
+
+  destination_resolution:
+    screen_state:
+      require_frame_node: true
+      missing_destination: "block_projection"
+    overlay:
+      require_overlay_frame: true
+      missing_destination: "block_projection"
+    component_variant:
+      require_same_component_set: true
+      missing_variant: "emit_component_gap"
+
+  trigger_policy:
+    default_click_trigger: "ON_CLICK"
+    same_source_same_trigger:
+      strategy: "merge_as_conditional_or_block"
+      independent_duplicate_lines_forbidden: true
+    allowed_multiple_triggers_per_source: true
+    canonical_interaction_across_states:
+      one_interaction_id_with_state_bindings: true
+      one_comment_with_applies_to_state_list: true
+      state_specific_reactions_allowed: true
+
+  action_order_policy:
+    preserve_runtime_order: true
+    require_explicit_order: true
+    set_variable_before_navigation: true
+    open_overlay_before_delayed_navigation: true
+
+  conditional_policy:
+    use_figma_conditional_when:
+      - guard_expression_supported
+      - variables_resolved
+    fallback:
+      - split_into_explicit_state_frames
+      - emit_gap_if_ambiguous
+    branch_annotation_required: true
+
+  overlay_policy:
+    modal:
+      action: "OPEN_OVERLAY"
+      require_close_path: true
+      require_cancel_for_destructive_action: true
+      comment_on_opening_component: true
+    toast:
+      action: "OPEN_OVERLAY"
+      require_auto_dismiss: true
+      default_auto_dismiss_ms: 2500
+      use_short_loopback_or_no_visual_line_when_destination_same_screen: true
+
+  comment_policy:
+    file: "rules/figma_comment_annotation_policy.yaml"
+    every_semantic_interaction_comment_required: true
+    dense_comments_collapse_to_summary: true
+
+  visual_line_policy:
+    file: "rules/pen_line_routing_rules.yaml"
+    visual_lines_are_documentation_only: true
+    generated_after_real_reactions: true
+
+  annotation_policy:
+    create_interaction_spec_page: true
+    create_flow_map_page: true
+    prefer_figma_comments_on_source_component: true
+    label_edges_with:
+      - interaction_id
+      - trigger
+      - guard
+      - primary_action
+      - analytics_event
+      - source_refs
+
+  reverse_sync_policy:
+    trigger_changed: "semantic_candidate"
+    destination_changed: "semantic_candidate"
+    action_added_or_removed: "high_risk_candidate"
+    animation_changed: "figma_only"
+    comment_text_changed: "comment_diff_report_or_semantic_candidate_if_behavior_changed"
+    visual_line_changed: "figma_only"

@@ -1,0 +1,33 @@
+package:
+  id: prototype_harness_loop_gate_only_alignment_v3_1
+  version: "3.1"
+  owner: prototype_projection_harness
+  mode: DRD_MODE
+  purpose: gate_only_loop_alignment
+  purpose_zh: 将 loop 升级包接入为只做审计、分类、刹车、解释的 gate-only 能力。
+  source_archive: package_manifest.yaml
+  executable_entrypoints:
+    rules:
+      - rules/16_gate_only_harness_alignment.yaml
+      - rules/17_harness_aligned_stage_loop_contracts.yaml
+    schemas:
+      - schemas/loop_manifest.schema.json
+      - schemas/loop_finding.schema.json
+      - schemas/repair_plan.schema.json
+      - schemas/stage_loop_contract.schema.json
+      - schemas/loop_profile.schema.json
+      - schemas/local_patch.schema.json
+    examples:
+      - examples/harness_aligned_loop_finding.sample.yaml
+      - examples/harness_aligned_repair_plan.sample.yaml
+      - examples/harness_aligned_loop_manifest.sample.yaml
+      - examples/harness_aligned_local_patches.sample.yaml
+    negative_examples:
+      - examples/negative/local_loop_patch.writes_prd_true.yaml
+      - examples/negative/repair_plan.missing_patch_set.yaml
+      - examples/negative/repair_plan.missing_rerun_scope.yaml
+  deferred_until_artifact_generator_exists:
+    - apply_allowed_patches
+    - rerun_affected_scopes
+    - prototype_payload_generation
+    - figma_canvas_write

@@ -1,0 +1,104 @@
+failure_classification_rules:
+  version: '3.1'
+  name_zh: 失败分类规则
+
+  classes:
+    - class_id: FC-INFERENCE-MISSING
+      class_id_zh: 推理漏项
+      definition_zh: PRD 中的约束、系统交接、边界或恢复义务没有被推导出来。
+      examples:
+        - min_max_boundary_not_expanded
+        - system_surface_not_detected
+        - permission_gate_not_inferred
+      default_route:
+        - ROLE-01
+        - DK-01
+      patch_type: inference_patch
+
+    - class_id: FC-KERNEL-INCOMPLETE
+      class_id_zh: 设计内核不完整
+      definition_zh: 已有角色链，但约束发生表面、反馈时机、控件状态、禁止实现不完整。
+      examples:
+        - constraint_has_no_feedback_timing
+        - commit_control_state_missing
+        - earliest_fix_surface_missing
+      default_route:
+        - DK-01
+      patch_type: design_kernel_patch
+
+    - class_id: FC-MATERIALIZATION-MISSING
+      class_id_zh: 物化缺失
+      definition_zh: 推理和内核存在，但 frame/card/hotspot/placeholder 没有生成。
+      examples:
+        - required_frame_missing
+        - boundary_state_not_displayed
+        - system_handoff_placeholder_missing
+      default_route:
+        - COMP-01
+        - PATCH-01
+      patch_type: materialization_patch
+
+    - class_id: FC-HOTSPOT-ANCHOR-MISSING
+      class_id_zh: 热点或锚点缺失
+      definition_zh: 交互说明或侧车卡片没有可定位的源组件/区域。
+      examples:
+        - sidecar_card_no_anchor
+        - disabled_control_no_explanation_anchor
+      default_route:
+        - HOT-01
+        - RND-06B
+      patch_type: hotspot_patch
+
+    - class_id: FC-SIDECAR-MISSING
+      class_id_zh: 侧车说明缺失
+      definition_zh: 复杂交互、约束、系统交接、边界状态没有完整 Logic Sidecar Card。
+      examples:
+        - logic_card_missing
+        - annotation_stub_missing_sidecar_ref
+      default_route:
+        - RND-06B
+      patch_type: sidecar_patch
+
+    - class_id: FC-LAYOUT-READABILITY
+      class_id_zh: 布局可读性问题
+      definition_zh: 画布密度、侧车列、leader line、badge 位置影响阅读。
+      examples:
+        - sidecar_column_overflow
+        - leader_line_too_long
+        - badge_overlaps_control
+      default_route:
+        - RND-01
+        - RND-08A
+      patch_type: layout_patch
+
+    - class_id: FC-SCHEMA-INTEGRITY
+      class_id_zh: 结构完整性问题
+      definition_zh: YAML/schema/source refs/hash 等结构问题。
+      examples:
+        - missing_source_refs
+        - invalid_schema
+        - missing_hash
+      default_route:
+        - owning_stage
+      patch_type: schema_patch
+
+    - class_id: FC-SEMANTIC-PRD-DEFECT
+      class_id_zh: PRD 语义缺陷
+      definition_zh: PRD 事实自相矛盾或缺关键产品逻辑，不能靠投射层局部修补。
+      examples:
+        - contradictory_requirements
+        - missing_decision_blocks_core_flow
+      default_route:
+        - human_review
+      patch_type: semantic_defect_candidate
+      auto_patch_allowed: false
+
+  classification_order:
+    - FC-SEMANTIC-PRD-DEFECT
+    - FC-INFERENCE-MISSING
+    - FC-KERNEL-INCOMPLETE
+    - FC-MATERIALIZATION-MISSING
+    - FC-HOTSPOT-ANCHOR-MISSING
+    - FC-SIDECAR-MISSING
+    - FC-LAYOUT-READABILITY
+    - FC-SCHEMA-INTEGRITY

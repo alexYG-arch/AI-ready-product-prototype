@@ -1,0 +1,84 @@
+run_id: RUN-LOOP-SAMPLE-001
+loop_version: '3.1'
+loop_profile: LOOP_PROFILE_COMPLEX
+rule_trace:
+  trace_version: "3.1.1"
+  projection_map_id: RULE_PROJECTION_MAP_V3_1_1
+  stage_id: ROLE-01
+  failure_class: FC-INFERENCE-MISSING
+  rule_ids: &loop_rule_ids [COMP_DED_001, ROLE_DED_001, ROLE_DED_002, ROLE_DED_005, ROLE_DED_006]
+rule_ids: *loop_rule_ids
+input_lock_hash: sha256:input-example
+iterations:
+  - iteration_id: 1
+    started_at: '2026-06-11T00:00:00Z'
+    input_hash: sha256:before
+    rule_ids: *loop_rule_ids
+    findings:
+      - finding_id: AUD-F-IMG-001
+        trigger_source: logic_sidecar_audit
+        severity: blocker
+        failure_class: FC-INFERENCE-MISSING
+        rule_trace:
+          trace_version: "3.1.1"
+          projection_map_id: RULE_PROJECTION_MAP_V3_1_1
+          stage_id: ROLE-01
+          failure_class: FC-INFERENCE-MISSING
+          rule_ids: *loop_rule_ids
+        rule_ids: *loop_rule_ids
+        affected_stage_candidate:
+          - ROLE-01
+          - DK-01
+          - COMP-01
+        affected_artifacts:
+          - composition_plan.yaml
+        source_refs:
+          - PRD.md#image-upload-rule
+        repair_hint_zh: 补充相册选择器、数量边界、确认前反馈。
+    repair_plan:
+      plan_id: RP-IMG-001
+      route_targets:
+        - ROLE-01
+        - DK-01
+        - COMP-01
+      selected_profile: LOOP_PROFILE_COMPLEX
+    patch_set:
+      - patch_id: LP-IMG-001
+        patch_type: materialization_patch
+        source_finding_id: AUD-F-IMG-001
+        rule_ids: *loop_rule_ids
+        before_hash: sha256:before
+        operations:
+          - add_frame_packet: FR-PICKER-SELECT-1
+          - add_frame_packet: FR-PICKER-SELECT-3
+          - add_frame_packet: FR-PICKER-SELECT-5
+          - add_frame_packet: FR-PICKER-SELECT-6
+        after_hash: sha256:after
+        writes_prd: false
+    rerun_scope:
+      scope: affected_board_only
+      boards:
+        - BOARD-IMAGE-UPLOAD
+    revalidation_results:
+      status: pass
+      validators:
+        - UC-002
+        - UC-003
+        - COMP-VAL-001
+    output_hash: sha256:after
+    exit_decision: continue
+  - iteration_id: 2
+    started_at: '2026-06-11T00:05:00Z'
+    input_hash: sha256:after
+    rule_ids: *loop_rule_ids
+    findings: []
+    repair_plan: {}
+    patch_set: []
+    rerun_scope:
+      scope: none
+    revalidation_results:
+      status: pass
+    output_hash: sha256:after
+    exit_decision: exit
+final_status: pass
+final_exit_reason: all_blocker_validators_pass

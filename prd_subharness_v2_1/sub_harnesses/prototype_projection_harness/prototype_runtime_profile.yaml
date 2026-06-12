@@ -1,0 +1,80 @@
+prototype_runtime_profile:
+  version: "2.1"
+  purpose: "定义 prototype.runtime.json 的对象、ID、完整性和来源规则。"
+
+  authority:
+    role: "derived_projection_intermediate"
+    forbidden_as_fact_source: true
+    owner: "prototype_projection_harness"
+
+  allowed_source_documents:
+    - "product-spec/requirements.yaml"
+    - "product-spec/screens.yaml"
+    - "product-spec/metrics.yaml"
+    - "product-spec/events.yaml"
+    - "product-spec/traceability.md"
+    - "product-spec/component-binding-map.yaml"
+    - "product-spec/design-semantic-library.json"
+
+  forbidden_source_documents:
+    - "product-spec/PRD.md"
+    - "product-spec/tech-design.md"
+    - "product-spec/test-plan.md"
+    - "Figma layer names"
+    - "Figma annotation cards"
+
+  object_types:
+    flows:
+      id_prefix: "FLOW-"
+      required_fields: ["flow_id", "name", "entry_screen_id", "source_refs"]
+    screens:
+      id_prefix: "SCREEN-"
+      required_fields: ["screen_id", "screen_name", "states", "source_refs"]
+    screen_states:
+      id_prefix: "ST-"
+      required_fields: ["state_id", "state_name", "state_kind", "dimensions", "entry_condition", "exit_condition", "source_refs"]
+    components:
+      id_prefix: "CMP-"
+      required_fields: ["component_instance_id", "semantic_role", "binding_key", "props", "source_refs"]
+    interactions:
+      id_prefix: "INT-"
+      required_fields: ["interaction_id", "source", "trigger", "actions", "source_refs"]
+    interaction_edges:
+      id_prefix: "EDGE-"
+      required_fields: ["edge_id", "interaction_id", "source", "trigger", "actions", "source_refs"]
+    overlays:
+      id_prefix: "OVERLAY-"
+      aliases: ["MODAL-", "TOAST-"]
+      required_fields: ["overlay_id", "overlay_type", "blocking", "source_refs"]
+    variables:
+      id_prefix: "VAR-"
+      required_fields: ["variable_id", "type", "default"]
+    gaps:
+      id_prefix: "PGAP-"
+      required_fields: ["gap_id", "type", "severity", "owner_candidate", "question"]
+
+  required_state_dimensions:
+    - "data_state"
+    - "network_state"
+    - "permission_state"
+    - "input_state"
+    - "request_lifecycle"
+    - "consistency_state"
+    - "recovery_state"
+    - "platform_device_state"
+
+  state_dimension_rule:
+    if_not_applicable: "must_set_not_applicable_with_reason"
+    missing_dimension: "block_runtime_generation"
+
+  deterministic_generation:
+    stable_ids_required: true
+    figma_node_id_forbidden_as_semantic_id: true
+    same_input_same_runtime_required: true
+    random_copy_generation_forbidden: true
+
+  gap_policy:
+    do_not_invent_missing_semantics: true
+    missing_destination: "block_forward_projection_for_edge"
+    missing_component_binding: "generate_binding_gap_and_placeholder_if_allowed"
+    missing_recovery_path: "generate_screen_state_gap"

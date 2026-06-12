@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/repair_plan.schema.json",
+  "title": "Loop Repair Plan",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "plan_id",
+    "findings",
+    "selected_profile",
+    "route_targets",
+    "patch_set",
+    "rerun_scope",
+    "revalidate"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "loop_version": {
+      "const": "3.1"
+    },
+    "gate_only": {
+      "const": true
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "required": [
+              "finding_id",
+              "failure_class"
+            ],
+            "additionalProperties": true,
+            "properties": {
+              "finding_id": {
+                "type": "string"
+              },
+              "failure_class": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "selected_profile": {
+      "enum": [
+        "LOOP_PROFILE_SIMPLE",
+        "LOOP_PROFILE_STANDARD",
+        "LOOP_PROFILE_COMPLEX"
+      ]
+    },
+    "route_targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "patch_set": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/local_patch"
+      }
+    },
+    "rerun_scope": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "scope"
+      ],
+      "properties": {
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string"
+        },
+        "would_rerun_after": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "revalidate": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "local_patch": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "patch_id",
+        "patch_type",
+        "source_finding_id",
+        "before_hash",
+        "operations",
+        "after_hash",
+        "writes_prd"
+      ],
+      "properties": {
+        "patch_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "patch_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_finding_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "before_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "after_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "writes_prd": {
+          "const": false
+        }
+      }
+    }
+  }
+}

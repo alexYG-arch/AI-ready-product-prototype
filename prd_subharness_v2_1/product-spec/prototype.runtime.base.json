@@ -1,0 +1,35 @@
+{
+  "prototype_runtime_version": "2.1",
+  "authority": {
+    "role": "derived_projection_intermediate",
+    "forbidden_as_fact_source": true,
+    "owner": "prototype_projection_harness"
+  },
+  "source_snapshot": {
+    "requirements_hash": "",
+    "screens_hash": "",
+    "metrics_hash": "",
+    "events_hash": "",
+    "traceability_hash": "",
+    "component_binding_hash": "",
+    "design_semantic_library_hash": ""
+  },
+  "generation_lineage": {
+    "pass_1": {
+      "name": "base_runtime_from_prd",
+      "output": "product-spec/prototype.runtime.base.json",
+      "source": "prd_fact_bundle",
+      "hash": ""
+    }
+  },
+  "flows": [],
+  "screens": [],
+  "overlays": [],
+  "variables": [],
+  "component_bindings": [],
+  "interaction_graph": {
+    "nodes": [],
+    "edges": []
+  },
+  "prototype_gaps": []
+}

@@ -1,0 +1,16 @@
+figma_interaction_map:
+  version: "2.0"
+  owner: "prototype_projection_harness"
+  authority_role: "artifact_binding_map"
+  forbidden_as_fact_source: true
+  runtime_hash: ""
+
+  interactions: []
+
+  reverse_sync_policy:
+    if_destination_changed: "semantic_candidate"
+    if_trigger_changed: "semantic_candidate"
+    if_action_added_or_removed: "high_risk_candidate"
+    if_animation_changed: "figma_only"
+    if_source_node_deleted: "high_risk_candidate"
+    if_annotation_text_changed: "ignore_or_figma_only"

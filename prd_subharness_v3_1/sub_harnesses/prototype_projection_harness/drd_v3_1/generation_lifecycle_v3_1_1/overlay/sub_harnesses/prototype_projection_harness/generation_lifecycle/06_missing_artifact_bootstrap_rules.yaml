@@ -1,0 +1,106 @@
+missing_artifact_bootstrap_rules:
+  id: BOOTSTRAP-01
+  name: Missing Artifact Bootstrap Rules
+  name_zh: 缺失产物自举规则
+  version: "3.1.1"
+
+  purpose_zh: >
+    规定当 required artifact 缺失时如何自举生成最小可校验产物，避免 validator 因文件不存在直接阻断。
+
+  bootstrap_decision_tree:
+    - condition: artifact_exists_and_schema_valid
+      action: validate
+      action_zh: 进入校验
+    - condition: artifact_missing_and_generator_registered
+      action: generate_minimum_viable_artifact
+      action_zh: 生成最小可校验产物
+    - condition: artifact_empty_and_generator_registered
+      action: regenerate_minimum_viable_artifact
+      action_zh: 重生成最小可校验产物
+    - condition: artifact_missing_and_stage_validate_only
+      action: block_with_missing_artifact
+      action_zh: validate_only 阶段可直接阻断
+    - condition: artifact_missing_and_no_generator
+      action: block_with_missing_generator
+      action_zh: 因缺少生成器而阻断
+    - condition: upstream_required_input_missing
+      action: emit_generation_gap
+      action_zh: 输出生成缺口
+
+  minimum_viable_artifact_policy:
+    rule_zh: >
+      最小可校验产物不是空文件，也不是 placeholder 空壳。
+      它必须包含 schema 所需字段、source refs、generation trace、以及足以让 validator 判断是否继续的核心内容。
+
+  artifact_bootstrap_map:
+    source_slice_index.yaml:
+      generator_id: GEN-SOURCE-SLICES
+      minimum_fields:
+        - slices
+        - source_refs
+        - extracted_facts
+    surface_decisions.yaml:
+      generator_id: GEN-SURFACE-DECISIONS
+      minimum_fields:
+        - decisions
+        - selected_surface
+        - source_refs
+    screen_role_obligation_map.yaml:
+      generator_id: GEN-ROLE-OBLIGATIONS
+      minimum_fields:
+        - role_chains
+        - obligations
+        - derivation_basis_zh
+    design_kernel.yaml:
+      generator_id: GEN-DESIGN-KERNEL
+      minimum_fields:
+        - kernels
+        - constraints
+        - feedback_timing
+    composition_plan.yaml:
+      generator_id: GEN-COMPOSITION
+      minimum_fields:
+        - boards
+        - frames
+        - display_reason_zh
+    interaction_hotspot_map.yaml:
+      generator_id: GEN-HOTSPOTS
+      minimum_fields:
+        - hotspots
+        - anchor_targets
+    logic_sidecar_card_map.yaml:
+      generator_id: GEN-SIDECAR-CARDS
+      minimum_fields:
+        - cards
+        - anchor_targets
+        - source_refs
+    figma_annotation_map.yaml:
+      generator_id: GEN-ANNOTATION-STUBS
+      minimum_fields:
+        - annotations
+        - target_node_refs
+        - sidecar_card_ids
+    anchor_badge_map.yaml:
+      generator_id: GEN-ANCHOR-LEADER
+      minimum_fields:
+        - badges
+        - sidecar_card_ids
+        - target_node_refs
+    projection_report.yaml:
+      generator_id: GEN-PROJECTION-REPORT
+      minimum_fields:
+        - run_id
+        - status
+        - validators
+        - gaps
+
+  safety_rules:
+    - id: BOOT-001
+      rule_zh: "自举产物必须标记 bootstrap_generated: true，直到通过正式 validator。"
+      severity: major
+    - id: BOOT-002
+      rule_zh: 自举产物不得伪装成人工确认产物。
+      severity: blocker
+    - id: BOOT-003
+      rule_zh: 自举失败必须输出 generation_gap_report，而不是返回空 YAML。
+      severity: blocker

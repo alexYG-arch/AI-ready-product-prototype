@@ -1,0 +1,38 @@
+release_ops_profile:
+  rollout_stages:
+    - "Alpha"
+    - "Beta"
+    - "GA"
+
+  required_release_fields:
+    - "rollout_strategy"
+    - "monitoring"
+    - "rollback_conditions"
+    - "ops_readiness"
+    - "faq_or_support_notes"
+
+  human_review_required_for:
+    - "ga_release"
+    - "rollback_condition_change"
+    - "customer_support_message"
+
+  rule_mappings:
+    - rule_id: "REL-FIELDS-001"
+      natural_language: "发布计划必须包含灰度策略、监控、回滚条件、运营准备和客服/FAQ 信息，或给出不适用原因。"
+      machine_mapping:
+        check_type: "required_release_fields_present"
+        required_fields_from: "release_ops_profile.required_release_fields"
+      human_review_prompt: "上线前这些发布要素是否都有人负责、能执行？"
+
+    - rule_id: "REL-HIGH-RISK-002"
+      natural_language: "GA 发布、回滚条件变更和客服对外口径都必须人工 review。"
+      machine_mapping:
+        check_type: "human_review_required_for_release_risk"
+        triggers_from: "release_ops_profile.human_review_required_for"
+      human_review_prompt: "这项发布决策是否需要业务、运营、客服或负责人明确批准？"
+
+    - rule_id: "REL-ROLLBACK-003"
+      natural_language: "任何灰度或 GA 计划都必须有可观测监控和明确回滚条件。"
+      machine_mapping:
+        check_type: "rollout_requires_monitoring_and_rollback"
+      human_review_prompt: "如果上线后出问题，如何发现、谁处理、何时回滚？"

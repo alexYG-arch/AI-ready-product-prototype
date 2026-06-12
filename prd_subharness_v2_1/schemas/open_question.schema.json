@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI-ready Open Question",
+  "type": "object",
+  "required": ["id", "question", "blocking_level", "affected_refs", "owner", "status"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "question": { "type": "string", "minLength": 1 },
+    "blocking_level": { "enum": ["blocking", "high", "medium", "low", "non_blocking"] },
+    "affected_refs": { "type": "array", "items": { "type": "string" } },
+    "owner": { "type": "string" },
+    "required_before": { "type": "string" },
+    "status": { "enum": ["open", "answered", "deferred", "closed", "blocked"] }
+  }
+}

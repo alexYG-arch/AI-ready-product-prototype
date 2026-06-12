@@ -1,0 +1,38 @@
+change_patch_candidate:
+  schema_version: "2.0"
+  patch_id: ""
+  source_channel: "natural_language | structured_yaml | figma_diff | prototype_runtime | generated_projection"
+  source_artifact:
+    path: ""
+    figma_file_key: ""
+    figma_page_id: ""
+    figma_node_ids: []
+    base_runtime_hash: ""
+    extracted_at: ""
+
+  candidate_status: "candidate_not_approved"
+  human_review_required: true
+
+  extracted_changes:
+    - change_id: ""
+      type: "requirement_change | screen_state_change | metric_change | event_change | release_change | core_change | projection_sync | prototype_projection | figma_semantic_diff | delete_item | unknown"
+      classification: "visual_only | semantic_candidate | high_risk_candidate | conflict | ignored_generated_noise"
+      target_ref_candidate: ""
+      target_document_candidate: ""
+      target_sub_harness_candidate: ""
+      confidence: "low | medium | high"
+      content: ""
+      reason: ""
+      source_refs: []
+      figma_refs:
+        file_key: ""
+        page_id: ""
+        node_ids: []
+      before: null
+      after: null
+      conflict: null
+
+  split_recommendation: []
+  downstream_rerun_candidates: []
+  open_questions: []
+  forbidden_direct_writes_checked: false

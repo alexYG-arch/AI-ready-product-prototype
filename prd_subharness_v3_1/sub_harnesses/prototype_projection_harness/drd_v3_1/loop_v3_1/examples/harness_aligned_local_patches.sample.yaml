@@ -1,0 +1,14 @@
+local_patches:
+  - patch_id: LP-SIDECAR-001
+    patch_type: sidecar_patch
+    source_finding_id: LOOP-FINDING-SAMPLE-001
+    rule_ids: [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001, PEN_DED_003]
+    before_hash: sha256:before-sidecar-map
+    operations:
+      - add_sidecar_card: SC-IMG-COUNT-MIN
+      - add_anchor_badge: BADGE-IMG-COUNT-MIN
+    after_hash: sha256:recommendation-only
+    writes_prd: false
+    source_refs:
+      - PRD.md#image-upload-rule
+    status: recommendation_only

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DRD v3.1 Interaction Hotspot Map",
+  "type": "object",
+  "required": ["interaction_hotspot_map"],
+  "properties": {
+    "interaction_hotspot_map": {
+      "type": "object",
+      "required": ["version", "mode", "source_refs", "hotspots"],
+      "properties": {
+        "version": { "const": "3.1" },
+        "mode": { "const": "DRD_MODE" },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "hotspots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["hotspot_id", "edge_id", "target_component_id", "trigger", "source_refs"],
+            "properties": {
+              "hotspot_id": { "type": "string", "minLength": 1 },
+              "edge_id": { "type": "string", "minLength": 1 },
+              "target_component_id": { "type": "string", "minLength": 1 },
+              "trigger": { "type": "string", "minLength": 1 },
+              "source_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

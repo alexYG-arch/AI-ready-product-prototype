@@ -1,0 +1,32 @@
+sidecar_card_generation_sample:
+  sample_id: SAMPLE-SIDECAR-CARD-GEN-001
+  sample_id_zh: 侧车卡片首轮生成示例
+
+  input:
+    hotspot_id: HOT-CONFIRM-DISABLED-1
+    frame_id: FR-PICKER-SELECT-1
+    source_refs:
+      - PRD.md#image-upload-rule
+
+  generated_sidecar_card:
+    sidecar_card_id: SC-IMG-MIN-COUNT
+    title_zh: 选择 1 张时确认按钮置灰
+    body_zh:
+      - 规则：上传图片不得少于 3 张。
+      - 当前：已选择 1 张，低于最小数量。
+      - 处理：确认按钮置灰或不可提交。
+      - 强提醒：至少还需选择 2 张。
+      - 时机：before_confirm，不能等返回业务页后再提示。
+    anchor_target:
+      frame_id: FR-PICKER-SELECT-1
+      component_id: CMP-PICKER-CONFIRM
+    related_hotspot_ids:
+      - HOT-CONFIRM-DISABLED-1
+    source_refs:
+      - PRD.md#image-upload-rule
+
+  generated_annotation_stub:
+    annotation_id: ANN-STUB-IMG-MIN-COUNT
+    target_node_ref: NODE-CMP-PICKER-CONFIRM
+    sidecar_card_id: SC-IMG-MIN-COUNT
+    labelMarkdown: "**选择不足**：详见 SC-IMG-MIN-COUNT。低于 3 张时确认按钮置灰。"

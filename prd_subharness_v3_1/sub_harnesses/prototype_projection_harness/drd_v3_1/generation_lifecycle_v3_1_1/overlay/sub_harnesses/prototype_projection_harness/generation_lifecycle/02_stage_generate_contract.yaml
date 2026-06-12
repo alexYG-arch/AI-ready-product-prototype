@@ -1,0 +1,400 @@
+stage_generate_contract_policy:
+  id: GEN-CONTRACT-01
+  name: Stage Generate Contract Policy
+  name_zh: 阶段生成契约策略
+  version: "3.1.1"
+
+  purpose_zh: >
+    规定每个 stage 必须声明 generator、触发条件、输入、输出、生成算法、最小可用产物、自检规则、禁止行为和失败处理。
+    任何非 validate_only stage 缺少 generate_contract 时，不得进入正式运行。
+
+  required_contract_fields:
+    - generator_id
+    - generator_name_zh
+    - generate_when
+    - inputs
+    - outputs
+    - algorithm
+    - minimum_viable_output
+    - self_check
+    - forbidden
+    - on_generate_failure
+    - generation_trace
+
+  generate_when_options:
+    - artifact_missing
+    - artifact_empty
+    - upstream_hash_changed
+    - explicit_regenerate_requested
+    - schema_version_changed
+    - primitive_library_version_changed
+
+  default_contract_template:
+    generator_id: GEN-STAGE-ID
+    generator_name_zh: 阶段生成器
+    generate_when:
+      - artifact_missing
+      - artifact_empty
+      - upstream_hash_changed
+    inputs:
+      required: []
+      optional: []
+    outputs: []
+    algorithm: []
+    minimum_viable_output:
+      required_fields: []
+    self_check:
+      - output_schema_valid
+      - source_refs_present
+      - generation_trace_exists
+    forbidden:
+      - write_prd
+      - create_confirmed_product_fact
+      - mark_inferred_as_confirmed
+    on_generate_failure:
+      action: emit_generation_gap
+      action_zh: 输出生成缺口
+    generation_trace:
+      required: true
+
+  contracts:
+    - stage_id: PAYLOAD-01
+      generator_id: GEN-SOURCE-SLICES
+      generator_name_zh: PRD 来源切片生成器
+      inputs:
+        required:
+          - prd_fact_bundle.yaml
+          - source_snapshot
+        optional:
+          - traceability_index
+      outputs:
+        - source_slice_index.yaml
+        - source_slices/*.yaml
+      algorithm:
+        - collect_renderable_facts
+        - group_by_screen_flow_requirement
+        - extract_actions_objects_constraints
+        - attach_source_refs
+        - emit_source_slice_index
+      minimum_viable_output:
+        required_fields:
+          - slice_id
+          - slice_type
+          - source_refs
+          - extracted_actions
+          - extracted_objects
+          - extracted_constraints
+      self_check:
+        - every_slice_has_source_refs
+        - every_slice_has_type
+        - slice_index_resolves_files
+      forbidden:
+        - write_prd
+        - invent_fact_from_prd_prose_without_source_ref
+
+    - stage_id: SURF-01
+      generator_id: GEN-SURFACE-DECISIONS
+      generator_name_zh: 宿主表面决策生成器
+      inputs:
+        required:
+          - source_slice_index.yaml
+          - surface_primitive_library.yaml
+        optional:
+          - renderer_skill_pack.yaml
+      outputs:
+        - surface_decisions.yaml
+      algorithm:
+        - detect_surface_hints
+        - infer_host_surface_candidates
+        - reject_incompatible_surfaces
+        - select_default_surface_with_reason
+        - attach_source_evidence
+      minimum_viable_output:
+        required_fields:
+          - decision_id
+          - surface_type
+          - surface_type_zh
+          - source_refs
+          - selected_reason_zh
+          - rejected_surfaces_with_reason
+      self_check:
+        - selected_surface_has_reason
+        - rejected_surfaces_have_reason
+        - source_refs_present
+
+    - stage_id: ROLE-01
+      generator_id: GEN-ROLE-OBLIGATIONS
+      generator_name_zh: 屏幕角色义务生成器
+      inputs:
+        required:
+          - source_slices
+          - surface_decisions.yaml
+          - obligation_primitive_library.yaml
+        optional:
+          - renderer_skill_pack.yaml
+      outputs:
+        - screen_role_obligation_map.yaml
+        - role_derivation_report.yaml
+      algorithm:
+        - extract_action_object_constraint_surface
+        - derive_surface_obligation
+        - derive_constraint_obligation
+        - derive_control_state_obligation
+        - derive_feedback_obligation
+        - derive_return_recovery_obligation
+        - create_role_chain
+        - attach_derivation_basis
+      minimum_viable_output:
+        required_fields:
+          - role_id
+          - role_name_zh
+          - role_vector
+          - obligations
+          - source_refs
+          - derivation_basis_zh
+      self_check:
+        - every_obligation_has_source_refs
+        - every_role_has_display_reason
+        - role_chain_has_entry_and_result_or_gap
+
+    - stage_id: DK-01
+      generator_id: GEN-DESIGN-KERNEL
+      generator_name_zh: 设计内核生成器
+      inputs:
+        required:
+          - screen_role_obligation_map.yaml
+          - source_slices
+          - surface_decisions.yaml
+        optional:
+          - skill_methodology_trace.yaml
+      outputs:
+        - design_kernel.yaml
+        - kernel_constraint_report.yaml
+      algorithm:
+        - convert_obligations_to_kernel_constraints
+        - infer_earliest_fix_surface
+        - infer_feedback_timing
+        - infer_required_controls
+        - infer_forbidden_realizations
+        - emit_kernel_audit_questions
+      minimum_viable_output:
+        required_fields:
+          - kernel_id
+          - host_surface
+          - constraints
+          - required_controls
+          - feedback_timing
+          - forbidden_realizations
+          - source_refs
+      self_check:
+        - every_constraint_has_feedback_timing
+        - every_constraint_has_earliest_fix_surface
+        - required_controls_have_reason
+
+    - stage_id: COMP-01
+      generator_id: GEN-COMPOSITION
+      generator_name_zh: 构图生成器
+      inputs:
+        required:
+          - design_kernel.yaml
+          - screen_role_obligation_map.yaml
+          - surface_decisions.yaml
+          - materialization_manifest.yaml
+        optional:
+          - primitive_libraries
+      outputs:
+        - composition_plan.yaml
+        - board_manifest.yaml
+        - frame_packets.yaml
+      algorithm:
+        - create_board_groups
+        - create_required_frames
+        - create_surface_placeholders
+        - collapse_unnecessary_states_with_reason
+        - create_sidecar_zones
+        - create_layout_requirements
+      minimum_viable_output:
+        required_fields:
+          - board_id
+          - frame_packets
+          - display_reason_zh
+          - surface_group
+          - source_refs
+      self_check:
+        - required_frames_exist_or_collapsed_with_reason
+        - every_frame_has_display_reason
+        - every_frame_has_source_refs
+
+    - stage_id: HOT-01
+      generator_id: GEN-HOTSPOTS
+      generator_name_zh: 交互热点生成器
+      inputs:
+        required:
+          - composition_plan.yaml
+          - frame_packets.yaml
+          - design_kernel.yaml
+      outputs:
+        - interaction_hotspot_map.yaml
+        - anchor_badge_requirements.yaml
+      algorithm:
+        - identify_source_controls
+        - identify_disabled_control_explanations
+        - identify_constraint_boundary_hotspots
+        - identify_system_return_hotspots
+        - assign_anchor_targets
+      minimum_viable_output:
+        required_fields:
+          - hotspot_id
+          - source_frame
+          - source_component_or_region
+          - trigger_zh
+          - semantic_action_zh
+          - source_refs
+      self_check:
+        - every_required_control_has_hotspot_or_reason
+        - every_hotspot_has_anchor_target
+
+    - stage_id: AUD-01
+      generator_id: GEN-LOGIC-SIDECAR-AUDIT
+      generator_name_zh: 逻辑侧车审计生成器
+      inputs:
+        required:
+          - design_kernel.yaml
+          - composition_plan.yaml
+          - interaction_hotspot_map.yaml
+      outputs:
+        - logic_sidecar_audit.yaml
+        - audit_findings.yaml
+      algorithm:
+        - create_audit_questions_from_kernel_constraints
+        - compare_required_obligations_to_composition
+        - compare_required_hotspots_to_hotspot_map
+        - classify_findings
+        - emit_local_patch_recommendations_if_needed
+      minimum_viable_output:
+        required_fields:
+          - audit_id
+          - audit_questions
+          - coverage_results
+          - findings
+      self_check:
+        - every_kernel_constraint_has_audit_question
+        - every_blocker_finding_has_route_or_patch_recommendation
+
+    - stage_id: RND-06B
+      generator_id: GEN-SIDECAR-CARDS
+      generator_name_zh: 逻辑侧车卡片生成器
+      inputs:
+        required:
+          - interaction_hotspot_map.yaml
+          - design_kernel.yaml
+          - logic_sidecar_audit.yaml
+          - sidecar_card_template_library.yaml
+      outputs:
+        - logic_sidecar_card_map.yaml
+        - annotation_stub_requirements.yaml
+      algorithm:
+        - create_card_for_complex_interaction
+        - create_card_for_constraint_boundary
+        - create_card_for_system_handoff
+        - create_card_for_permission_or_recovery
+        - create_folded_summary_cards
+        - assign_card_column_and_order
+      minimum_viable_output:
+        required_fields:
+          - sidecar_card_id
+          - title_zh
+          - body_zh
+          - anchor_target
+          - source_refs
+          - related_hotspot_ids
+      self_check:
+        - every_required_logic_has_card_or_summary
+        - every_card_has_anchor_target
+        - every_card_has_source_refs
+
+    - stage_id: RND-06
+      generator_id: GEN-ANNOTATION-STUBS
+      generator_name_zh: Dev Mode 备注短桩生成器
+      inputs:
+        required:
+          - logic_sidecar_card_map.yaml
+          - interaction_hotspot_map.yaml
+          - figma_node_map
+      outputs:
+        - figma_annotation_map.yaml
+      algorithm:
+        - resolve_annotation_target_node
+        - create_short_stub_body
+        - reference_sidecar_card_id
+        - attach_interaction_or_state_id
+        - attach_source_refs
+      minimum_viable_output:
+        required_fields:
+          - annotation_id
+          - target_node_ref
+          - labelMarkdown
+          - sidecar_card_id
+          - source_refs
+      self_check:
+        - every_stub_has_target_node_or_gap
+        - every_stub_references_sidecar_card
+
+    - stage_id: RND-08A
+      generator_id: GEN-ANCHOR-LEADER
+      generator_name_zh: 锚点编号与短引导线生成器
+      inputs:
+        required:
+          - logic_sidecar_card_map.yaml
+          - figma_node_map
+          - board_layout_plan.yaml
+      outputs:
+        - anchor_badge_map.yaml
+        - leader_line_map.yaml
+      algorithm:
+        - create_anchor_badges
+        - pair_badges_with_sidecar_cards
+        - create_short_leader_lines_when_safe
+        - remove_or_skip_long_lines
+        - emit_badge_pairing_without_line_if_needed
+      minimum_viable_output:
+        required_fields:
+          - badge_id
+          - target_node_ref
+          - sidecar_card_id
+          - placement_zh
+      self_check:
+        - every_sidecar_card_has_badge
+        - no_long_line_required_for_valid_pairing
+
+    - stage_id: RND-09
+      generator_id: GEN-PROJECTION-REPORT
+      generator_name_zh: 投射报告生成器
+      inputs:
+        required:
+          - generated_artifact_manifest.yaml
+          - validation_results
+          - generation_trace.yaml
+          - patch_trace.yaml
+        optional:
+          - loop_manifest.yaml
+      outputs:
+        - projection_report.yaml
+      algorithm:
+        - collect_generation_results
+        - collect_validation_results
+        - collect_patch_trace
+        - summarize_gaps
+        - summarize_review_items
+      minimum_viable_output:
+        required_fields:
+          - run_id
+          - status
+          - generated_artifacts
+          - validators
+          - gaps
+          - review_items
+      self_check:
+        - report_references_existing_artifacts
+        - blockers_listed
+        - review_items_have_reason

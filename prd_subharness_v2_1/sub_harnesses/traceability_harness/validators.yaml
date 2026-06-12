@@ -1,0 +1,92 @@
+validator_spec_version: "1.0"
+review_status: "approved_by_human_review"
+intent: "确保目标、需求、页面、事件、验收、测试和监控之间可追踪；任何变更都能产出影响分析和局部重跑计划。"
+
+validators:
+  - id: "traceability_harness_contract_validator"
+    severity: "blocker"
+    natural_language: "Traceability 只维护追踪矩阵、依赖图、影响分析、局部重跑计划和 tombstone；不能生成新需求内容或批准产品决策。"
+    applies_to:
+      documents:
+        - "product-spec/traceability.md"
+        - "prd_orchestrator/dependency_graph.yaml"
+        - "prd_orchestrator/impact_analysis/"
+        - "prd_orchestrator/partial_rerun_plans/"
+        - "prd_orchestrator/tombstones/"
+    machine_rule:
+      check_type: "traceability_shape_and_boundary"
+      required_chain:
+        - "Goal"
+        - "Requirement"
+        - "Screen"
+        - "Event"
+        - "Acceptance"
+        - "Test"
+        - "Monitoring"
+      pass_when:
+        - "Traceability artifacts reference existing ids from source documents."
+        - "Impact analysis and rerun plan are generated for changed requirement, screen, metric, event, release, or deletion."
+      fail_when:
+        - "Traceability patch invents a new requirement or closes a product decision."
+        - "Changed high-risk item has no impact_analysis."
+    human_review:
+      reviewer_prompt: "从目标到监控的链路是否能追到？变更影响是否覆盖下游 harness？"
+      evidence:
+        - "traceability.md"
+        - "dependency_graph.yaml"
+        - "impact_analysis"
+        - "partial_rerun_plan"
+
+  - id: "traceability_harness_source_ref_validator"
+    severity: "blocker"
+    natural_language: "追踪关系必须引用真实存在的 goal、requirement、screen、event、acceptance、test 或 monitoring id；不能引用不存在或已废弃但未 tombstone 的对象。"
+    applies_to:
+      documents:
+        - "product-spec/requirements.yaml"
+        - "product-spec/screens.yaml"
+        - "product-spec/events.yaml"
+        - "product-spec/metrics.yaml"
+        - "product-spec/traceability.md"
+        - "prd_orchestrator/tombstones/"
+    machine_rule:
+      check_type: "trace_reference_integrity"
+      pass_when:
+        - "All trace links resolve to existing or tombstoned ids."
+        - "Deprecated/deleted ids have tombstone records and downstream impact."
+      fail_when:
+        - "Trace link points to missing id."
+        - "Deleted item remains covered without tombstone or replacement path."
+    human_review:
+      reviewer_prompt: "是否存在断链、孤立需求、孤立事件或没有测试/监控的关键链路？"
+      evidence:
+        - "trace links"
+        - "tombstones"
+        - "coverage status"
+
+  - id: "traceability_harness_gap_validator"
+    severity: "major"
+    natural_language: "链路覆盖状态必须是 covered、partial、uncovered、blocked 或 deprecated；partial/uncovered/blocked 必须说明原因和负责人。"
+    applies_to:
+      documents:
+        - "product-spec/traceability.md"
+        - "sub_harnesses/traceability_harness/traceability_profile.yaml"
+    machine_rule:
+      check_type: "traceability_gap_capture"
+      allowed_coverage_status:
+        - "covered"
+        - "partial"
+        - "uncovered"
+        - "blocked"
+        - "deprecated"
+      pass_when:
+        - "Every chain segment has coverage_status."
+        - "Non-covered statuses include reason, owner_candidate, and required_before when known."
+      fail_when:
+        - "Coverage status is missing or outside allowed_coverage_status."
+        - "Partial/uncovered/blocked link lacks reason."
+    human_review:
+      reviewer_prompt: "哪些链路还没覆盖？缺的是需求、页面、事件、测试还是监控？"
+      evidence:
+        - "coverage status"
+        - "gap reasons"
+        - "owners"

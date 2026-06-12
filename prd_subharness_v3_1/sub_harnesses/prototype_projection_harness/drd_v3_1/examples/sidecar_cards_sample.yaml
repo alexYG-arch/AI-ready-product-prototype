@@ -1,6 +1,12 @@
 logic_sidecar_card_map:
   board_id: BOARD-IMAGE-UPLOAD-FLOW
   board_id_zh: 图片上传使用链路画布
+  rule_trace:
+    trace_version: "3.1.1"
+    projection_map_id: RULE_PROJECTION_MAP_V3_1_1
+    artifact_key: logic_sidecar_card_map
+    stage_id: RND-06B
+    rule_ids: &sidecar_rule_ids [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001, PEN_DED_003]
   cards:
     - card_id: SC-INT-03
       card_id_zh: 选择不足说明卡
@@ -13,3 +19,4 @@ logic_sidecar_card_map:
       feedback_timing_zh: before_confirm
       source_refs:
         - PRD.md#upload-image-rule
+      rule_ids: *sidecar_rule_ids

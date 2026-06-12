@@ -1,0 +1,35 @@
+generation_trace:
+  trace_id: TRACE-DK-IMAGE-UPLOAD-001
+  artifact_id: design_kernel.yaml
+  artifact_path: runs/RUN-SAMPLE-001/design_kernel.yaml
+  generator_id: GEN-DESIGN-KERNEL
+  generator_worker_id: GEN-WORKER-KERNEL
+  generated_at: "2026-06-11T00:00:00Z"
+  input_hashes:
+    source_slice_index: sha256:sample-source-slice
+    screen_role_obligation_map: sha256:sample-role-map
+    surface_decisions: sha256:sample-surface
+  source_refs:
+    - PRD.md#image-upload-rule
+  decisions:
+    - decision_id: DK-DEC-001
+      decision_zh: 将图片数量不足和超限反馈放在确认前
+      basis_zh: 用户仍在相册选择器内，可继续选择或取消，错误应在最早可修正表面暴露
+      source_refs:
+        - PRD.md#image-upload-rule
+      confidence: high
+      review_required: false
+  skill_influence:
+    - skill_id: SKILL-BOUNDARY-VALUE
+      method_id: boundary_value_analysis
+      influence_zh: 建议展示 min-1、min、max、max+1 边界状态
+      affected_decision_id: DK-DEC-001
+      precedence_result_zh: PRD 事实优先，skill 仅影响边界展示策略
+      validator_result: pass
+  generation_gaps: []
+  output_hash: sha256:sample-design-kernel
+  self_check_result:
+    status: pass
+    checks:
+      - every_constraint_has_feedback_timing
+      - every_constraint_has_earliest_fix_surface

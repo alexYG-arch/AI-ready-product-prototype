@@ -1,0 +1,65 @@
+generation_trace_rules:
+  id: GEN-TRACE-01
+  name: Generation Trace Rules
+  name_zh: 生成追踪规则
+  version: "3.1.1"
+
+  purpose_zh: >
+    每个生成物必须记录来源、输入 hash、生成器、关键决策、skill 影响、输出 hash 和生成缺口，
+    避免出现“产物从哪里来、为什么这么生成”不可追溯的问题。
+
+  required_trace_fields:
+    - trace_id
+    - artifact_id
+    - artifact_path
+    - generator_id
+    - generator_worker_id
+    - generated_at
+    - input_hashes
+    - source_refs
+    - decisions
+    - skill_influence
+    - generation_gaps
+    - output_hash
+    - self_check_result
+
+  decision_record_fields:
+    - decision_id
+    - decision_zh
+    - basis_zh
+    - source_refs
+    - confidence
+    - review_required
+
+  skill_influence_fields:
+    - skill_id
+    - method_id
+    - influence_zh
+    - affected_decision_id
+    - precedence_result_zh
+    - validator_result
+
+  generation_gap_fields:
+    - gap_id
+    - gap_zh
+    - missing_input
+    - affected_stage
+    - severity
+    - route_zh
+
+  rules:
+    - id: TRACE-001
+      rule_zh: 所有 generated artifacts 必须能通过 trace_id 找到生成过程。
+      severity: blocker
+    - id: TRACE-002
+      rule_zh: 每个关键 decision 必须有 basis_zh 和 source_refs；如果没有 source_refs，必须标为 gap 或 projection decision。
+      severity: blocker
+    - id: TRACE-003
+      rule_zh: skill influence 不得覆盖 PRD fact；必须记录 precedence_result_zh。
+      severity: blocker
+    - id: TRACE-004
+      rule_zh: 输出 hash 必须写入 generated_artifact_manifest。
+      severity: major
+    - id: TRACE-005
+      rule_zh: generation_trace 不能进入产品主画布，只能进入 run artifacts 或 projection report。
+      severity: blocker

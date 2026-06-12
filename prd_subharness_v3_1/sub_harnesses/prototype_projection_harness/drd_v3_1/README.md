@@ -27,7 +27,7 @@ Screen Role Obligation（屏幕角色义务演算）
 - `rules/12_complete_deductive_rules.yaml`：合并后的主规则索引。
 - `rules/01_screen_role_obligation_rules.yaml`：屏幕角色义务演算核心规则。
 - `rules/11_validators.yaml`：升级后的验证器。
-- `examples/image_upload_3_5_walkthrough.yaml`：上传 3-5 张图片的演绎示例。
+- 业务专属图片上传示例已从生产规则包移除；边界值展示必须由真实 PRD 文本和通用 boundary-value algorithm 生成。
 
 ## 与 2.1 的兼容边界
 

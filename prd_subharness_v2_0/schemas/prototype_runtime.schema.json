@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prototype Runtime Model",
+  "type": "object",
+  "required": [
+    "prototype_runtime_version",
+    "authority",
+    "source_snapshot",
+    "flows",
+    "screens",
+    "overlays",
+    "variables",
+    "interaction_graph",
+    "prototype_gaps"
+  ],
+  "properties": {
+    "prototype_runtime_version": {
+      "type": "string"
+    },
+    "authority": {
+      "type": "object",
+      "required": [
+        "role",
+        "forbidden_as_fact_source",
+        "owner"
+      ],
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "forbidden_as_fact_source": {
+          "type": "boolean"
+        },
+        "owner": {
+          "type": "string"
+        }
+      }
+    },
+    "source_snapshot": {
+      "type": "object"
+    },
+    "flows": {
+      "type": "array"
+    },
+    "screens": {
+      "type": "array"
+    },
+    "overlays": {
+      "type": "array"
+    },
+    "variables": {
+      "type": "array"
+    },
+    "component_bindings": {
+      "type": "array"
+    },
+    "interaction_graph": {
+      "type": "object",
+      "required": [
+        "nodes",
+        "edges"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "array"
+        },
+        "edges": {
+          "type": "array"
+        }
+      }
+    },
+    "prototype_gaps": {
+      "type": "array"
+    }
+  }
+}

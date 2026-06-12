@@ -1,0 +1,41 @@
+contract_upgrade_manifest:
+  id: CONTRACT_UPGRADE_MANIFEST_V3_1_2
+  version: "3.1.2"
+  mode: DRD_MODE
+  upgrades:
+    - contract_profile_id: carrier_handoff_operation_chain_v2
+      trigger_zh: source 识别到承载面、系统交接、真实操作链或能力前提。
+      required_artifacts:
+        - interaction_carrier_map
+        - system_handoff_map
+        - user_operation_chain
+        - capability_assessment
+        - prototype_review_view_model
+      required_model_fields:
+        surface_ownership:
+          - carrier_type
+          - host_context_zh
+          - standalone_page_allowed
+          - system_surface_refs
+        user_journey:
+          - operation_chain_id
+          - carrier_transition_type
+          - handoff_ids
+        interaction_state_machine:
+          - edge_type
+          - stays_on_same_surface
+          - feedback_surface_zh
+        component_blueprint:
+          - carrier_type
+          - render_region_zh
+      validators:
+        - validate-carrier-map
+        - validate-system-handoff-map
+        - validate-operation-chain
+        - validate-capability-assessment
+        - validate-review-view-model
+        - validate-contract-promotion
+      forbidden_operations:
+        - write_prd
+        - write_product_spec
+        - write_figma

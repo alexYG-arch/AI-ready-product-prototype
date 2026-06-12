@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/local_patch.schema.json",
+  "title": "Loop Local Patch Recommendation",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "patch_id",
+    "patch_type",
+    "source_finding_id",
+    "before_hash",
+    "operations",
+    "after_hash",
+    "writes_prd"
+  ],
+  "properties": {
+    "patch_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "patch_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_finding_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "before_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true
+          }
+        ]
+      }
+    },
+    "after_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "writes_prd": {
+      "const": false
+    },
+    "source_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "enum": [
+        "recommendation_only",
+        "not_applied",
+        "applied",
+        "blocked"
+      ]
+    }
+  }
+}

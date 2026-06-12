@@ -1,6 +1,6 @@
 harness_rule_review_crosswalk:
   crosswalk_version: "3.1"
-  review_status: "candidate_requires_human_review"
+  review_status: "approved_by_human_review"
   reviewer: "alexYG"
   reviewed_at: "2026-06-10"
   source_review_doc: "prd_orchestrator/HARNESS_RULE_REVIEW.md"

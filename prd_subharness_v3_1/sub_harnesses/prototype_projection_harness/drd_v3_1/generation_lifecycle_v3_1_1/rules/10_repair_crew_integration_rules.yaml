@@ -1,0 +1,55 @@
+repair_crew_integration_rules:
+  id: GEN-REPAIR-INTEGRATION-01
+  name: Build Crew and Repair Crew Integration
+  name_zh: 建设队与施工队集成规则
+  version: "3.1.1"
+
+  purpose_zh: >
+    明确首轮生成、校验失败修补、严重损坏重生成之间的边界，避免 Repair Crew 被误用为首轮生成器。
+
+  routing:
+    artifact_missing:
+      route_to: build_crew_generator
+      route_to_zh: 建设队生成器
+    artifact_empty:
+      route_to: build_crew_generator
+      route_to_zh: 建设队生成器
+    artifact_invalid_minor:
+      route_to: repair_crew_generator
+      route_to_zh: 施工队生成器
+    artifact_invalid_major_schema_unreadable:
+      route_to: regenerator
+      route_to_zh: 重生成器
+    upstream_hash_changed:
+      route_to: build_or_regenerate_based_on_scope
+      route_to_zh: 根据影响范围选择增量生成或重生成
+
+  handoff_fields:
+    from_build_to_validator:
+      - generated_artifact_manifest
+      - generation_trace
+      - self_check_result
+    from_validator_to_repair:
+      - finding_id
+      - failure_class
+      - affected_artifacts
+      - expected_validators_to_pass
+    from_repair_to_validator:
+      - dry_run_patch_set
+      - applied_patch_set
+      - patch_trace
+      - rerun_scope
+
+  rules:
+    - id: INTEGRATE-001
+      rule_zh: 产物不存在时不得创建 repair work order；必须创建 build work order。
+      severity: blocker
+    - id: INTEGRATE-002
+      rule_zh: 产物存在但字段缺失时可创建 repair work order。
+      severity: major
+    - id: INTEGRATE-003
+      rule_zh: 产物 schema 不可读时应走 regeneration，不应局部 patch。
+      severity: major
+    - id: INTEGRATE-004
+      rule_zh: Repair Crew 不能修改 generation_trace，只能追加 patch_trace。
+      severity: blocker

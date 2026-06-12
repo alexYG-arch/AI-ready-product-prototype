@@ -1,0 +1,45 @@
+regeneration_policy:
+  id: REGEN-01
+  name: Regeneration Policy
+  name_zh: 重生成策略
+  version: "3.1.1"
+
+  purpose_zh: >
+    区分生成、修补和重生成。已有产物轻微缺陷走 Repair Crew；产物严重损坏、schema 不可读或上游 hash 变化过大时走 Regenerator。
+
+  regeneration_triggers:
+    - trigger: artifact_schema_unreadable
+      trigger_zh: 产物 schema 不可读
+    - trigger: upstream_hash_changed_with_breaking_scope
+      trigger_zh: 上游 hash 发生破坏性变化
+    - trigger: artifact_version_incompatible
+      trigger_zh: 产物版本不兼容
+    - trigger: repeated_repair_failed
+      trigger_zh: 多次修补失败
+    - trigger: artifact_hash_flapping
+      trigger_zh: 产物 hash 在循环中反复震荡
+
+  regeneration_modes:
+    - mode: full_stage_regeneration
+      mode_zh: 阶段全量重生成
+      use_when_zh: 单个 stage 产物严重损坏
+    - mode: board_shard_regeneration
+      mode_zh: 画布分片重生成
+      use_when_zh: 某个 board/page shard 无法局部修补
+    - mode: downstream_regeneration
+      mode_zh: 下游重生成
+      use_when_zh: 上游核心 artifact 改变，需要刷新依赖产物
+
+  rules:
+    - id: REGEN-001
+      rule_zh: 重生成前必须备份 before artifact 和 hash。
+      severity: blocker
+    - id: REGEN-002
+      rule_zh: 重生成必须记录原因，不得作为普通修补的默认选择。
+      severity: major
+    - id: REGEN-003
+      rule_zh: 只有 target scope 内的 artifact 可被重生成，不得重写无关 board。
+      severity: blocker
+    - id: REGEN-004
+      rule_zh: 重生成后必须重新运行 downstream validators。
+      severity: blocker

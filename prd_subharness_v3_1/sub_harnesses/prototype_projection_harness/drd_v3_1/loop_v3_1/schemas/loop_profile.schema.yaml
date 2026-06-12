@@ -1,0 +1,18 @@
+schema:
+  id: loop_profile_schema
+  id_zh: 回路档位 Schema
+  type: object
+  required:
+    - profile_id
+    - profile_id_zh
+    - enabled_loops
+    - max_iterations
+  properties:
+    profile_id:
+      type: string
+    profile_id_zh:
+      type: string
+    enabled_loops:
+      type: array
+    max_iterations:
+      type: object

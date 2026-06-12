@@ -1,0 +1,89 @@
+loop_manifest_rules:
+  version: '3.1'
+  name_zh: 回路清单规则
+
+  artifact:
+    filename: loop_manifest.yaml
+    filename_zh: 回路清单
+    purpose_zh: 记录每轮 loop 的输入、发现、路由、修补、重跑范围、复验结果和退出原因。
+
+  required_top_level_fields:
+    - run_id
+    - loop_version
+    - loop_profile
+    - input_lock_hash
+    - iterations
+    - final_status
+    - final_exit_reason
+
+  iteration_required_fields:
+    - iteration_id
+    - started_at
+    - input_hash
+    - findings
+    - repair_plan
+    - patch_set
+    - rerun_scope
+    - revalidation_results
+    - output_hash
+    - exit_decision
+
+  finding_record_required_fields:
+    - finding_id
+    - trigger_source
+    - severity
+    - failure_class
+    - affected_stage_candidate
+    - affected_artifacts
+    - source_refs
+    - repair_hint_zh
+
+  patch_record_required_fields:
+    - patch_id
+    - patch_type
+    - source_finding_id
+    - before_hash
+    - operations
+    - after_hash
+    - writes_prd
+
+  manifest_safety_rules:
+    - id: MANIFEST-001
+      rule_zh: 每个 patch 必须能追溯到 finding_id。
+    - id: MANIFEST-002
+      rule_zh: 每次 rerun 必须声明 scope 和 reason。
+    - id: MANIFEST-003
+      rule_zh: 如果 writes_prd 为 true，必须立即失败；loop 不允许直接写 PRD。
+    - id: MANIFEST-004
+      rule_zh: final_status 为 failed 时必须有 human_review_prompt 或 semantic_defect_candidate。
+
+  minimal_example:
+    run_id: RUN-EXAMPLE
+    loop_version: '3.1'
+    loop_profile: LOOP_PROFILE_COMPLEX
+    input_lock_hash: sha256:example
+    iterations:
+      - iteration_id: 1
+        input_hash: sha256:before
+        findings:
+          - finding_id: AUD-F-001
+            failure_class: FC-INFERENCE-MISSING
+            severity: blocker
+        repair_plan:
+          route_to:
+            - ROLE-01
+            - DK-01
+            - COMP-01
+        patch_set:
+          - patch_id: LP-001
+            patch_type: materialization_patch
+        rerun_scope:
+          scope: affected_board_only
+          boards:
+            - BOARD-IMAGE-UPLOAD
+        revalidation_results:
+          status: pass
+        output_hash: sha256:after
+        exit_decision: continue
+    final_status: pass
+    final_exit_reason: all_blocker_validators_pass

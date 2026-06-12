@@ -1,0 +1,50 @@
+figma_interaction_map:
+  version: "2.1"
+  owner: "prototype_projection_harness"
+  authority_role: "artifact_binding_map"
+  forbidden_as_fact_source: true
+  runtime_hash: "sha256:sample"
+  layout_route_plan_hash: "sha256:layout-sample"
+
+  interactions:
+    - interaction_id: "INT-AUTH-SUBMIT"
+      edge_id: "EDGE-AUTH-SUBMIT"
+      runtime_source:
+        screen_id: "SCREEN-AUTH-LOGIN"
+        state_id: "ST-READY"
+        component_id: "CMP-AUTH-SUBMIT"
+      figma_source:
+        frame_node_id: "12:100"
+        source_node_id: "12:155"
+        source_node_name: "Button / Login"
+      figma_reaction:
+        trigger: "ON_CLICK"
+        actions:
+          - action_type: "NODE"
+            navigation: "NAVIGATE"
+            destination_node_id: "12:300"
+      comment_binding:
+        comment_semantic_id: "CMT-INT-AUTH-SUBMIT"
+        external_comment_id: null
+      visual_line_binding:
+        route_id: "ROUTE-EDGE-AUTH-SUBMIT"
+        line_node_ids: []
+      reverse_sync_policy:
+        if_destination_changed: "semantic_candidate"
+        if_trigger_changed: "semantic_candidate"
+        if_action_added_or_removed: "high_risk_candidate"
+        if_animation_changed: "figma_only"
+        if_comment_text_changed: "semantic_candidate_if_behavior_changed_else_comment_diff"
+        if_visual_line_changed: "figma_only"
+
+  comment_bindings:
+    - comment_semantic_id: "CMT-INT-AUTH-SUBMIT"
+      interaction_id: "INT-AUTH-SUBMIT"
+      anchor_semantic_id: "CMP-AUTH-SUBMIT"
+
+  reverse_sync_policy:
+    if_destination_changed: "semantic_candidate"
+    if_trigger_changed: "semantic_candidate"
+    if_action_added_or_removed: "high_risk_candidate"
+    if_animation_changed: "figma_only"
+    if_annotation_text_changed: "ignore_or_figma_only"

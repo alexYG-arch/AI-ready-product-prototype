@@ -1,0 +1,41 @@
+capability_primitive_library:
+  id: CAPABILITY_PRIMITIVE_LIBRARY_V3_1_2
+  version: "3.1.2"
+  mode: DRD_MODE
+  primitives:
+    - capability_id: media_picker
+      name_zh: 媒体选择
+      generic_surface: system_picker
+    - capability_id: file_picker
+      name_zh: 文件选择
+      generic_surface: system_picker
+    - capability_id: contact_picker
+      name_zh: 联系人选择
+      generic_surface: system_picker
+    - capability_id: location_picker
+      name_zh: 位置选择
+      generic_surface: system_picker
+    - capability_id: permission_prompt
+      name_zh: 系统授权
+      generic_surface: system_prompt
+    - capability_id: auth_sdk
+      name_zh: 认证 SDK
+      generic_surface: sdk_surface
+    - capability_id: payment_sdk
+      name_zh: 支付 SDK
+      generic_surface: sdk_surface
+    - capability_id: share_sheet
+      name_zh: 分享面板
+      generic_surface: system_sheet
+    - capability_id: clipboard_write
+      name_zh: 剪贴板写入
+      generic_surface: system_service
+  judgement_layers:
+    - prd_source_atoms
+    - local_capability_library
+    - instance_platform_context
+    - official_docs
+  policy:
+    official_docs_search_default: disabled
+    unknown_capability_requires_review: true
+    capability_evidence_forbidden_as_prd_fact_source: true

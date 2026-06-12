@@ -1,0 +1,7 @@
+fixture_id: "syntax_pass_quality_fail"
+bad_requirement:
+  cn_ears: "当用户点击提交时，系统应当处理请求。"
+  quality_profile: null
+  acceptance: []
+expected_result: "blocked"
+reason: "C-EARS 句式通过不等于质量通过。"

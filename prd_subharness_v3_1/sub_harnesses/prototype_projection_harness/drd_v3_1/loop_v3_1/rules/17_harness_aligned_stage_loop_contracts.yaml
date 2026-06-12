@@ -1,0 +1,318 @@
+harness_aligned_stage_loop_contracts:
+  version: "3.1"
+  mode: DRD_MODE
+  name_zh: v3.1 工程命名对齐后的阶段级回路契约
+  gate_only: true
+  automatic_patch_apply_enabled: false
+  automatic_rerun_enabled: false
+  contracts:
+    - stage_id: ROLE-01
+      stage_name_zh: 屏幕角色义务推导
+      loop_enabled: true
+      loop_layer: inference_loop
+      triggers:
+        - missing_role_for_constraint
+        - missing_role_for_system_surface
+        - downstream_audit_reports_missing_usage_step
+      diagnose:
+        - map_finding_to_prd_constraint
+        - detect_missing_obligation_type
+        - identify_affected_role_chain
+      repair_actions:
+        - add_missing_obligation
+        - add_boundary_obligation
+        - add_surface_return_obligation
+      writes:
+        - screen_role_obligations.yaml
+        - role_inference_report.yaml
+      forbidden_writes:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+        - metrics.yaml
+        - events.yaml
+      rerun_scope:
+        default: stage_and_downstream
+      revalidate:
+        - ROLE-VAL-001
+        - UC-001
+        - UC-002
+      exit_conditions:
+        - all_declared_constraints_have_obligations
+        - all_system_surfaces_have_entry_cancel_return_roles
+      max_iterations: 2
+
+    - stage_id: DK-01
+      stage_name_zh: 设计内核构建
+      loop_enabled: true
+      loop_layer: design_kernel_loop
+      triggers:
+        - constraint_has_no_feedback_timing
+        - constraint_has_wrong_feedback_surface
+        - commit_control_state_missing
+        - forbidden_realization_missing
+      diagnose:
+        - infer_earliest_fix_surface
+        - compare_feedback_timing_to_constraint
+        - locate_commit_control
+      repair_actions:
+        - add_feedback_timing
+        - add_earliest_fix_surface
+        - add_required_control_state
+        - add_forbidden_realization
+      writes:
+        - design_kernel.yaml
+        - kernel_constraint_report.yaml
+      forbidden_writes:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+        - metrics.yaml
+        - events.yaml
+      rerun_scope:
+        default: stage_and_downstream
+      revalidate:
+        - DK-VAL-001
+        - DK-VAL-002
+        - UC-003
+      exit_conditions:
+        - every_constraint_has_applies_at
+        - every_constraint_has_feedback_timing
+        - every_commit_control_has_state_rule
+      max_iterations: 2
+
+    - stage_id: COMP-01
+      stage_name_zh: 构图生成
+      loop_enabled: true
+      loop_layer: materialization_loop
+      triggers:
+        - required_state_not_materialized
+        - boundary_state_missing
+        - system_surface_not_shown
+        - board_density_too_high
+      diagnose:
+        - compare_kernel_required_states_to_frame_packets
+        - locate_missing_surface_group
+        - measure_board_density
+      repair_actions:
+        - add_frame_packet
+        - add_surface_placeholder
+        - collapse_low_priority_state_to_sidecar
+        - split_board
+        - redistribute_sidecar_cards
+      writes:
+        - composition_plan.yaml
+        - board_frame_packets.yaml
+        - board_manifest.yaml
+      forbidden_writes:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+        - metrics.yaml
+        - events.yaml
+      rerun_scope:
+        default: affected_board_only
+      revalidate:
+        - COMP-VAL-001
+        - BOARD-VAL-001
+        - SURFACE-003
+      exit_conditions:
+        - required_states_displayed_or_collapsed_with_reason
+        - board_density_under_budget
+      max_iterations: 3
+
+    - stage_id: HOT-01
+      stage_name_zh: 交互热点提取
+      loop_enabled: true
+      loop_layer: materialization_loop
+      triggers:
+        - sidecar_card_has_no_anchor
+        - constraint_state_has_no_hotspot
+        - disabled_control_has_no_explanation
+        - system_return_has_no_hotspot
+      diagnose:
+        - identify_missing_anchor_target
+        - find_nearest_component_or_region
+        - classify_anchor_as_component_region_or_board_gateway
+      repair_actions:
+        - add_hotspot
+        - retarget_hotspot_to_region
+        - create_anchor_badge
+        - create_folded_summary_hotspot
+      writes:
+        - interaction_hotspot_map.yaml
+        - hotspot_annotation_requirements.yaml
+      forbidden_writes:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+        - metrics.yaml
+        - events.yaml
+      rerun_scope:
+        default: affected_board_only
+      revalidate:
+        - HOT-VAL-001
+        - HOT-VAL-002
+        - ANCHOR-VAL-001
+      exit_conditions:
+        - every_sidecar_card_has_anchor
+        - every_constraint_control_has_hotspot_or_region_anchor
+      max_iterations: 2
+
+    - stage_id: AUD-01
+      stage_name_zh: 逻辑侧车审计
+      loop_enabled: true
+      loop_layer: validation_repair_loop
+      triggers:
+        - audit_finding_blocker
+        - audit_finding_major
+        - kernel_constraint_not_covered
+        - usage_chain_step_missing
+      diagnose:
+        - classify_audit_finding
+        - map_finding_to_failure_class
+        - propose_route_target
+      repair_actions:
+        - route_to_ROLE_01
+        - route_to_DK_01
+        - route_to_COMP_01
+        - route_to_HOT_01
+        - route_to_RND_06B
+        - create_local_patch_recommendation
+      writes:
+        - logic_sidecar_audit.yaml
+        - audit_findings.yaml
+        - local_patch_recommendations.yaml
+      forbidden_writes:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+        - metrics.yaml
+        - events.yaml
+      rerun_scope:
+        default: routed_by_failure_class
+      revalidate:
+        - AUD-VAL-001
+        - UC-003
+      exit_conditions:
+        - no_blocker_findings
+        - all_major_findings_have_patch_or_review_note
+      max_iterations: 2
+
+    - stage_id: PATCH-01
+      stage_name_zh: 局部物化修补
+      loop_enabled: true
+      loop_layer: materialization_loop
+      triggers:
+        - local_patch_recommendation_exists
+        - board_shard_missing_required_packet
+        - sidecar_card_missing_after_audit
+        - anchor_badge_missing_after_sidecar
+      diagnose:
+        - validate_patch_scope
+        - ensure_patch_has_source_finding
+        - check_patch_authority_boundary
+      repair_actions:
+        - record_frame_packet_patch_recommendation
+        - record_sidecar_card_patch_recommendation
+        - record_annotation_stub_patch_recommendation
+        - record_anchor_badge_patch_recommendation
+      writes:
+        - local_materialization_patch.yaml
+        - patch_trace.yaml
+      forbidden_writes:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+        - metrics.yaml
+        - events.yaml
+      rerun_scope:
+        default: affected_board_only
+      revalidate:
+        - PATCH-VAL-001
+        - BOARD-VAL-002
+        - SIDECAR-VAL-001
+      exit_conditions:
+        - patch_recommendation_recorded
+        - human_review_can_decide_next_action
+      max_iterations: 0
+
+    - stage_id: RND-06B
+      stage_name_zh: 逻辑侧车卡片
+      loop_enabled: true
+      loop_layer: annotation_sidecar_loop
+      triggers:
+        - card_missing_source_refs
+        - card_missing_anchor_badge
+        - card_column_overflow
+        - card_logic_too_long
+        - duplicate_cards_for_same_interaction
+      diagnose:
+        - compare_cards_to_hotspots
+        - measure_card_density
+        - detect_duplicate_card_semantics
+      repair_actions:
+        - add_missing_source_refs_from_interaction
+        - request_hotspot_anchor
+        - split_card
+        - collapse_card_to_summary
+        - merge_duplicate_cards
+      writes:
+        - logic_sidecar_card_map.yaml
+        - annotation_stub_map.yaml
+        - anchor_badge_map.yaml
+      forbidden_writes:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+        - metrics.yaml
+        - events.yaml
+      rerun_scope:
+        default: affected_board_only
+      revalidate:
+        - SIDECAR-VAL-001
+        - SIDECAR-VAL-002
+        - ANCHOR-VAL-001
+      exit_conditions:
+        - every_required_logic_has_card_or_summary
+        - every_card_has_anchor
+        - sidecar_density_under_budget
+      max_iterations: 3
+
+    - stage_id: RND-08A
+      stage_name_zh: 锚点编号与短引导线
+      loop_enabled: true
+      loop_layer: layout_loop
+      triggers:
+        - leader_line_too_long
+        - leader_line_crosses_product_frame
+        - badge_overlaps_control
+        - too_many_leader_lines
+      diagnose:
+        - measure_leader_line_length
+        - detect_line_crossing_product_ui
+        - detect_badge_overlap
+      repair_actions:
+        - remove_line_keep_badge_pairing
+        - reroute_short_line
+        - move_badge_to_region_corner
+        - collapse_multiple_badges_to_group_badge
+      writes:
+        - anchor_leader_line_map.yaml
+        - anchor_badge_map.yaml
+      forbidden_writes:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+        - metrics.yaml
+        - events.yaml
+      rerun_scope:
+        default: affected_board_only
+      revalidate:
+        - LEADER-VAL-001
+        - BADGE-VAL-001
+        - DRD-LINE-001
+      exit_conditions:
+        - no_leader_line_crosses_product_ui
+        - long_lines_replaced_by_badge_pairing
+      max_iterations: 3

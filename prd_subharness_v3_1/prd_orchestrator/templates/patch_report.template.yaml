@@ -1,0 +1,22 @@
+patch_report:
+  schema_version: "1.0"
+  patch_id: ""
+  run_id: ""
+  sub_harness: ""
+  status: "candidate"
+  summary: ""
+  root_cause: ""
+  source_artifacts: []
+  changed_files: []
+  validation: []
+  remaining_gaps: []
+  stop_the_line_refs: []
+  human_review:
+    required: true
+    stage: "patch-report"
+    artifact_type: "patch_report"
+    candidate_status_before_review: "candidate_not_approved"
+    decision_required_before:
+      - "promote_patch_report"
+      - "write_instance_product_spec"
+    decision_path: "prd_orchestrator/review_decisions/"

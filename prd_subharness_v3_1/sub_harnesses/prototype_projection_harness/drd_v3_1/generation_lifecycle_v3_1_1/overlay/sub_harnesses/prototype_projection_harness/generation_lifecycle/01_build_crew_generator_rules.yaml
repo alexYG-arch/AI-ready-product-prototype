@@ -1,0 +1,93 @@
+build_crew_generator:
+  id: BCG-01
+  name: Build Crew Generator
+  name_zh: 建设队生成器
+  version: "3.1.1"
+
+  purpose_zh: >
+    根据 stage plan、generate contracts、upstream artifacts 和 primitive libraries，生成每个 stage 的首轮最小可校验产物。
+    Build Crew 用于 first-pass generation，不负责修补已存在但不合格的产物；修补工作交给 Repair Crew。
+
+  difference_from_repair_crew_zh: >
+    Build Crew 负责“从无到有”的初始构建；Repair Crew 负责“已有但不合格”的局部修补。
+    如果 artifact 不存在，不能直接让 Repair Crew patch；必须先由 Build Crew 生成。
+
+  inputs:
+    - run_manifest.yaml
+    - stage_plan.yaml
+    - generation_contracts.yaml
+    - prd_fact_bundle.yaml
+    - source_snapshot
+    - source_slices
+    - primitive_libraries
+    - optional_skill_pack
+
+  outputs:
+    - build_work_order_manifest.yaml
+    - generated_artifact_manifest.yaml
+    - generation_trace.yaml
+    - generation_gap_report.yaml
+
+  build_order:
+    - stage_id: PAYLOAD-01
+      generator_id: GEN-SOURCE-SLICES
+      output_zh: PRD 来源切片
+    - stage_id: SURF-01
+      generator_id: GEN-SURFACE-DECISIONS
+      output_zh: 宿主表面决策
+    - stage_id: ROLE-01
+      generator_id: GEN-ROLE-OBLIGATIONS
+      output_zh: 屏幕角色义务图
+    - stage_id: DK-01
+      generator_id: GEN-DESIGN-KERNEL
+      output_zh: 设计内核
+    - stage_id: COMP-01
+      generator_id: GEN-COMPOSITION
+      output_zh: 构图计划和 Frame 包
+    - stage_id: HOT-01
+      generator_id: GEN-HOTSPOTS
+      output_zh: 交互热点图
+    - stage_id: AUD-01
+      generator_id: GEN-LOGIC-SIDECAR-AUDIT
+      output_zh: 逻辑侧车审计
+    - stage_id: RND-06B
+      generator_id: GEN-SIDECAR-CARDS
+      output_zh: 逻辑侧车卡片
+    - stage_id: RND-06
+      generator_id: GEN-ANNOTATION-STUBS
+      output_zh: Dev Mode 备注短桩
+    - stage_id: RND-08A
+      generator_id: GEN-ANCHOR-LEADER
+      output_zh: 锚点编号与短引导线
+    - stage_id: RND-09
+      generator_id: GEN-PROJECTION-REPORT
+      output_zh: 投射报告
+
+  build_work_order_policy:
+    required_fields:
+      - build_order_id
+      - stage_id
+      - generator_id
+      - target_artifacts
+      - upstream_inputs
+      - minimum_viable_output
+      - self_check
+      - forbidden_writes
+      - generation_trace_required
+    rules:
+      - id: BCG-WO-001
+        rule_zh: 每个 build work order 必须指定 target_artifacts。
+      - id: BCG-WO-002
+        rule_zh: 每个 build work order 必须指定 minimum_viable_output，避免 generator 输出空壳。
+      - id: BCG-WO-003
+        rule_zh: 每个 build work order 必须指定 self_check，生成后先自检再交给 validator。
+
+  safety_rules:
+    - id: BCG-SAFE-001
+      rule_zh: 生成器只能写本 run 的 io/output、io/state、boards、reports、maps，不得写 PRD fact store。
+    - id: BCG-SAFE-002
+      rule_zh: 生成器不得把 skill 建议当作 confirmed product fact。
+    - id: BCG-SAFE-003
+      rule_zh: 用户可见内容必须有 source_refs、copy catalog ref 或明确 candidate/gap 标记。
+    - id: BCG-SAFE-004
+      rule_zh: 若上游 required input 缺失，必须输出 generation_gap，而不是伪造产物。

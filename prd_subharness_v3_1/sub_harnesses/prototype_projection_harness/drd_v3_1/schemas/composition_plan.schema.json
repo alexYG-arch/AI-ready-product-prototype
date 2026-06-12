@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DRD v3.1 Composition Plan",
+  "type": "object",
+  "required": ["composition_plan"],
+  "properties": {
+    "composition_plan": {
+      "type": "object",
+      "required": ["version", "mode", "board_id", "source_refs", "frames"],
+      "properties": {
+        "version": { "const": "3.1" },
+        "mode": { "const": "DRD_MODE" },
+        "board_id": { "type": "string", "minLength": 1 },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "frames": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/renderable_item" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "renderable_item": {
+      "type": "object",
+      "required": ["source_refs", "render_eligibility", "candidate_marker"],
+      "properties": {
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "render_eligibility": { "const": "renderable" },
+        "candidate_marker": { "const": "candidate_projection" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

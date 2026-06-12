@@ -1,0 +1,17 @@
+prefix_rule(
+    pattern = ["rm", "-rf"],
+    decision = "forbidden",
+    justification = "禁止递归删除，避免删除 PRD、patch report、review decision、tombstone 或迁移证据。"
+)
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "禁止丢弃当前 patch diff。"
+)
+
+prefix_rule(
+    pattern = ["python", "scripts/prd_control"],
+    decision = "allow",
+    justification = "允许运行 PRD sub-harness 校验脚本。"
+)

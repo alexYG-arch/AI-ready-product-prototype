@@ -1,0 +1,21 @@
+finding_id: LOOP-FINDING-SAMPLE-001
+run_id: RUN-LOOP-SAMPLE-001
+stage: RND-06B
+trigger_source: logic_sidecar_audit
+severity: blocker
+failure_class: FC-SIDECAR-MISSING
+rule_trace:
+  trace_version: "3.1.1"
+  projection_map_id: RULE_PROJECTION_MAP_V3_1_1
+  stage_id: RND-06B
+  failure_class: FC-SIDECAR-MISSING
+  rule_ids: &loop_rule_ids [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001, PEN_DED_003]
+rule_ids: *loop_rule_ids
+affected_stage_candidate:
+  - RND-06B
+affected_artifacts:
+  - logic_sidecar_card_map.yaml
+source_refs:
+  - PRD.md#image-upload-rule
+repair_hint_zh: 补齐缺失的 Logic Sidecar Card，并确保每张卡有 anchor_badge_id。
+created_at: "2026-06-11T00:00:00Z"

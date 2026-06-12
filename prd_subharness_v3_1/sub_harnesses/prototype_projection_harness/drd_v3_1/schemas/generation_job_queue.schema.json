@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prototype Generation Job Queue",
+  "type": "object",
+  "required": ["generation_job_queue"],
+  "properties": {
+    "generation_job_queue": {
+      "type": "object",
+      "required": ["version", "mode", "run_id", "queue_id", "source_refs", "jobs", "completion_summary"],
+      "properties": {
+        "version": { "const": "3.1.1" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "queue_id": { "type": "string", "minLength": 1 },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "jobs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "job_id",
+              "stage_id",
+              "generator_id",
+              "generator_kind",
+              "worker_id",
+              "dependency_job_ids",
+              "input_refs",
+              "output_refs",
+              "completion_criteria",
+              "status",
+              "writes_prd"
+            ],
+            "properties": {
+              "job_id": { "type": "string", "minLength": 1 },
+              "stage_id": { "type": "string", "minLength": 1 },
+              "generator_id": { "type": "string", "minLength": 1 },
+              "generator_kind": { "enum": ["deterministic", "model"] },
+              "worker_id": { "type": "string", "minLength": 1 },
+              "dependency_job_ids": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "input_refs": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "output_refs": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "completion_criteria": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["criterion_id", "description_zh", "validator", "required", "status", "evidence_refs"],
+                  "properties": {
+                    "criterion_id": { "type": "string", "minLength": 1 },
+                    "description_zh": { "type": "string", "minLength": 1 },
+                    "validator": { "type": "string", "minLength": 1 },
+                    "required": { "type": "boolean" },
+                    "status": { "enum": ["pass", "blocked", "skipped", "review_required"] },
+                    "evidence_refs": {
+                      "type": "array",
+                      "items": { "type": "string", "minLength": 1 }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "status": { "enum": ["pass", "pass_with_review_required", "blocked", "skipped"] },
+              "writes_prd": { "const": false }
+            },
+            "additionalProperties": true
+          }
+        },
+        "completion_summary": {
+          "type": "object",
+          "required": ["total_jobs", "blocked_jobs", "all_required_criteria_passed"],
+          "properties": {
+            "total_jobs": { "type": "integer", "minimum": 1 },
+            "blocked_jobs": { "type": "integer", "minimum": 0 },
+            "all_required_criteria_passed": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,193 @@
+generation_worker_contracts:
+  id: GEN-WORKERS-01
+  name: Generation Worker Contracts
+  name_zh: 生成工种契约
+  version: "3.1.1"
+
+  principle_zh: >
+    生成工种只负责首轮产物构建。它们不能修改 PRD fact store，不能替代 repair workers，不能在没有 source evidence 的情况下生成 confirmed product fact。
+
+  workers:
+    - worker_id: GEN-WORKER-SOURCE-SLICER
+      worker_name_zh: 来源切片生成工
+      owns_generators:
+        - GEN-SOURCE-SLICES
+      can_read:
+        - prd_fact_bundle.yaml
+        - PRD.md
+        - traceability_index
+      can_write:
+        - source_slice_index.yaml
+        - source_slices/*.yaml
+      cannot_write:
+        - PRD.md
+        - requirements.yaml
+        - screens.yaml
+      output_quality_gate:
+        - every_slice_has_source_refs
+        - every_extracted_constraint_has_origin
+
+    - worker_id: GEN-WORKER-SURFACE
+      worker_name_zh: 宿主表面生成工
+      owns_generators:
+        - GEN-SURFACE-DECISIONS
+      can_read:
+        - source_slices/*.yaml
+        - surface_primitive_library.yaml
+      can_write:
+        - surface_decisions.yaml
+      cannot_write:
+        - frame_packets.yaml
+        - PRD.md
+      output_quality_gate:
+        - every_surface_decision_has_evidence
+        - rejected_surfaces_have_reason
+
+    - worker_id: GEN-WORKER-ROLE
+      worker_name_zh: 角色义务生成工
+      owns_generators:
+        - GEN-ROLE-OBLIGATIONS
+      can_read:
+        - source_slices/*.yaml
+        - surface_decisions.yaml
+        - obligation_primitive_library.yaml
+      can_write:
+        - screen_role_obligation_map.yaml
+        - role_derivation_report.yaml
+      cannot_write:
+        - design_kernel.yaml
+        - frame_packets.yaml
+        - PRD.md
+      output_quality_gate:
+        - every_obligation_has_derivation_basis
+        - every_role_has_source_refs
+
+    - worker_id: GEN-WORKER-KERNEL
+      worker_name_zh: 设计内核生成工
+      owns_generators:
+        - GEN-DESIGN-KERNEL
+      can_read:
+        - screen_role_obligation_map.yaml
+        - source_slices/*.yaml
+        - surface_decisions.yaml
+      can_write:
+        - design_kernel.yaml
+        - kernel_constraint_report.yaml
+      cannot_write:
+        - frame_packets.yaml
+        - PRD.md
+      output_quality_gate:
+        - every_constraint_has_feedback_timing
+        - every_constraint_has_earliest_fix_surface
+
+    - worker_id: GEN-WORKER-COMPOSITION
+      worker_name_zh: 构图生成工
+      owns_generators:
+        - GEN-COMPOSITION
+      can_read:
+        - design_kernel.yaml
+        - screen_role_obligation_map.yaml
+        - surface_decisions.yaml
+        - materialization_manifest.yaml
+        - primitive_libraries
+      can_write:
+        - composition_plan.yaml
+        - board_manifest.yaml
+        - frame_packets.yaml
+      cannot_write:
+        - design_kernel.yaml
+        - PRD.md
+      output_quality_gate:
+        - required_frames_exist_or_collapsed
+        - every_frame_has_display_reason
+
+    - worker_id: GEN-WORKER-HOTSPOT
+      worker_name_zh: 交互热点生成工
+      owns_generators:
+        - GEN-HOTSPOTS
+      can_read:
+        - composition_plan.yaml
+        - frame_packets.yaml
+        - design_kernel.yaml
+      can_write:
+        - interaction_hotspot_map.yaml
+        - anchor_badge_requirements.yaml
+      cannot_write:
+        - frame_packets.yaml
+        - PRD.md
+      output_quality_gate:
+        - every_required_control_has_hotspot_or_reason
+        - every_hotspot_has_source_refs
+
+    - worker_id: GEN-WORKER-AUDIT
+      worker_name_zh: 逻辑侧车审计生成工
+      owns_generators:
+        - GEN-LOGIC-SIDECAR-AUDIT
+      can_read:
+        - design_kernel.yaml
+        - composition_plan.yaml
+        - interaction_hotspot_map.yaml
+      can_write:
+        - logic_sidecar_audit.yaml
+        - audit_findings.yaml
+        - local_patch_recommendations.yaml
+      cannot_write:
+        - frame_packets.yaml
+        - PRD.md
+      output_quality_gate:
+        - every_kernel_constraint_has_audit_question
+        - every_blocker_finding_has_route_or_patch
+
+    - worker_id: GEN-WORKER-SIDECAR
+      worker_name_zh: 逻辑侧车卡片生成工
+      owns_generators:
+        - GEN-SIDECAR-CARDS
+      can_read:
+        - interaction_hotspot_map.yaml
+        - design_kernel.yaml
+        - logic_sidecar_audit.yaml
+        - sidecar_card_template_library.yaml
+      can_write:
+        - logic_sidecar_card_map.yaml
+        - annotation_stub_requirements.yaml
+      cannot_write:
+        - figma_annotation_map.yaml
+        - PRD.md
+      output_quality_gate:
+        - every_card_has_anchor_target
+        - every_card_has_source_refs
+
+    - worker_id: GEN-WORKER-ANNOTATION-STUB
+      worker_name_zh: 备注短桩生成工
+      owns_generators:
+        - GEN-ANNOTATION-STUBS
+      can_read:
+        - logic_sidecar_card_map.yaml
+        - interaction_hotspot_map.yaml
+        - figma_node_map
+      can_write:
+        - figma_annotation_map.yaml
+      cannot_write:
+        - logic_sidecar_card_map.yaml
+        - PRD.md
+      output_quality_gate:
+        - every_stub_targets_node_or_gap
+        - every_stub_references_sidecar
+
+    - worker_id: GEN-WORKER-ANCHOR-LEADER
+      worker_name_zh: 锚点与短引导线生成工
+      owns_generators:
+        - GEN-ANCHOR-LEADER
+      can_read:
+        - logic_sidecar_card_map.yaml
+        - figma_node_map
+        - board_layout_plan.yaml
+      can_write:
+        - anchor_badge_map.yaml
+        - leader_line_map.yaml
+      cannot_write:
+        - interaction_semantics
+        - PRD.md
+      output_quality_gate:
+        - every_sidecar_card_has_badge
+        - long_lines_degraded_to_badge_pairing

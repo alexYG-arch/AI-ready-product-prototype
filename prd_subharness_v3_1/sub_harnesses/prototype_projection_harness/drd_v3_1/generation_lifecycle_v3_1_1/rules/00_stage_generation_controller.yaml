@@ -1,0 +1,98 @@
+stage_generation_controller:
+  id: GEN-00
+  name: Stage Generation Controller
+  name_zh: 阶段生成控制器
+  version: "3.1.1"
+
+  purpose_zh: >
+    在每个 stage 的 validator 运行前，检查 required artifacts 是否存在。
+    如果产物不存在、为空、上游 hash 变化或显式要求重生成，则调用对应 stage generator
+    生成最小可校验产物。validator 只校验已生成产物，不负责凭空创建产物。
+
+  lifecycle:
+    - step: prepare_inputs
+      step_zh: 准备输入
+    - step: check_artifact_presence
+      step_zh: 检查产物是否存在
+    - step: generate_if_missing
+      step_zh: 缺失时生成
+    - step: self_check_generated_artifact
+      step_zh: 生成后自检
+    - step: validate_artifact
+      step_zh: 正式校验产物
+    - step: repair_if_validation_fails
+      step_zh: 校验失败时进入修补
+    - step: revalidate_after_repair
+      step_zh: 修补后复验
+    - step: emit_generation_trace
+      step_zh: 输出生成追踪
+
+  hard_rules:
+    - id: GEN-CTRL-001
+      rule_zh: 除非 stage 被显式声明为 validate_only，否则 required artifact 缺失时不得直接 block，必须先调用对应 generator。
+      severity: blocker
+    - id: GEN-CTRL-002
+      rule_zh: generator 只能生成 materialization、review、projection artifacts，不得生成 confirmed PRD fact。
+      severity: blocker
+    - id: GEN-CTRL-003
+      rule_zh: 每个 generator 输出必须包含 generation_trace 或写入统一 generation_trace.yaml。
+      severity: blocker
+    - id: GEN-CTRL-004
+      rule_zh: 生成失败时必须输出 generation_gap，而不是静默进入 validator block。
+      severity: major
+    - id: GEN-CTRL-005
+      rule_zh: 生成层和修补层必须分离。首轮产物缺失走 Build Crew；已有产物不合格走 Repair Crew。
+      severity: blocker
+
+  can_generate:
+    - source_slice_index.yaml
+    - source_slices/*.yaml
+    - surface_decisions.yaml
+    - screen_role_obligation_map.yaml
+    - role_derivation_report.yaml
+    - design_kernel.yaml
+    - kernel_constraint_report.yaml
+    - composition_plan.yaml
+    - board_manifest.yaml
+    - frame_packets.yaml
+    - component_instance_packets.yaml
+    - interaction_hotspot_map.yaml
+    - anchor_badge_requirements.yaml
+    - logic_sidecar_card_map.yaml
+    - annotation_stub_requirements.yaml
+    - figma_annotation_map.yaml
+    - anchor_badge_map.yaml
+    - leader_line_map.yaml
+    - projection_report.yaml
+
+  cannot_generate:
+    - PRD.md
+    - requirements.yaml
+    - screens.yaml
+    - metrics.yaml
+    - events.yaml
+    - confirmed_product_fact_store
+    - human_approval
+
+  artifact_presence_policy:
+    artifact_missing:
+      action: call_generator
+      action_zh: 调用生成器
+    artifact_empty:
+      action: call_generator
+      action_zh: 调用生成器
+    upstream_hash_changed:
+      action: regenerate_or_incremental_generate
+      action_zh: 重生成或增量生成
+    generator_not_registered:
+      action: block_with_generator_missing_error
+      action_zh: 因缺少生成器而阻断
+    validate_only_stage:
+      action: block_if_missing
+      action_zh: validate_only 阶段可在缺失时阻断
+
+  outputs:
+    - build_crew_plan.yaml
+    - generation_trace.yaml
+    - generated_artifact_manifest.yaml
+    - generation_gap_report.yaml

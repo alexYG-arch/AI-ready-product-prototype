@@ -1,0 +1,16 @@
+example:
+  id: simple_static_page_loop
+  id_zh: 简单静态页面回路示例
+  selected_profile: LOOP_PROFILE_SIMPLE
+  reason_zh: 单页面、无系统交接、无 min/max 约束、无异步过程。
+  findings:
+    - finding_id: VAL-F-001
+      failure_class: FC-SCHEMA-INTEGRITY
+      severity: minor
+      finding_zh: 一个说明卡缺 source_refs。
+  repair_plan:
+    route_to:
+      - owning_stage
+    patch_type: schema_patch
+    rerun_scope: stage_only
+  expected_exit_zh: 一轮修补后通过。

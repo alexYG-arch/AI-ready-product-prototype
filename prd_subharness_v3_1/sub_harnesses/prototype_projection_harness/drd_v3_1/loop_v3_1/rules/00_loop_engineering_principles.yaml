@@ -1,0 +1,75 @@
+loop_engineering_principles:
+  version: '3.1'
+  name_zh: 反馈回路工程原则
+
+  definition:
+    loop_en: feedback_loop
+    loop_zh: 反馈回路
+    description_zh: >
+      反馈回路不是简单重试，而是观察实际状态、比较期望状态、诊断差异、路由到责任阶段、局部修补、重跑、复验、退出的受控工程机制。
+
+  mental_model:
+    desired_state_zh: PRD facts、source slices、design kernel、materialization rules 共同定义的期望投射状态。
+    actual_state_zh: 当前生成出的 board shards、frame packets、sidecar cards、annotations、leader lines、reports。
+    reconciliation_zh: 将 actual_state 修补到满足 desired_state，但不直接修改 PRD 事实源。
+
+  canonical_loop_steps:
+    - step: observe
+      step_zh: 观察
+      output_zh: 收集 validator result、audit finding、projection report warning、layout issue。
+    - step: compare
+      step_zh: 比较
+      output_zh: 比较 expected projection state 与 actual projection state。
+    - step: diagnose
+      step_zh: 诊断
+      output_zh: 生成 failure_class、affected_artifact、owning_stage。
+    - step: route
+      step_zh: 路由
+      output_zh: 将 finding 路由到最小责任 stage，而不是默认重跑全链路。
+    - step: repair
+      step_zh: 修补
+      output_zh: 生成 local patch 或 semantic defect candidate。
+    - step: rerun
+      step_zh: 重跑
+      output_zh: 只重跑受影响的 stage 和 board/page shard。
+    - step: revalidate
+      step_zh: 复验
+      output_zh: 执行与 failure class 匹配的 validators。
+    - step: exit
+      step_zh: 退出
+      output_zh: 通过、达到迭代上限、进入人工评审或熔断。
+
+  authority_boundary:
+    can_patch:
+      - materialization_manifest
+      - source_slice_index
+      - screen_role_obligation_map
+      - design_kernel
+      - composition_plan
+      - frame_packets
+      - component_instance_packets
+      - interaction_hotspot_map
+      - annotation_stub_map
+      - logic_sidecar_cards
+      - anchor_badge_map
+      - leader_line_map
+      - projection_report
+    cannot_patch:
+      - PRD.md
+      - requirements.yaml
+      - screens.yaml
+      - metrics.yaml
+      - events.yaml
+      - confirmed_product_fact_store
+
+  safety_principles:
+    - id: LOOP-PRINCIPLE-001
+      rule_zh: 每个自动 patch 必须由 finding_id、validator_id 或 audit_id 触发，不能无来源修补。
+    - id: LOOP-PRINCIPLE-002
+      rule_zh: 自动 loop 只能修补投射层；PRD 事实冲突必须进入 semantic_defect_candidate。
+    - id: LOOP-PRINCIPLE-003
+      rule_zh: 每次迭代必须记录 before_hash、after_hash、patch_set、rerun_scope、validator_results。
+    - id: LOOP-PRINCIPLE-004
+      rule_zh: 超过最大迭代次数必须停止，不能无限补。
+    - id: LOOP-PRINCIPLE-005
+      rule_zh: skill 只能给 repair recommendation，不能绕过 validator 或改变 confirmed fact。

@@ -20,6 +20,17 @@ patch_control_v2:
     prototype_runtime:
       description: "prototype.runtime.json 的生成或校验结果。"
       direct_fact_write_allowed: false
+    prototype_artifact_generator:
+      description: "Prototype harness v3.1 从 inputs/PRD.md 生成 source brief、DRD artifacts、runtime candidate 和 render payload 的隔离 run 输出。"
+      allowed_entrypoints:
+        - "runs/<run-id>/io/output/prototype_source_brief.yaml"
+        - "runs/<run-id>/io/output/prototype.runtime.candidate.json"
+        - "runs/<run-id>/io/output/prototype-render-payload.yaml"
+        - "runs/<run-id>/prd_orchestrator/prototype_projection_reports/prototype_projection_report.yaml"
+        - "runs/<run-id>/prd_orchestrator/prototype_projection_reports/prototype_projection_report.md"
+      direct_fact_write_allowed: false
+      forbidden_as_fact_source: true
+      figma_write_allowed: false
     prototype_renderer_projection:
       description: "UX writer、layout route、Figma comments、visual lines、renderer skill influence 等原型渲染阶段产物。"
       direct_fact_write_allowed: false
@@ -44,8 +55,33 @@ patch_control_v2:
         - "sub_harnesses/prototype_projection_harness/adapters/design_systems/sds_monochrome_adapter.yaml"
       direct_fact_write_allowed: false
     generated_projection:
-      description: "PRD.md、Figma frame、Flow Map、Interaction Spec 等投影。"
+      description: "PRD.md、最终 Figma 原型画布、Flow Map、Interaction Spec 等投影。Figma 只允许承载最终原型写入，不承载 gate/review/stop-line 结果。"
       forbidden_as_fact_source: true
+    patch_report:
+      description: "每次 patch 或修复的原因、改动、验证、剩余缺口和关联 stop-the-line 记录；YAML 为机器源，同名 MD 为人工阅读入口。"
+      allowed_entrypoints:
+        - "runs/<run-id>/prd_orchestrator/patch_reports/*.patch_report.yaml"
+        - "runs/<run-id>/prd_orchestrator/patch_reports/*.patch_report.md"
+      direct_fact_write_allowed: false
+      fact_patch_allowed: false
+    stop_the_line:
+      description: "关键断点的阻断报告，记录 required_next_action 和 resume_condition；YAML 为机器源，同名 MD 为人工阅读入口。"
+      allowed_entrypoints:
+        - "runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.yaml"
+        - "runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.md"
+      direct_fact_write_allowed: false
+      fact_patch_allowed: false
+    loop_gate:
+      description: "Loop v3.1 gate-only 审计、分类、路由、repair plan 和人工解释证据；只写 isolated run root，不执行 patch、rerun、payload 生成或 Figma 写入。"
+      allowed_entrypoints:
+        - "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/loop_finding.yaml"
+        - "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/repair_plan.yaml"
+        - "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/loop_manifest.yaml"
+        - "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/final_loop_report.md"
+      direct_fact_write_allowed: false
+      fact_patch_allowed: false
+      automatic_patch_apply_allowed: false
+      automatic_rerun_allowed: false
 
   authority_boundaries:
     fact_stores:
@@ -84,6 +120,55 @@ patch_control_v2:
         forbidden_as_fact_source: true
       - path: "runs/<run-id>/io/output/local_materialization_patch.yaml"
         owner: "prototype_projection_harness"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/io/output/prototype_source_brief.yaml"
+        owner: "prototype_projection_harness"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/io/output/prototype.runtime.candidate.json"
+        owner: "prototype_projection_harness"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/io/output/prototype-render-payload.yaml"
+        owner: "prototype_projection_harness"
+        allowed_only_after: "generate-prototype-artifacts"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/prd_orchestrator/patch_reports/*.patch_report.yaml"
+        owner: "prd_orchestrator"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/prd_orchestrator/patch_reports/*.patch_report.md"
+        owner: "prd_orchestrator"
+        human_readable_companion_for: "runs/<run-id>/prd_orchestrator/patch_reports/*.patch_report.yaml"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.yaml"
+        owner: "prd_orchestrator"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.md"
+        owner: "prd_orchestrator"
+        human_readable_companion_for: "runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.yaml"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/loop_finding.yaml"
+        owner: "prd_orchestrator"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/repair_plan.yaml"
+        owner: "prd_orchestrator"
+        forbidden_as_fact_source: true
+        automatic_patch_apply_allowed: false
+        automatic_rerun_allowed: false
+      - path: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/loop_manifest.yaml"
+        owner: "prd_orchestrator"
+        forbidden_as_fact_source: true
+      - path: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/final_loop_report.md"
+        owner: "prd_orchestrator"
+        human_readable_companion_for: "runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/*.yaml"
+        forbidden_as_fact_source: true
+      - path: "Figma final prototype canvas"
+        owner: "prototype_projection_harness"
+        allowed_only_after: "validate-render-readiness PASS"
+        forbidden_for:
+          - "validator_report"
+          - "review_report"
+          - "patch_report"
+          - "stop_the_line"
+          - "run_status_dashboard"
         forbidden_as_fact_source: true
 
   figma_diff_classification:
@@ -133,6 +218,9 @@ patch_control_v2:
       - "delete_item"
       - "same_semantic_field_changed_both_sides"
       - "source_channel in [drd_local_materialization_patch, design_system_adapter]"
+      - "source_channel == prototype_artifact_generator"
+      - "source_channel in [patch_report, stop_the_line]"
+      - "source_channel == loop_gate"
 
   write_policy:
     prototype_projection_harness:
@@ -170,6 +258,26 @@ patch_control_v2:
       - "logic_sidecar_card_map validates"
       - "local_materialization_patch validates with writes_prd=false"
       - "SDS monochrome adapter validates or gap is recorded"
+      - "patch_report records fixes when validation behavior changes"
+      - "patch_report has a same-stem Markdown companion for human review"
+      - "stop_the_line report exists for unresolved blocker gates"
+      - "stop_the_line has a same-stem Markdown companion for human review"
+      - "Figma is used only for final prototype canvas writes after render readiness passes"
+    loop_gate_only:
+      - "loop_v3_1 original package is archived"
+      - "harness-aligned stage contracts use current DRD artifact names"
+      - "loop finding, repair plan, manifest, and local patch schemas validate"
+      - "repair_plan.patch_set records recommendations only"
+      - "writes_prd is always false"
+      - "blocker and semantic_defect findings write stop_the_line YAML plus Markdown"
+      - "final_loop_report.md is the human review entry"
+      - "no product-spec write, prototype payload generation, rerun, patch apply, or Figma write occurs"
+    prototype_artifact_generator:
+      - "inputs/PRD.md is converted to prototype_source_brief without PRD harness source extraction"
+      - "DRD artifacts, runtime candidate, and render payload are generated under isolated run root"
+      - "prototype-render-payload.yaml validates and is not sample/example sourced"
+      - "validate-render-readiness passes before any final Figma writer may run"
+      - "no product-spec fact store or Figma write occurs during generation"
     reverse_sync:
       - "figma_diff_report generated"
       - "semantic diff classified"

@@ -1,0 +1,39 @@
+metric_event_profile:
+  metric_states:
+    - "measurable_now"
+    - "needs_instrumentation"
+    - "proxy_only"
+    - "qualitative_prelaunch"
+    - "blocked"
+
+  no_invented_numeric_rule:
+    baseline_unknown_cannot_generate_target: true
+    target_unknown_must_be_TBD_AFTER_BASELINE: true
+
+  required_before_for_needs_instrumentation:
+    - "required_events"
+    - "owner"
+    - "required_before"
+    - "forbidden_inference"
+
+  rule_mappings:
+    - rule_id: "DATA-METRIC-STATE-001"
+      natural_language: "每个指标必须声明当前可度量状态：可立即度量、需埋点、仅代理指标、上线前定性或被阻塞。"
+      machine_mapping:
+        check_type: "metric_state_allowed"
+        allowed_values_from: "metric_event_profile.metric_states"
+      human_review_prompt: "这个指标现在真的量得到吗？如果量不到，缺什么？"
+
+    - rule_id: "DATA-NO-INVENTED-TARGET-002"
+      natural_language: "baseline 不明时不能生成 target；target 必须等 baseline 或来源明确后再定。"
+      machine_mapping:
+        check_type: "baseline_required_before_target"
+        target_unknown_value: "TBD_AFTER_BASELINE"
+      human_review_prompt: "target 和 baseline 是否有来源，还是看起来精确但其实是编的？"
+
+    - rule_id: "DATA-INSTRUMENTATION-003"
+      natural_language: "需要埋点的指标必须写清需要哪些事件、负责人、完成时间和禁止推断的口径。"
+      machine_mapping:
+        check_type: "needs_instrumentation_required_fields"
+        required_fields_from: "metric_event_profile.required_before_for_needs_instrumentation"
+      human_review_prompt: "埋点计划是否足够让数据/工程直接接手？"

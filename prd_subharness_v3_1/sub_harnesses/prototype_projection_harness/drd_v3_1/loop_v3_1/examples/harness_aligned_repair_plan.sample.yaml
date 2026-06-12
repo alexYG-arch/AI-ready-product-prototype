@@ -1,0 +1,40 @@
+plan_id: RP-LOOP-SAMPLE-001
+loop_version: "3.1"
+gate_only: true
+rule_trace:
+  trace_version: "3.1.1"
+  projection_map_id: RULE_PROJECTION_MAP_V3_1_1
+  stage_id: RND-06B
+  failure_class: FC-SIDECAR-MISSING
+  rule_ids: &loop_rule_ids [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001, PEN_DED_003]
+rule_ids: *loop_rule_ids
+findings:
+  - finding_id: LOOP-FINDING-SAMPLE-001
+    failure_class: FC-SIDECAR-MISSING
+    rule_ids: *loop_rule_ids
+selected_profile: LOOP_PROFILE_COMPLEX
+route_targets:
+  - RND-06B
+patch_set:
+  - patch_id: LP-SIDECAR-001
+    patch_type: sidecar_patch
+    source_finding_id: LOOP-FINDING-SAMPLE-001
+    rule_ids: *loop_rule_ids
+    before_hash: sha256:before-sidecar-map
+    operations:
+      - add_sidecar_card: SC-IMG-COUNT-MIN
+      - add_anchor_badge: BADGE-IMG-COUNT-MIN
+    after_hash: sha256:recommendation-only
+    writes_prd: false
+    source_refs:
+      - PRD.md#image-upload-rule
+    status: recommendation_only
+rerun_scope:
+  scope: affected_board_only
+  reason: gate-only records scope but does not rerun.
+  would_rerun_after:
+    - RND-08A
+    - RND-09
+revalidate:
+  - SIDECAR-VAL-001
+  - ANCHOR-VAL-001

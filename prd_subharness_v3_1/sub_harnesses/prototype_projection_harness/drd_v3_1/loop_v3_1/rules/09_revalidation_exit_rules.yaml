@@ -1,0 +1,68 @@
+revalidation_exit_rules:
+  version: '3.1'
+  name_zh: 复验与退出规则
+
+  revalidation_principles:
+    - id: REVAL-001
+      rule_zh: 每个 patch 后必须只运行与 patch scope 相关的最小 validator 集合，再运行最终 projection report validator。
+    - id: REVAL-002
+      rule_zh: 如果 patch 改变上游 artifact，必须重跑所有依赖该 artifact 的下游 validator。
+    - id: REVAL-003
+      rule_zh: 如果 patch 只修补 sidecar/card/badge，不得重跑 ROLE-01 或 DK-01。
+    - id: REVAL-004
+      rule_zh: 如果 revalidation 产生新的 blocker finding，必须进入下一轮 loop 或升级人工评审。
+
+  validator_groups_by_patch_type:
+    inference_patch:
+      - ROLE-VAL-001
+      - UC-001
+      - UC-002
+      - DK-VAL-001
+      - COMP-VAL-001
+    design_kernel_patch:
+      - DK-VAL-001
+      - DK-VAL-002
+      - UC-003
+      - COMP-VAL-001
+    materialization_patch:
+      - COMP-VAL-001
+      - BOARD-VAL-001
+      - SURFACE-003
+      - SIDECAR-VAL-001
+    hotspot_patch:
+      - HOT-VAL-001
+      - ANCHOR-VAL-001
+      - SIDECAR-VAL-001
+    sidecar_patch:
+      - SIDECAR-VAL-001
+      - SIDECAR-VAL-002
+      - ANCHOR-VAL-001
+    layout_patch:
+      - LAYOUT-VAL-001
+      - BADGE-VAL-001
+      - LEADER-VAL-001
+    schema_patch:
+      - SCHEMA-VAL-001
+      - SOURCE-REF-VAL-001
+
+  exit_conditions:
+    success:
+      - all_blocker_validators_pass
+      - no_new_local_patch_generated
+      - projection_report_status_is_pass_or_pass_with_nonblocking_warnings
+    stop_and_review:
+      - semantic_prd_defect_detected
+      - max_harness_iterations_reached
+      - same_finding_repeats_after_patch
+      - patch_would_write_forbidden_artifact
+      - skill_conflict_unresolved
+    circuit_breaker:
+      - repeated_patch_oscillation_detected
+      - non_idempotent_patch_detected
+      - artifact_hash_flaps_between_iterations
+      - validator_results_non_deterministic
+
+  repeated_finding_policy:
+    max_repeat_count: 2
+    action: stop_and_request_human_review
+    action_zh: 同一 finding 修补后仍重复出现，停止自动修补并请求人工评审。

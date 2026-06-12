@@ -1,0 +1,130 @@
+interaction_projection_rules:
+  version: "2.0"
+  purpose: "定义 interaction_graph.edges[] 如何投射为 Figma reactions 和交互说明。"
+
+  core_principle:
+    real_interaction: "Figma node reaction"
+    documentation_only: "Flow Map arrow / Interaction Spec card"
+    rule: "说明线不能替代真实 reaction；真实 reaction 必须来自 runtime edge。"
+
+  source_resolution:
+    order:
+      - "component_instance_by_semantic_id"
+      - "named_hotspot_by_interaction_id"
+      - "frame_region_by_semantic_role"
+      - "generated_transparent_hotspot"
+      - "screen_frame_for_auto_trigger_only"
+    require_source_ref: true
+    missing_source: "block_edge_projection"
+
+  destination_resolution:
+    screen_state:
+      target: "FRAME node with matching screen_id + state_id"
+      require_frame_node: true
+      missing_destination: "block_edge_projection"
+    overlay:
+      target: "FRAME node with matching overlay_id"
+      require_overlay_frame: true
+      missing_destination: "block_edge_projection"
+    component_variant:
+      target: "variant in same component set"
+      require_same_component_set: true
+      missing_variant: "emit_component_gap"
+    url:
+      require_explicit_url: true
+      external_url_review_required: true
+
+  trigger_policy:
+    default_click_trigger: "ON_CLICK"
+    supported_triggers:
+      - "ON_CLICK"
+      - "ON_HOVER"
+      - "ON_PRESS"
+      - "DRAG"
+      - "AFTER_DELAY"
+      - "MOUSE_ENTER"
+      - "MOUSE_LEAVE"
+      - "MOUSE_DOWN"
+      - "MOUSE_UP"
+    same_source_same_trigger:
+      allowed: false
+      resolution_order:
+        - "merge_as_ordered_multiple_actions"
+        - "convert_to_conditional"
+        - "move_page_navigation_to_parent_hotspot"
+        - "block_and_emit_conflict"
+
+  action_order_policy:
+    preserve_runtime_order: true
+    require_explicit_order: true
+    set_variable_before_navigation_when_destination_depends_on_value: true
+    close_overlay_before_destructive_confirm_navigation: true
+    delay_required_if_open_overlay_then_navigate: true
+
+  conditional_policy:
+    use_conditionals_when:
+      - "guard_expression_supported"
+      - "variables_resolved"
+      - "same_source_same_trigger_has_branching_outcomes"
+    fallback_when_not_supported:
+      - "split_into_explicit_state_frames"
+      - "emit_gap_if_ambiguous"
+
+  overlay_policy:
+    modal:
+      action: "OPEN_OVERLAY"
+      require_close_path: true
+      destructive_requires_cancel_and_confirm: true
+      background_default: "dim"
+    toast:
+      action: "OPEN_OVERLAY"
+      blocking: false
+      require_auto_dismiss: true
+      default_auto_dismiss_ms: 2500
+      background_default: "none"
+
+  multi_state_policy:
+    screen_level_states:
+      use_explicit_frames_for:
+        - "loading"
+        - "empty"
+        - "error"
+        - "permission_denied"
+        - "submit_failed"
+        - "success"
+    component_level_states:
+      use_variants_for:
+        - "hover"
+        - "pressed"
+        - "disabled"
+        - "loading"
+        - "checked"
+        - "focused"
+        - "expanded"
+    dynamic_states:
+      use_variables_when:
+        - "form_validity"
+        - "selection_state"
+        - "simple_boolean_or_enum_state"
+      fallback: "explicit_frames"
+
+  annotation_policy:
+    create_flow_map_page: true
+    create_interaction_spec_page: true
+    label_edges_with:
+      - "interaction_id"
+      - "trigger"
+      - "guard"
+      - "primary_action"
+      - "analytics_event"
+      - "source_refs"
+    annotation_is_not_fact_source: true
+
+  reverse_sync_policy:
+    trigger_changed: "semantic_candidate"
+    destination_changed: "semantic_candidate"
+    action_added_or_removed: "high_risk_candidate"
+    guard_changed: "high_risk_candidate"
+    animation_changed: "figma_only"
+    source_node_deleted: "high_risk_candidate"
+    annotation_text_changed: "ignore_or_figma_only"

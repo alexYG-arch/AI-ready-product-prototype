@@ -1,0 +1,9 @@
+local_patches:
+  - patch_id: LP-BAD-001
+    patch_type: sidecar_patch
+    source_finding_id: LOOP-FINDING-BAD-001
+    before_hash: sha256:before
+    operations:
+      - add_sidecar_card: SC-BAD
+    after_hash: sha256:after
+    writes_prd: true

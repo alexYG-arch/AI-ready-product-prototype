@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prototype Model Execution Contract",
+  "type": "object",
+  "required": ["model_execution_contract"],
+  "properties": {
+    "model_execution_contract": {
+      "type": "object",
+      "required": [
+        "version",
+        "mode",
+        "run_id",
+        "contract_id",
+        "generator_id",
+        "generator_kind",
+        "provider",
+        "execution_mode",
+        "command_policy",
+        "input_refs",
+        "output_refs",
+        "allowed_operations",
+        "forbidden_operations",
+        "completion_criteria"
+      ],
+      "properties": {
+        "version": { "enum": ["3.1.1", "3.1.2"] },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "contract_id": { "type": "string", "minLength": 1 },
+        "generator_id": { "type": "string", "minLength": 1 },
+        "generator_kind": { "const": "model" },
+        "provider": { "type": "string", "minLength": 1 },
+        "execution_mode": { "enum": ["off", "optional", "required"] },
+        "command_policy": { "type": "object" },
+        "input_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "output_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "allowed_operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "forbidden_operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "completion_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["criterion_id", "description_zh", "required"],
+            "properties": {
+              "criterion_id": { "type": "string", "minLength": 1 },
+              "description_zh": { "type": "string", "minLength": 1 },
+              "required": { "type": "boolean" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

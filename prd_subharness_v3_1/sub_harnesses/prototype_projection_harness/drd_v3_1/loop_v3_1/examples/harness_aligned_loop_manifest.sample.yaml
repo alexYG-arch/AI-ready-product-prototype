@@ -1,0 +1,67 @@
+run_id: RUN-LOOP-SAMPLE-001
+loop_version: "3.1"
+loop_profile: LOOP_PROFILE_COMPLEX
+rule_trace:
+  trace_version: "3.1.1"
+  projection_map_id: RULE_PROJECTION_MAP_V3_1_1
+  stage_id: RND-06B
+  failure_class: FC-SIDECAR-MISSING
+  rule_ids: &loop_rule_ids [COMP_DED_004, COMP_DED_005, HOT_DED_004, PEN_DED_001, PEN_DED_003]
+rule_ids: *loop_rule_ids
+input_lock_hash: sha256:sample-input
+iterations:
+  - iteration_id: 1
+    started_at: "2026-06-11T00:00:00Z"
+    input_hash: sha256:before-sidecar-map
+    rule_ids: *loop_rule_ids
+    findings:
+      - finding_id: LOOP-FINDING-SAMPLE-001
+        run_id: RUN-LOOP-SAMPLE-001
+        stage: RND-06B
+        trigger_source: logic_sidecar_audit
+        severity: blocker
+        failure_class: FC-SIDECAR-MISSING
+        rule_trace:
+          trace_version: "3.1.1"
+          projection_map_id: RULE_PROJECTION_MAP_V3_1_1
+          stage_id: RND-06B
+          failure_class: FC-SIDECAR-MISSING
+          rule_ids: *loop_rule_ids
+        rule_ids: *loop_rule_ids
+        affected_stage_candidate:
+          - RND-06B
+        affected_artifacts:
+          - logic_sidecar_card_map.yaml
+        source_refs:
+          - PRD.md#image-upload-rule
+        repair_hint_zh: 补齐缺失的 Logic Sidecar Card，并确保每张卡有 anchor_badge_id。
+    repair_plan:
+      plan_id: RP-LOOP-SAMPLE-001
+      selected_profile: LOOP_PROFILE_COMPLEX
+      route_targets:
+        - RND-06B
+    patch_set:
+      - patch_id: LP-SIDECAR-001
+        patch_type: sidecar_patch
+        source_finding_id: LOOP-FINDING-SAMPLE-001
+        rule_ids: *loop_rule_ids
+        before_hash: sha256:before-sidecar-map
+        operations:
+          - add_sidecar_card: SC-IMG-COUNT-MIN
+          - add_anchor_badge: BADGE-IMG-COUNT-MIN
+        after_hash: sha256:recommendation-only
+        writes_prd: false
+        status: recommendation_only
+    rerun_scope:
+      scope: affected_board_only
+      reason: gate-only records scope but does not rerun.
+      would_rerun_after:
+        - RND-08A
+        - RND-09
+    revalidation_results:
+      status: blocked
+      reason: gate-only mode records the finding and stops before patch or rerun.
+    output_hash: sha256:recommendation-only
+    exit_decision: stop_line
+final_status: stop_line
+final_exit_reason: blocker finding recorded; manual review required before any patch or rerun.

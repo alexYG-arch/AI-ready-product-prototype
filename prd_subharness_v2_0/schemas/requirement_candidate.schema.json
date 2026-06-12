@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Requirement Candidate v1.0",
+  "type": "object",
+  "required": [
+    "id",
+    "pattern_id",
+    "title",
+    "priority",
+    "source_refs",
+    "cn_ears",
+    "semantic_slots",
+    "evidence_status",
+    "gaps"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "pattern_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "priority": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
+    "source_refs": {
+      "type": "array"
+    },
+    "cn_ears": {
+      "type": "string"
+    },
+    "semantic_slots": {
+      "type": "object"
+    },
+    "evidence_status": {
+      "enum": [
+        "confirmed",
+        "derived",
+        "candidate",
+        "assumed",
+        "missing"
+      ]
+    },
+    "gaps": {
+      "type": "array"
+    },
+    "acceptance": {
+      "type": "array",
+      "description": "Human-reviewable acceptance criteria derived after the REQ record is assembled."
+    },
+    "verification": {
+      "type": "array",
+      "description": "Verification method or checks that prove acceptance criteria are met."
+    },
+    "quality_profile": {
+      "type": "object",
+      "description": "Requirement quality metadata used by the C-EARS quality gate."
+    },
+    "quantification_review": {
+      "type": "object",
+      "description": "Post-C-EARS numeric review: quantified, not_quantifiable_yet, or not_applicable."
+    }
+  }
+}

@@ -1,0 +1,93 @@
+figma_comment_annotation_policy:
+  version: "2.1"
+  purpose: >-
+    Use Figma comments as the primary interaction explanation surface, anchored to the source component or a nearby
+    region, so reviewers can see the interaction logic where it starts.
+
+  source_basis:
+    figma_comments_api:
+      notes:
+        - "Figma comments can be placed on the canvas and read/posted through the REST Comments endpoints."
+        - "client_meta supports canvas coordinates, frame-relative offsets, and frame-relative regions."
+      source_urls:
+        - "https://developers.figma.com/docs/rest-api/comments-types/"
+        - "https://developers.figma.com/docs/rest-api/comments-property-types/"
+        - "https://developers.figma.com/docs/rest-api/comments-endpoints/"
+
+  comment_roles:
+    interaction_explanation:
+      prefix: "[INT]"
+      anchored_to: "source_component_or_hotspot"
+    state_explanation:
+      prefix: "[STATE]"
+      anchored_to: "state_frame"
+    gap_or_question:
+      prefix: "[GAP]"
+      anchored_to: "affected_frame_or_component"
+    uxwriter_note:
+      prefix: "[COPY]"
+      anchored_to: "text_node_or_component_region"
+
+  anchor_resolution:
+    order:
+      - component_instance_bounding_box
+      - generated_hotspot_bounding_box
+      - frame_region_bounding_box
+      - state_frame_top_right_anchor
+    api_payload_strategy:
+      preferred: "FrameOffsetRegion"
+      fallback: "FrameOffset"
+      note: >-
+        REST comments are positioned by client_meta. The renderer stores the semantic target component_id in
+        figma-comment-map.yaml and computes a frame-relative offset from the component bounding box when a component-level
+        anchor is needed.
+    offset_policy:
+      default_pin_corner: "top-right"
+      x_offset_from_target_px: 12
+      y_offset_from_target_px: 0
+      avoid_covering_touch_target: true
+      avoid_covering_copy: true
+
+  comment_body_template:
+    interaction: |-
+      [INT] {interaction_id}
+      Trigger: {trigger}
+      If: {guard_or_precondition}
+      Then: {ordered_actions_summary}
+      Else: {else_actions_summary}
+      State effect: {state_effect}
+      Event: {analytics_event_or_none}
+      Refs: {source_refs}
+    state: |-
+      [STATE] {state_id}
+      Entry: {entry_condition}
+      Exit: {exit_condition}
+      Recovery: {recovery_path_or_none}
+      Refs: {source_refs}
+    gap: |-
+      [GAP] {gap_id}
+      Missing: {missing_decision}
+      Why it blocks: {severity_reason}
+      Suggested question: {recommended_question}
+      Owner: {owner_candidate}
+    copy: |-
+      [COPY] {copy_id}
+      Intent: {copy_intent}
+      Original: {original_copy}
+      Proposed: {optimized_copy}
+      Reason: {rewrite_reason}
+
+  comment_density_policy:
+    max_comments_per_screen_state: 8
+    max_comments_per_component: 2
+    overflow_strategy: "collapse_to_interaction_spec_panel_and_place_one_summary_comment"
+    duplicate_semantic_comment_policy: "one_comment_with_applies_to_state_list"
+
+  sync_and_review:
+    comments_are_not_fact_source: true
+    comment_edits_do_not_directly_modify_runtime: true
+    changed_comment_text_generates: "figma_comment_diff_report"
+    semantic_comment_change_requires_patch_candidate: true
+    stale_comment_detection:
+      compare_runtime_hash: true
+      mark_stale_prefix: "[STALE]"

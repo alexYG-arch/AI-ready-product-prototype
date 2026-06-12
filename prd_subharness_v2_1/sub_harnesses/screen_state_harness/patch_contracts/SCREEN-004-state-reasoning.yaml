@@ -1,0 +1,16 @@
+patch_contract:
+  patch_id: "SCREEN-004-state-reasoning"
+  title: "SCREEN-004: 生成页面语义和状态推理链。"
+  status: "draft"
+  goal:
+    - "SCREEN-004: 生成页面语义和状态推理链。"
+  allowed_files:
+    - "product-spec/"
+    - "prd_orchestrator/"
+    - "sub_harnesses/"
+  forbidden_files:
+    - "product-spec/legacy_prd.md"
+  done_when:
+    - "patch_report written"
+    - "change_patch written"
+    - "impact_analysis written"
