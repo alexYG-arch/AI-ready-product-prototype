@@ -1,0 +1,24 @@
+schema:
+  id: model_surface_ownership.schema
+  version: 3.2.0
+  required_root: model_surface_ownership
+  required_fields:
+  - version
+  - mode
+  - run_id
+  - source_refs
+  - surfaces
+  - ownership_decisions
+  surface_required_fields:
+  - surface_id
+  - surface_type
+  - surface_name_zh
+  - owner_zh
+  - source_refs
+  decision_required_fields:
+  - decision_id
+  - target_id
+  - ownership_zh
+  - boundary_zh
+  - forbidden_realizations
+  - source_refs

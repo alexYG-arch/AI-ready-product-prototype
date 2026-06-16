@@ -1,0 +1,32 @@
+model_user_journey:
+  version: 3.2.0
+  mode: DRD_TO_FIGMA_WRITE
+  run_id: RUN-DEMO
+  source_refs:
+  - PRD.md#7.1:ROW-UPLOAD-COUNT
+  chains:
+  - chain_id: CHAIN-IMAGE-UPLOAD
+    chain_name_zh: 图片上传真实链路
+    steps:
+    - step_id: STEP-ENTRY
+      actor: user
+      actor_zh: 用户
+      surface_ref: SURFACE-BUSINESS-PAGE
+      action_zh: 点击上传入口
+      object_zh: 上传按钮
+      result_zh: 进入图片选择器或权限判断
+      source_refs:
+      - PRD.md#7.1:ROW-UPLOAD-COUNT
+    - step_id: STEP-CONSTRAINT
+      actor: system
+      actor_zh: 系统
+      surface_ref: SURFACE-PHOTO-PICKER
+      action_zh: 判断已选数量是否为 3-5 张
+      object_zh: 已选图片数量
+      result_zh: 控制确认按钮可用性和强提醒
+      source_refs:
+      - PRD.md#7.1:ROW-UPLOAD-COUNT
+    cancel_paths:
+    - from_step: STEP-CONSTRAINT
+      action_zh: 取消选择
+      result_zh: 返回上传入口

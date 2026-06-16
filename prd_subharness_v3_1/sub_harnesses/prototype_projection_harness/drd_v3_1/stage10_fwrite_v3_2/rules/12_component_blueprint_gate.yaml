@@ -1,0 +1,27 @@
+component_blueprint_gate:
+  version: 3.2.0
+  gate_id: COMPONENT-BLUEPRINT-GATE
+  gate_id_zh: 组件蓝图闸门
+  minimum_component_fields:
+  - component_id
+  - primitive_path
+  - expected_figma_node_type
+  - layout_region
+  - source_refs
+  requires_when_interactive:
+  - interaction_hotspot_node_role
+  - component_state_matrix
+  requires_when_result_component:
+  - content_slots
+  requires_when_system_picker:
+  - picker_header
+  - picker_grid_region
+  - picker_action_bar
+  - picker_feedback_region
+  blocks_if:
+  - component_missing_primitive_path
+  - component_missing_expected_figma_node_type
+  - interactive_component_missing_hotspot_role
+  - component_state_matrix_missing
+  - result_component_missing_content_slots
+  - system_picker_missing_required_regions

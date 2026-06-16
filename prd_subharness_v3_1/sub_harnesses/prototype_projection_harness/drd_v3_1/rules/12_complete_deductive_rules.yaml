@@ -28,6 +28,14 @@ prototype_harness_drd_deductive_complete_rules:
       role_zh: 验证器
     - file: rules/14_carrier_handoff_operation_chain_rules.yaml
       role_zh: 承载面、系统交接、真实操作链与能力前提
+    - file: rules/15_figma_renderer_loop_rules.yaml
+      role_zh: Figma 渲染计划、门禁与 loop 防压扁
+    - file: rules/16_figma_live_visual_comprehension_rules.yaml
+      role_zh: Figma live 回读、页面构成与视觉理解门禁
+    - file: rules/17_playable_prototype_contract_rules.yaml
+      role_zh: 可播放原型总契约
+    - file: rules/18_stage10_fwrite_semantic_payload_rules.yaml
+      role_zh: Stage10/FWRITE 与自然语义原型 Payload
     - file: rules/13_rule_projection_map.yaml
       role_zh: 规则编号投射表
 

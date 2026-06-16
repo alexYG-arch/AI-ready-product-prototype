@@ -1,0 +1,40 @@
+package:
+  id: prototype_harness_stage10_fwrite_v3_2_harness_aligned
+  name_zh: 原型 Harness Stage10/FWRITE v3.2 接入清单
+  version: "3.2.0"
+  base_package_ref: package_manifest.yaml
+  compatibility:
+    base_harness: prototype_projection_harness
+    base_drd_version: "3.1.4"
+    merged_profile: PLAYABLE_PROTOTYPE_WRITE
+  alignment_policy:
+    archive_package_without_overwrite: true
+    drd_to_figma_write_is_archive_compatibility_only: true
+    playable_prototype_write_is_default: true
+    semantic_payload_is_writer_truth_source: true
+    fwrite_is_pure_write_layer: true
+    loop_remains_gate_only: true
+    product_spec_writes_forbidden: true
+  canonical_run_artifacts:
+    semantic_prototype_payload: io/output/semantic_prototype_payload.yaml
+    figma_semantic_writer_input: io/output/figma-semantic-writer-input.full.json
+    semantic_writer_runtime: io/output/figma-writer-runtime.js
+    live_readback_runtime: io/output/figma-live-readback-runtime.js
+  retained_v314_guards:
+    - PLAYABLE_DED_001
+    - PLAYABLE_DED_002
+    - PLAYABLE_DED_003
+    - PLAYABLE_DED_004
+    - PLAYABLE_DED_005
+    - PLAYABLE_DED_006
+    - VISUAL_DED_008
+  normalized_schema_outputs:
+    - ../../schemas/model_user_journey_v3_2.schema.json
+    - ../../schemas/model_interaction_state_machine_v3_2.schema.json
+    - ../../schemas/model_component_blueprint_v3_2.schema.json
+    - ../../schemas/final_materialization_v3_2.schema.json
+    - ../../schemas/coverage_manifest_v3_2.schema.json
+    - ../../schemas/figma_write_plan.schema.json
+    - ../../schemas/figma_write_report.schema.json
+    - ../../schemas/gate_report_v3_2.schema.json
+    - ../../schemas/name_alias_map_v3_2.schema.json

@@ -1,0 +1,94 @@
+prototype_failure_memory:
+  id: PROTOTYPE_FAILURE_MEMORY_V3_1_4
+  version: "3.1.4"
+  mode: DRD_MODE
+  purpose_zh: >
+    记录已发生过的 Figma 原型写入失败模式。生成、writer、live readback、
+    gate 和 loop 必须读取这些记忆，避免再次把结构完整误判为原型可用。
+  memories:
+    - memory_id: MEM-FIGMA-001
+      title_zh: 结构完整不等于原型可用
+      failure_pattern_zh: >
+        payload、scene、reaction 和节点数量全部合格，但 Figma 截图仍像模块板、
+        状态板或说明卡，用户无法当作真实产品原型体验。
+      must_block_when:
+        - visible_canvas_is_module_board
+        - visible_canvas_is_state_matrix
+        - writer_only_draws_semantic_boxes
+      rule_ids: [PLAYABLE_DED_006, VISUAL_DED_004, VISUAL_DED_007]
+
+    - memory_id: MEM-FIGMA-002
+      title_zh: 机器 ID 不得进入可见画布
+      failure_pattern_zh: >
+        PLAYABLE-PAGE-GROUP、INT-*、FRAME-*、CMP-*、PROTOTYPE-* 等工程 ID
+        被当成人类标题、按钮文案或交互说明画到 Figma 里。
+      must_block_when:
+        - visible_text_contains_machine_id
+        - button_copy_falls_back_to_interaction_id
+        - page_title_uses_node_name
+      rule_ids: [REVIEW_DED_001, HUMAN_DED_005, VISUAL_DED_005]
+
+    - memory_id: MEM-FIGMA-003
+      title_zh: 泛化占位文案不得通过 live gate
+      failure_pattern_zh: >
+        “选择或输入内容”“展示可点击入口”“当前操作”“结果内容”等占位文案
+        被当成真实控件或真实状态说明。
+      must_block_when:
+        - visible_text_contains_generic_placeholder
+        - generic_placeholder_appears_in_control_or_result_region
+      rule_ids: [VISUAL_DED_005, HUMAN_DED_001, HUMAN_DED_003]
+
+    - memory_id: MEM-FIGMA-004
+      title_zh: 隐藏 target 不得干扰主视觉画布
+      failure_pattern_zh: >
+        作为 prototype 跳转目标的隐藏状态被直接铺在最终 Figma page 的主视觉区域，
+        用户会误以为仍然是状态矩阵。
+      must_block_when:
+        - hidden_targets_are_visible_in_main_canvas
+        - hidden_targets_are_laid_out_next_to_playable_pages
+      rule_ids: [PLAYABLE_DED_003, SCENE_DED_001, VISUAL_DED_002]
+
+    - memory_id: MEM-FIGMA-005
+      title_zh: UI primitive 必须真实落形
+      failure_pattern_zh: >
+        level_selector、media_picker、keyboard_ai_panel 只被画成普通矩形和文本，
+        没有等级选择、媒体网格、计数、操作栏、反馈区等真实控件结构。
+      must_block_when:
+        - level_selector_missing_1_to_7_options
+        - media_picker_missing_grid_counter_action_feedback
+        - keyboard_panel_missing_toolbar_shape
+      rule_ids: [UI_PRIM_DED_007, UI_PRIM_DED_008, UI_PRIM_DED_009, VISUAL_DED_004]
+
+    - memory_id: MEM-FIGMA-006
+      title_zh: 压缩 readback 不得作为最终视觉 gate
+      failure_pattern_zh: >
+        live readback 只返回截断文本 blob 或少量语义节点，导致真实 Figma 几何中的
+        控件出界、裁切、重复控件、泛化文案无法进入 geometry gate。
+      must_block_when:
+        - readback_missing_visible_node_geometry
+        - readback_missing_overflow_nodes
+        - geometry_audit_forces_issue_counts_to_zero
+      rule_ids: [VISUAL_DED_001, VISUAL_DED_002, VISUAL_DED_006]
+
+    - memory_id: MEM-FIGMA-007
+      title_zh: 可见控件不得横向塞满后裁切
+      failure_pattern_zh: >
+        多个按钮或控件被放在固定宽度横排里，超过区域宽度后被裁切，
+        但自报 audit 仍然 PASS。
+      must_block_when:
+        - visible_control_overflows_parent
+        - button_text_or_button_shape_is_clipped
+        - duplicate_control_group_on_same_visible_page
+      rule_ids: [VISUAL_DED_002, UI_PRIM_DED_006, HUMAN_DED_003]
+
+    - memory_id: MEM-FIGMA-008
+      title_zh: 没有模块回退不等于正常原型图
+      failure_pattern_zh: >
+        Figma 画布已经不再是状态矩阵或模块回退，但主画面仍由“页面组”“功能：”
+        “承载面：”“操作元素”“输入选择元素”“反馈提示元素”“交互说明”等文档化标题
+        和规则说明支配，看起来像审阅文档或线框说明，不像一个可直接体验的产品原型。
+      must_block_when:
+        - visible_canvas_has_page_group_headings
+        - documentation_text_dominates_product_surface
+        - annotation_or_review_copy_replaces_real_product_ui
+      rule_ids: [VISUAL_DED_008, VISUAL_DED_004, PLAYABLE_DED_006]

@@ -1,0 +1,12 @@
+schema:
+  id: name_alias_map.schema
+  version: 3.2.0
+  required_root: name_alias_map
+  required_fields:
+  - version
+  - aliases
+  alias_required_fields:
+  - old
+  - canonical
+  - read_allowed
+  - write_allowed

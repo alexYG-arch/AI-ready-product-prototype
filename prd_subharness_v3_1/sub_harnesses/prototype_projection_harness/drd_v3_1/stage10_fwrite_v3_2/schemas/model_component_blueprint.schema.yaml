@@ -1,0 +1,22 @@
+schema:
+  id: model_component_blueprint.schema
+  version: 3.2.0
+  required_root: model_component_blueprint
+  required_fields:
+  - version
+  - mode
+  - run_id
+  - source_refs
+  - components
+  component_required_fields:
+  - component_id
+  - component_name_zh
+  - primitive_path
+  - expected_figma_node_type
+  - layout_region
+  - source_refs
+  interactive_required_fields:
+  - interaction_hotspot_node_role
+  - component_state_matrix
+  result_required_fields:
+  - content_slots

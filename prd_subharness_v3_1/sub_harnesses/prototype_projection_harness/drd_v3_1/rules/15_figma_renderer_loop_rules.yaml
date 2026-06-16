@@ -1,0 +1,141 @@
+prototype_harness_figma_renderer_loop_rules:
+  id: FIGMA_RENDERER_LOOP_RULES_V3_1_2
+  id_zh: 原型 Harness Figma 渲染计划、门禁与 loop 规则 v3.1.2
+  version: "3.1.2"
+  mode: DRD_MODE
+  purpose_zh: >
+    防止最终 Figma 写入把 runtime/payload 压扁成模块摘要或状态文案卡。
+    Figma writer 只能消费已经通过校验的 prototype_ui_blueprint / full writer input；
+    若计划、蓝图或物化缺漏，只能写 run root 下的 gate/loop evidence，不能写 Figma。
+
+  rules:
+    - rule_id: RENDER_DED_001
+      name_zh: Figma 写入前必须先生成渲染计划
+      rule_zh: >
+        generated runtime 与 prototype_render_payload 通过 readiness 后，
+        还必须生成 figma_render_plan.yaml。该计划是生成 prototype_ui_blueprint 的前置计划层，
+        不允许 writer 直接扫描 payload 并自行摘要化投射。
+      blocks_when_zh: 缺少 figma_render_plan，或计划没有 runtime/payload/hash/source_refs/rule_trace。
+
+    - rule_id: RENDER_DED_002
+      name_zh: 渲染计划必须覆盖 payload 全量对象
+      rule_zh: >
+        payload 中的 boards、frames、components、interactions、annotations 都必须在
+        figma_render_plan 中有一一对应的 render unit。禁止只生成页面模块、状态标题或摘要卡。
+      blocks_when_zh: 任一 payload frame/component/interaction/annotation 没有对应 render unit。
+
+    - rule_id: RENDER_DED_003
+      name_zh: 承载面、系统交接、真实操作链必须进入渲染计划
+      rule_zh: >
+        interaction_carrier_map、system_handoff_map、user_operation_chain 和 capability_assessment
+        必须被 render plan 消费。系统交接面要按 handoff 条目展开，不能只聚合成一条说明。
+      blocks_when_zh: 有 handoff 或 operation chain，但 render plan 缺对应 surface/chain/interaction 映射。
+
+    - rule_id: RENDER_DED_004
+      name_zh: 禁止摘要化 Figma 物化
+      rule_zh: >
+        Figma 写入计划不得使用 summary_only、module_summary_card、state_text_card_only
+        等压扁策略。每个 frame 至少要包含 component 物化计划，每条 interaction 至少要包含
+        reaction 或同页状态说明策略。generated payload 还必须给出人可读页面摘要、
+        frame_kind、元素分组、显示文案和一控一意图的 source_component 绑定。
+      blocks_when_zh: 计划只描述模块/状态名称，没有元素、交互、注释和承载面落点；
+        或 payload 仍保留机器名页面、缺 frame_kind、泛化按钮、一个组件多条交互。
+
+    - rule_id: RENDER_DED_005
+      name_zh: 渲染门禁失败必须写 loop evidence
+      rule_zh: >
+        validate-figma-render-plan 发现 blocker 时，只能在 isolated run root 下写
+        loop_manifest、loop_finding、repair_plan 和 final_loop_report.md；不得自动 patch、
+        不得 rerun、不得写 Figma。
+      blocks_when_zh: 渲染门禁失败后仍尝试写 Figma，或没有 loop gate evidence。
+
+    - rule_id: RENDER_DED_006
+      name_zh: rule_id 必须贯穿 renderer
+      rule_zh: >
+        render plan 的 root、每个 render unit、renderer gate 和 loop evidence 都必须携带
+        从 rule projection map 派生出的 rule_ids，保证 rule -> generate -> validator -> gate -> loop
+        是同一编号链路。
+      blocks_when_zh: renderer artifact、validator finding 或 loop evidence 缺 rule_ids。
+
+    - rule_id: RENDER_DED_007
+      name_zh: Figma 写入必须先生成真实原型物化施工包
+      rule_zh: >
+        通过 figma_render_plan 后，必须进一步生成 figma_prototype_materialization.yaml。
+        materialization 必须消费 prototype_ui_blueprint.yaml。该文件声明最终画布必须是 interactive_prototype，并把 screen、state frame、
+        visible component、system handoff surface、prototype interaction 映射成 writer
+        必须执行的真实原型施工合同。writer 不得直接消费 review MD 或临时摘要脚本。
+      blocks_when_zh: 缺少 materialization spec，或 spec 没有真实 screen/state/component/reaction 合同。
+
+    - rule_id: RENDER_DED_008
+      name_zh: 写后必须回读审计真实原型形态
+      rule_zh: >
+        Figma 写入后必须生成 figma_post_write_audit.yaml，并验证最终画布不是 review board、
+        状态索引板或文档说明板。主交互必须是 NAVIGATE、OVERLAY、CHANGE_TO、BACK
+        等真实 prototype 行为；禁止用 SCROLL_TO 交互索引冒充可体验原型。
+      blocks_when_zh: 写后 audit 缺失、发现 review board / interaction index、没有 prototype 起点，
+        或真实 reaction 数少于 materialization spec 要求。
+
+    - rule_id: RENDER_DED_009
+      name_zh: 写后审计失败必须进入 post-write loop gate
+      rule_zh: >
+        validate-figma-post-write-audit 失败时，必须在 isolated run root 下写
+        FIGMA-POST-WRITE-GATE 的 loop_manifest、loop_finding、repair_plan 和
+        final_loop_report.md。该 loop 只记录证据和修复建议，不写 PRD fact store，
+        不自动 patch，不自动 rerun。
+      blocks_when_zh: 写后 audit 失败但没有 post-write loop evidence，或仍把失败画布标记为通过。
+
+    - rule_id: RENDER_DED_010
+      name_zh: 最终 Figma writer 必须通过写入前总门禁
+      rule_zh: >
+        进入真实 Figma 写入前，必须运行 validate-figma-write-readiness。
+        该门禁同时校验 runtime、prototype_render_payload、figma_render_plan、
+        prototype_ui_blueprint、figma-writer-input.full.json 和 figma_prototype_materialization，
+        确认 writer 的唯一施工输入是 full UI blueprint input 与 materialization spec，
+        且必须忽略 review MD、禁止 compact tuple input、禁止 review board、禁止 SCROLL_TO 伪交互、必须创建
+        prototype starting point。
+      blocks_when_zh: 缺任一写入前 artifact，或 writer 仍可能从 review MD、payload 摘要、
+        临时脚本、状态索引板生成 Figma。
+
+    - rule_id: UI_PRIM_DED_001
+      name_zh: 语义必须落到 UI primitive
+      rule_zh: >
+        Figma writer 不能只消费 button/input/feedback 等粗粒度语义。
+        每个可见 component 必须先在 prototype_ui_blueprint.yaml 中映射到明确 UI primitive，
+        例如 keyboard_panel、toolbar、media_picker、image_grid、selection_counter、
+        primary_button、level_selector、result_card、loading_state、error_notice、toast。
+      blocks_when_zh: component 只有 semantic_role/semantic_key/copy_zh，没有 ui_primitive_ref、
+        layout_region、visual_affordance 或 expected_figma_node_type。
+
+    - rule_id: UI_PRIM_DED_002
+      name_zh: 系统选择器必须有可操作结构
+      rule_zh: >
+        当 handoff_surface_type 表示系统选择器、媒体选择、文件选择或宿主选择面时，
+        writer 必须生成可操作结构，而不是重复的说明卡。媒体选择类结构至少包含
+        media_picker、image_grid、selection_counter、取消、确认和反馈区域。
+      blocks_when_zh: system handoff 只生成通用步骤文案，缺少选择网格、数量反馈、取消或确认区域。
+
+    - rule_id: UI_PRIM_DED_003
+      name_zh: 输入法与嵌入承载面必须保持形态
+      rule_zh: >
+        carrier_type 为 embedded_host_panel、keyboard、toolbar、attached_panel 等嵌入承载面时，
+        不得默认提升为普通独立页面。writer 必须生成宿主区域与嵌入区域的层次，至少以
+        keyboard_panel 或 toolbar primitive 表达其所在承载面。
+      blocks_when_zh: 输入法、键盘、工具栏或嵌入面被画成普通 app_page 或独立状态卡。
+
+    - rule_id: UI_PRIM_DED_004
+      name_zh: 可点击交互必须有真实 hotspot
+      rule_zh: >
+        writer_must_create_reaction=true 的 interaction 必须优先把 reaction 绑定到真实可见组件。
+        若 Figma API 限制嵌套节点 reaction，必须生成透明 hotspot overlay 并在 audit 中记录 fallback，
+        不得静默挂到整张 state frame。
+      blocks_when_zh: reaction 只挂在整张 state frame，且没有 transparent_hotspot_overlay fallback 记录。
+
+    - rule_id: UI_PRIM_DED_005
+      name_zh: 写后必须检查视觉原型形态
+      rule_zh: >
+        post-write audit 不得只数 frame、component 和 reaction。必须检查真实 hotspot 数、
+        UI primitive 节点数、media picker 结构、keyboard carrier 结构、result card 结构、
+        重复 handoff 模板、compact writer input 是否被使用，以及机器 ID 文本、泛化按钮、
+        承载面外漂浮控件、文本重叠和过密画面等可用性/可读性证据。
+      blocks_when_zh: post-write audit 缺少 visual_prototype_audit，或真实 UI primitive / hotspot 证据不足。
+        缺少 readability_audit，或 readability_audit 发现不可读、不可点、承载面错误的节点时也必须阻断。

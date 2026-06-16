@@ -1,0 +1,18 @@
+user_journey_gate:
+  version: 3.2.0
+  gate_id: USER-JOURNEY-GATE
+  gate_id_zh: 真实用户链路闸门
+  minimum_step_fields:
+  - step_id
+  - actor
+  - surface_ref
+  - action_zh
+  - object_zh
+  - result_zh
+  - source_refs
+  blocks_if:
+  - operation_chain_only_summary
+  - chain_step_missing_actor_surface_action_result
+  - system_handoff_missing_entry_cancel_return
+  - constraint_source_slice_missing_chain_step
+  - user_fixable_error_delayed_after_return

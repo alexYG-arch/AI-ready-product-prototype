@@ -1,0 +1,17 @@
+schema:
+  id: coverage_manifest.schema
+  version: 3.2.0
+  required_root: coverage_manifest
+  required_fields:
+  - version
+  - mode
+  - run_id
+  - source_refs
+  - coverage_items
+  - gate_results
+  coverage_item_required_fields:
+  - coverage_id
+  - source_ref
+  - expected_output
+  - covered
+  - evidence_refs

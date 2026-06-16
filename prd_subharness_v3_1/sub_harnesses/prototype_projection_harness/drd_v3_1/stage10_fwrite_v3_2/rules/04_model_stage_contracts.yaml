@@ -1,0 +1,41 @@
+model_stage_contracts:
+  version: 3.2.0
+  name_zh: 四段模型推理契约
+  model_required: true
+  stages:
+  - stage_id: GEN-14
+    artifact: model_surface_ownership.yaml
+    must_reason_zh:
+    - 页面职责
+    - 页面边界
+    - 系统/宿主表面归属
+    - 禁止实现
+  - stage_id: GEN-15
+    artifact: model_user_journey.yaml
+    must_reason_zh:
+    - 真实用户步骤
+    - 用户动作/系统动作/返回动作
+    - 取消路径
+    - 错误修正位置
+  - stage_id: GEN-16
+    artifact: model_interaction_state_machine.yaml
+    must_reason_zh:
+    - 状态
+    - transition
+    - trigger
+    - guard
+    - feedback_timing
+    - control_state
+  - stage_id: GEN-17
+    artifact: model_component_blueprint.yaml
+    must_reason_zh:
+    - 模块
+    - 组件
+    - 元素
+    - primitive_path
+    - content_slots
+    - component_state_matrix
+  blocks_if:
+  - model_required_stage_has_no_model_invocation_trace
+  - model_output_only_summary
+  - model_output_missing_source_refs

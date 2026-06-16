@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/figma_render_plan.schema.json",
+  "title": "Figma Render Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["figma_render_plan"],
+  "properties": {
+    "figma_render_plan": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "version",
+        "mode",
+        "run_id",
+        "generated_by",
+        "candidate_marker",
+        "source_refs",
+        "rule_trace",
+        "input_artifacts",
+        "compression_guard",
+        "render_stages",
+        "render_units",
+        "payload_coverage",
+        "renderer_loop_contract"
+      ],
+      "properties": {
+        "version": { "const": "3.1.2" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "generated_by": { "const": "prototype_figma_renderer_planner_v3_1_2" },
+        "candidate_marker": { "const": "candidate_projection" },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_trace": {
+          "type": "object",
+          "required": ["rule_ids"],
+          "additionalProperties": true,
+          "properties": {
+            "rule_ids": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "input_artifacts": {
+          "type": "object",
+          "required": ["runtime", "payload"],
+          "additionalProperties": true
+        },
+        "compression_guard": {
+          "type": "object",
+          "required": ["summary_only_render", "module_summary_card_only", "payload_unit_coverage_required"],
+          "additionalProperties": true,
+          "properties": {
+            "summary_only_render": { "const": false },
+            "module_summary_card_only": { "const": false },
+            "payload_unit_coverage_required": { "const": true }
+          }
+        },
+        "render_stages": {
+          "type": "array",
+          "minItems": 5,
+          "items": { "$ref": "#/$defs/rule_traced_object" }
+        },
+        "render_units": {
+          "type": "object",
+          "required": ["boards", "frames", "components", "interactions", "annotations", "system_handoff_surfaces", "operation_chains"],
+          "additionalProperties": true,
+          "properties": {
+            "boards": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/render_unit" } },
+            "frames": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/render_unit" } },
+            "components": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/render_unit" } },
+            "interactions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/render_unit" } },
+            "annotations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/render_unit" } },
+            "system_handoff_surfaces": { "type": "array", "items": { "$ref": "#/$defs/render_unit" } },
+            "operation_chains": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/render_unit" } }
+          }
+        },
+        "payload_coverage": {
+          "type": "object",
+          "required": ["payload_counts", "plan_counts", "status"],
+          "additionalProperties": true,
+          "properties": {
+            "status": { "enum": ["pass", "blocked"] }
+          }
+        },
+        "renderer_loop_contract": {
+          "type": "object",
+          "required": ["validator_command", "loop_gate_on_validation_failure", "failure_classes"],
+          "additionalProperties": true,
+          "properties": {
+            "validator_command": { "const": "validate-figma-render-plan" },
+            "loop_gate_on_validation_failure": { "const": true },
+            "failure_classes": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "rule_traced_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["rule_ids"],
+      "properties": {
+        "rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "render_unit": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["render_unit_id", "unit_type", "source_refs", "rule_ids"],
+      "properties": {
+        "render_unit_id": { "type": "string", "minLength": 1 },
+        "unit_type": { "type": "string", "minLength": 1 },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

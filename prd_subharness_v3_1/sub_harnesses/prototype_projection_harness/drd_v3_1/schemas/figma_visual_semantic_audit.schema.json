@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/figma_visual_semantic_audit.schema.json",
+  "title": "Figma Visual Semantic Audit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["figma_visual_semantic_audit"],
+  "properties": {
+    "figma_visual_semantic_audit": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["version", "mode", "run_id", "status", "source_refs", "rule_trace", "scene_alignment", "interaction_explanation_alignment", "source_alignment"],
+      "properties": {
+        "version": { "enum": ["3.1.3", "3.1.4"] },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["pass", "blocked"] },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_trace": { "$ref": "#/$defs/rule_trace" },
+        "scene_alignment": { "type": "object", "additionalProperties": true },
+        "interaction_explanation_alignment": { "type": "object", "additionalProperties": true },
+        "source_alignment": { "type": "object", "additionalProperties": true },
+        "blocker_findings": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "$defs": {
+    "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "rule_trace": {
+      "type": "object",
+      "required": ["rule_ids"],
+      "additionalProperties": true,
+      "properties": { "rule_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } }
+    }
+  }
+}

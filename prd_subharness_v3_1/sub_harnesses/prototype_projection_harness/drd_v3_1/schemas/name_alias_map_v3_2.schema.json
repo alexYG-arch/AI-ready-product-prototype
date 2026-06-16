@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/name_alias_map_v3_2.schema.json",
+  "title": "Name Alias Map v3.2",
+  "type": "object",
+  "required": ["name_alias_map"],
+  "properties": {
+    "name_alias_map": {
+      "type": "object",
+      "required": ["version", "aliases"],
+      "additionalProperties": true,
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["old", "canonical", "write_allowed"],
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+schema:
+  id: gate_report.schema
+  version: 3.2.0
+  required_root: gate_report
+  required_fields:
+  - gate_id
+  - status
+  - checked_at
+  - inputs
+  - findings
+  finding_required_fields:
+  - finding_id
+  - severity
+  - message_zh
+  - target_artifact

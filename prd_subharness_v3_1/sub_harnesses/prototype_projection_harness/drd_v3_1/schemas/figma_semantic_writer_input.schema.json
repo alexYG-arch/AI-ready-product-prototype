@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/figma_semantic_writer_input.schema.json",
+  "title": "Figma Semantic Writer Input",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "format",
+    "version",
+    "run_id",
+    "playable_profile",
+    "source_refs",
+    "rule_trace",
+    "payload_hash",
+    "semantic_prototype_payload",
+    "pages",
+    "interactions",
+    "writer_contract"
+  ],
+  "properties": {
+    "format": { "const": "semantic_prototype_writer_input_v3_2" },
+    "version": { "const": "3.2.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "playable_profile": { "const": "PLAYABLE_PROTOTYPE_WRITE" },
+    "source_refs": { "$ref": "#/$defs/source_refs" },
+    "rule_trace": { "$ref": "#/$defs/rule_trace" },
+    "payload_hash": { "type": "string", "pattern": "^sha256:" },
+    "semantic_prototype_payload": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "additionalProperties": true
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "object" }
+    },
+    "interactions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "object" }
+    },
+    "writer_contract": {
+      "type": "object",
+      "required": [
+        "writer_must_consume_semantic_payload",
+        "writer_must_not_scan_payload",
+        "writer_must_not_scan_review_md",
+        "drd_board_packets_forbidden",
+        "documentation_dominance_forbidden",
+        "live_visual_gate_required"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "writer_must_consume_semantic_payload": { "const": true },
+        "writer_must_not_scan_payload": { "const": true },
+        "writer_must_not_scan_review_md": { "const": true },
+        "drd_board_packets_forbidden": { "const": true },
+        "documentation_dominance_forbidden": { "const": true },
+        "live_visual_gate_required": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "rule_trace": {
+      "type": "object",
+      "required": ["rule_ids"],
+      "additionalProperties": true,
+      "properties": {
+        "rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

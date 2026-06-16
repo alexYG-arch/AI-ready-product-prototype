@@ -1,0 +1,13 @@
+review_non_blocking_policy:
+  version: 3.2.0
+  name_zh: 文字评审非阻塞策略
+  default_review_target: figma_artifact
+  text_review_role: audit_evidence
+  text_review_blocks_by_default: false
+  blocks_only_when:
+  - human_review_required_items_exist
+  - coverage_gate_failed
+  - model_contract_gate_failed
+  - materialization_gate_failed
+  - figma_write_readiness_gate_failed
+  pass_action_zh: gate 通过后进入 FWRITE，最终人工 review Figma 生成物。

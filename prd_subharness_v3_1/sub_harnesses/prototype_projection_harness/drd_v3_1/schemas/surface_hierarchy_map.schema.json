@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/surface_hierarchy_map.schema.json",
+  "title": "Surface Hierarchy Map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["surface_hierarchy_map"],
+  "properties": {
+    "surface_hierarchy_map": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["version", "mode", "run_id", "source_refs", "rule_trace", "screen_surfaces", "frame_surfaces", "component_surfaces", "interaction_surfaces"],
+      "properties": {
+        "version": { "const": "3.1.3" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_trace": { "$ref": "#/$defs/rule_trace" },
+        "screen_surfaces": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/screen_surface" } },
+        "frame_surfaces": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/frame_surface" } },
+        "component_surfaces": { "type": "array", "items": { "$ref": "#/$defs/component_surface" } },
+        "interaction_surfaces": { "type": "array", "items": { "$ref": "#/$defs/interaction_surface" } }
+      }
+    }
+  },
+  "$defs": {
+    "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "rule_trace": {
+      "type": "object",
+      "required": ["rule_ids"],
+      "additionalProperties": true,
+      "properties": { "rule_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } }
+    },
+    "surface_type": {
+      "enum": ["app_page", "host_page", "embedded_keyboard_panel", "system_picker_overlay", "modal", "toast_or_inline_feedback", "same_surface_state"]
+    },
+    "transition_kind": {
+      "enum": ["same_scene_state_change", "scene_navigation", "system_handoff", "overlay_open", "inline_feedback"]
+    },
+    "screen_surface": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["screen_id", "screen_surface", "source_refs", "rule_ids"],
+      "properties": {
+        "screen_id": { "type": "string", "minLength": 1 },
+        "screen_surface": { "$ref": "#/$defs/surface_type" },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    },
+    "frame_surface": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["frame_id", "state_id", "screen_id", "frame_surface", "source_refs", "rule_ids"],
+      "properties": {
+        "frame_id": { "type": "string", "minLength": 1 },
+        "state_id": { "type": "string", "minLength": 1 },
+        "screen_id": { "type": "string", "minLength": 1 },
+        "frame_surface": { "$ref": "#/$defs/surface_type" },
+        "carrier_override_reason_zh": { "type": "string" },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    },
+    "component_surface": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["component_id", "frame_id", "component_surface", "source_refs", "rule_ids"],
+      "properties": {
+        "component_id": { "type": "string", "minLength": 1 },
+        "frame_id": { "type": "string", "minLength": 1 },
+        "component_surface": { "$ref": "#/$defs/surface_type" },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    },
+    "interaction_surface": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["interaction_id", "source_surface", "target_surface", "transition_kind", "source_refs", "rule_ids"],
+      "properties": {
+        "interaction_id": { "type": "string", "minLength": 1 },
+        "source_surface": { "$ref": "#/$defs/surface_type" },
+        "target_surface": { "$ref": "#/$defs/surface_type" },
+        "transition_kind": { "$ref": "#/$defs/transition_kind" },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    }
+  }
+}

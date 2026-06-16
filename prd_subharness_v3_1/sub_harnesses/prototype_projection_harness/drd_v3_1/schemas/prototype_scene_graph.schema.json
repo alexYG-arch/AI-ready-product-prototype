@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/prototype_scene_graph.schema.json",
+  "title": "Prototype Scene Graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prototype_scene_graph"],
+  "properties": {
+    "prototype_scene_graph": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["version", "mode", "run_id", "source_refs", "rule_trace", "final_page_allowed_top_level_nodes", "scene_clusters", "scenes", "scene_transitions"],
+      "properties": {
+        "version": { "const": "3.1.3" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_trace": { "$ref": "#/$defs/rule_trace" },
+        "final_page_allowed_top_level_nodes": {
+          "type": "array",
+          "contains": { "const": "PROTOTYPE-FINAL-ENTRY" }
+        },
+        "scene_clusters": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/cluster" } },
+        "scenes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/scene" } },
+        "scene_transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" } }
+      }
+    }
+  },
+  "$defs": {
+    "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "rule_trace": {
+      "type": "object",
+      "required": ["rule_ids"],
+      "additionalProperties": true,
+      "properties": { "rule_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } }
+    },
+    "cluster": {
+      "type": "object",
+      "required": ["scene_cluster_id", "title_zh", "scene_ids", "source_refs", "rule_ids"],
+      "additionalProperties": true,
+      "properties": {
+        "scene_cluster_id": { "type": "string", "pattern": "^SCENE-CLUSTER:" },
+        "title_zh": { "type": "string", "minLength": 1 },
+        "scene_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^PROTOTYPE-SCENE:" } },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "required": ["scene_id", "scene_cluster_id", "frame_id", "state_id", "screen_id", "surface_type", "scene_role", "source_refs", "rule_ids"],
+      "additionalProperties": true,
+      "properties": {
+        "scene_id": { "type": "string", "pattern": "^PROTOTYPE-SCENE:" },
+        "scene_cluster_id": { "type": "string", "pattern": "^SCENE-CLUSTER:" },
+        "frame_id": { "type": "string", "minLength": 1 },
+        "state_id": { "type": "string", "minLength": 1 },
+        "screen_id": { "type": "string", "minLength": 1 },
+        "surface_type": { "type": "string", "minLength": 1 },
+        "scene_role": { "enum": ["entry", "primary", "same_surface_state", "handoff", "feedback", "result"] },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "required": ["interaction_id", "source_scene_id", "target_scene_id", "transition_kind", "source_refs", "rule_ids"],
+      "additionalProperties": true,
+      "properties": {
+        "interaction_id": { "type": "string", "minLength": 1 },
+        "source_scene_id": { "type": "string", "pattern": "^PROTOTYPE-SCENE:" },
+        "target_scene_id": { "type": "string", "pattern": "^PROTOTYPE-SCENE:" },
+        "transition_kind": { "type": "string", "minLength": 1 },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    }
+  }
+}

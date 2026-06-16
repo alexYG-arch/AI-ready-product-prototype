@@ -1,0 +1,300 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/figma_prototype_materialization.schema.json",
+  "title": "Figma Prototype Materialization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["figma_prototype_materialization"],
+  "properties": {
+    "figma_prototype_materialization": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "version",
+        "mode",
+        "run_id",
+        "generated_by",
+        "candidate_marker",
+        "final_canvas_kind",
+        "source_refs",
+        "rule_trace",
+        "input_artifacts",
+        "writer_contract",
+        "expected_counts",
+        "prototype_screens",
+        "prototype_interactions",
+        "post_write_audit_contract"
+      ],
+      "properties": {
+        "version": { "const": "3.1.3" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "generated_by": { "const": "prototype_figma_materialization_generator_v3_1_3" },
+        "candidate_marker": { "const": "candidate_projection" },
+        "final_canvas_kind": { "const": "interactive_prototype" },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_trace": { "$ref": "#/$defs/rule_traced_object" },
+        "input_artifacts": {
+          "type": "object",
+          "required": ["runtime", "payload", "figma_render_plan", "prototype_ui_blueprint"],
+          "additionalProperties": true
+        },
+        "writer_contract": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "writer_must_consume_this_spec",
+            "writer_must_consume_ui_blueprint",
+            "writer_input_format",
+            "compact_writer_input_forbidden",
+            "writer_must_not_use_compact_tuple_payload",
+            "writer_must_not_scan_review_md",
+            "writer_must_not_create_review_board",
+            "writer_must_not_create_interaction_index_as_primary_ui",
+            "writer_must_create_prototype_starting_point",
+            "forbidden_primary_reaction_types",
+            "forbidden_canvas_kinds"
+          ],
+          "properties": {
+            "writer_must_consume_this_spec": { "const": true },
+            "writer_must_consume_ui_blueprint": { "const": true },
+            "writer_input_format": { "const": "playable_prototype_writer_input_v3_1_4" },
+            "compact_writer_input_forbidden": { "const": true },
+            "writer_must_not_use_compact_tuple_payload": { "const": true },
+            "writer_must_not_scan_review_md": { "const": true },
+            "writer_must_not_create_review_board": { "const": true },
+            "writer_must_not_create_interaction_index_as_primary_ui": { "const": true },
+            "writer_must_create_prototype_starting_point": { "const": true },
+            "forbidden_primary_reaction_types": {
+              "type": "array",
+              "contains": { "const": "SCROLL_TO" }
+            },
+            "forbidden_canvas_kinds": {
+              "type": "array",
+              "contains": { "const": "review_board" }
+            }
+          }
+        },
+        "expected_counts": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "top_level_prototype_screens",
+            "state_frames",
+            "visible_component_nodes",
+            "prototype_interactions",
+            "required_prototype_reactions",
+            "ui_primitive_nodes",
+            "interaction_hotspots"
+          ]
+        },
+        "prototype_screens": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/prototype_screen" }
+        },
+        "system_handoff_surfaces": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rule_traced_object" }
+        },
+        "prototype_interactions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/prototype_interaction" }
+        },
+        "post_write_audit_contract": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["required_validator", "loop_gate_on_failure", "expected_counts"],
+          "properties": {
+            "required_validator": { "const": "validate-figma-post-write-audit" },
+            "loop_gate_on_failure": { "const": true }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "rule_traced_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["rule_ids"],
+      "properties": {
+        "rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "prototype_component": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "component_id",
+        "writer_node_role",
+        "ui_primitive",
+        "ui_primitive_ref",
+        "primitive_path",
+        "layout_region",
+        "visual_affordance",
+        "expected_figma_node_type",
+        "interaction_hotspot_node_role",
+        "source_refs",
+        "rule_ids"
+      ],
+      "properties": {
+        "component_id": { "type": "string", "minLength": 1 },
+        "writer_node_role": { "const": "visible_prototype_component" },
+        "ui_primitive": {
+          "enum": [
+            "keyboard_panel",
+            "phone_shell",
+            "host_chat_surface",
+            "keyboard_ai_panel",
+            "app_content_surface",
+            "system_picker_overlay",
+            "modal_surface",
+            "inline_feedback_surface",
+            "result_surface",
+            "status_bar",
+            "host_message_area",
+            "keyboard_toolbar_region",
+            "picker_header",
+            "picker_grid_region",
+            "picker_action_bar",
+            "picker_feedback_region",
+            "result_summary_region",
+            "member_unlock_region",
+            "interaction_explanation_region",
+            "toolbar_action",
+            "image_tile",
+            "confirm_action",
+            "cancel_action",
+            "level_option",
+            "primary_action",
+            "disabled_action",
+            "retry_action",
+            "copy_action",
+            "loading_indicator",
+            "toast_notice",
+            "toolbar",
+            "media_picker",
+            "image_grid",
+            "selection_counter",
+            "primary_button",
+            "disabled_button",
+            "level_selector",
+            "result_card",
+            "loading_state",
+            "error_notice",
+            "toast",
+            "handoff_overlay",
+            "input_field",
+            "display_text"
+          ]
+        },
+        "ui_primitive_ref": { "type": "string", "minLength": 1 },
+        "primitive_path": {
+          "type": "object",
+          "required": ["surface", "region", "control", "surface_type"],
+          "additionalProperties": true
+        },
+        "layout_region": { "type": "string", "minLength": 1 },
+        "visual_affordance": { "type": "object", "minProperties": 1 },
+        "expected_figma_node_type": { "type": "string", "minLength": 1 },
+        "interaction_hotspot_node_role": { "type": "string", "minLength": 1 },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "prototype_screen": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["screen_id", "writer_node_role", "state_frames", "source_refs", "rule_ids"],
+      "properties": {
+        "screen_id": { "type": "string", "minLength": 1 },
+        "writer_node_role": { "const": "top_level_prototype_screen" },
+        "state_frames": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/rule_traced_object" },
+              {
+                "type": "object",
+                "required": ["frame_surface", "composition_contract", "component_nodes"],
+                "properties": {
+                  "frame_surface": { "type": "string", "minLength": 1 },
+                  "composition_contract": { "type": "object", "minProperties": 1 },
+                  "component_nodes": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "$ref": "#/$defs/prototype_component" }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "prototype_interaction": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "interaction_id",
+        "source_component_id",
+        "destination_frame_id",
+        "writer_must_create_reaction",
+        "primary_reaction_type",
+        "forbidden_primary_reaction_types",
+        "source_refs",
+        "rule_ids"
+      ],
+      "properties": {
+        "interaction_id": { "type": "string", "minLength": 1 },
+        "writer_must_create_reaction": { "type": "boolean" },
+        "primary_reaction_type": {
+          "enum": ["NAVIGATE", "OVERLAY", "CHANGE_TO", "BACK", "NONE_TERMINAL_STAY"]
+        },
+        "forbidden_primary_reaction_types": {
+          "type": "array",
+          "contains": { "const": "SCROLL_TO" }
+        },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

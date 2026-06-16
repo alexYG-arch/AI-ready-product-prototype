@@ -1,0 +1,54 @@
+stage10_fwrite_semantic_payload_rules:
+  id: STAGE10_FWRITE_SEMANTIC_PAYLOAD_RULES_V3_2
+  id_zh: Stage10/FWRITE 与自然语义原型 Payload 规则 v3.2
+  version: "3.2.0"
+  mode: DRD_MODE
+  purpose_zh: >
+    把 v3.2 的 Stage10/FWRITE 纪律层接入现有 v3.1.4 可播放原型链路，
+    并规定 Figma writer 的唯一施工源是自然语义和机器锚点混合的
+    semantic_prototype_payload，而不是 compact payload、review 文档或 DRD board packets。
+  rules:
+    - rule_id: STAGE10_DED_001
+      name_zh: 真实用户链路必须作为写入前硬门禁
+      rule_zh: model_user_journey 必须包含真实步骤、承载面、动作、对象、结果和 source refs。
+      blocks_when_zh: 链路只有 summary，或缺 actor/surface/action/object/result/source_refs。
+    - rule_id: STAGE10_DED_002
+      name_zh: 页面内交互状态机必须作为写入前硬门禁
+      rule_zh: 每条 transition 必须有 trigger、guard 或 no_guard_reason、source state、target/effect、feedback timing。
+      blocks_when_zh: 同页状态被写成独立页面，或 disabled/recovery/feedback 缺失。
+    - rule_id: STAGE10_DED_003
+      name_zh: 组件蓝图必须作为写入前硬门禁
+      rule_zh: 可见和可交互组件必须有 primitive path、Figma node type、layout region、hotspot role 和状态矩阵。
+      blocks_when_zh: 组件只剩 button/input/feedback 粗分类，或系统选择器缺 header/grid/action/feedback 区域。
+    - rule_id: STAGE10_DED_004
+      name_zh: 四段模型输出必须相互一致
+      rule_zh: surface ownership、user journey、interaction state machine、component blueprint 必须引用一致的页面、状态、承载面和 source refs。
+      blocks_when_zh: 任一模型输出缺失、未被 final materialization 消费，或相互引用断裂。
+    - rule_id: STAGE10_DED_005
+      name_zh: FWRITE 只能写入不能推理
+      rule_zh: FWRITE 只消费 final materialization、semantic payload 和 writer input；不得读 PRD、调用模型或发明 copy。
+      blocks_when_zh: writer runtime 直接扫 PRD、review MD、compact payload 或 DRD board packets。
+    - rule_id: SEMANTIC_PAYLOAD_DED_001
+      name_zh: 原型 payload 必须包含自然语义和机器锚点
+      rule_zh: semantic_prototype_payload 中每个页面、元素、交互必须同时有中文可读说明和可校验 id/source/rule 锚点。
+      blocks_when_zh: 只保留 component_id、role、copy，或自然语义缺失。
+    - rule_id: SEMANTIC_PAYLOAD_DED_002
+      name_zh: writer 只能消费 semantic writer input
+      rule_zh: Figma writer runtime 的输入必须是 figma-semantic-writer-input.full.json，且该输入必须由 semantic_prototype_payload 生成。
+      blocks_when_zh: writer input 来自 compact payload、playable scene array、DRD board packets 或 review 文档。
+    - rule_id: SEMANTIC_PAYLOAD_DED_003
+      name_zh: 自然语义不得被画成主 UI 文档板
+      rule_zh: 自然语义用于指导 UI 施工和少量辅助注释；最终主画布必须首先呈现产品界面。
+      blocks_when_zh: 页面组、功能、承载面、操作元素、规则说明等文字支配主画布。
+    - rule_id: SEMANTIC_PAYLOAD_DED_004
+      name_zh: 页面、承载面、交互、元素必须可追溯
+      rule_zh: semantic payload 的 page、region、element、interaction 都必须有 source_refs 和 rule_ids。
+      blocks_when_zh: 任一可见页面或可点击元素缺 source_refs/rule_ids。
+    - rule_id: SEMANTIC_PAYLOAD_DED_005
+      name_zh: live gate 必须对照 semantic payload
+      rule_zh: 写后 live readback、geometry、semantic audit 和 model visual comprehension 必须读取 semantic payload 摘要，而不是只检查节点数量。
+      blocks_when_zh: live gate 缺 semantic payload hash、只检查 node count，或无法发现说明板主导。
+    - rule_id: PROFILE_DED_001
+      name_zh: 真实原型写入默认使用 PLAYABLE_PROTOTYPE_WRITE
+      rule_zh: DRD_TO_FIGMA_WRITE 只用于归档兼容；真实原型 writer readiness 必须要求 PLAYABLE_PROTOTYPE_WRITE。
+      blocks_when_zh: 可播放原型写入时仍使用 DRD_TO_FIGMA_WRITE 或禁用真实 reaction。

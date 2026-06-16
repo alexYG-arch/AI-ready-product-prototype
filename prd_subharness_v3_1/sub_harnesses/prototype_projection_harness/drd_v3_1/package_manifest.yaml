@@ -1,7 +1,7 @@
 package:
   id: prototype_harness_drd_deductive_upgrade_v3_1
-  name_zh: 原型 Harness DRD 演绎推理升级包 v3.1
-  version: "3.1"
+  name_zh: 原型 Harness DRD 演绎推理升级包 v3.1.4
+  version: "3.1.4"
   compatibility:
     base_harness: prototype_projection_harness
     base_stage_rules: "2.1"
@@ -23,8 +23,18 @@ package:
       - rules/11_validators.yaml
       - rules/12_complete_deductive_rules.yaml
       - rules/13_rule_projection_map.yaml
+      - rules/14_carrier_handoff_operation_chain_rules.yaml
+      - rules/15_figma_renderer_loop_rules.yaml
+      - rules/16_figma_live_visual_comprehension_rules.yaml
+      - rules/17_playable_prototype_contract_rules.yaml
+      - rules/18_stage10_fwrite_semantic_payload_rules.yaml
+    upgrades:
+      - stage10_fwrite_v3_2/package_manifest.yaml
+      - stage10_fwrite_v3_2/package_manifest.harness_aligned.yaml
     profile:
       - profile.yaml
+    memory:
+      - prototype_failure_memory.yaml
     libs:
       - libs/deductive_method_library.yaml
       - libs/sidecar_card_template_library.yaml
@@ -37,6 +47,37 @@ package:
       - schemas/design_kernel.schema.json
       - schemas/logic_sidecar_card_map.schema.json
       - schemas/local_materialization_patch.schema.json
+      - schemas/interaction_carrier_map.schema.json
+      - schemas/system_handoff_map.schema.json
+      - schemas/user_operation_chain.schema.json
+      - schemas/capability_assessment.schema.json
+      - schemas/prototype_review_view_model.schema.json
+      - schemas/model_contract_promotion_report.schema.json
+      - schemas/figma_render_plan.schema.json
+      - schemas/prototype_ui_blueprint.schema.json
+      - schemas/figma_prototype_materialization.schema.json
+      - schemas/figma_post_write_audit.schema.json
+      - schemas/surface_hierarchy_map.schema.json
+      - schemas/prototype_scene_graph.schema.json
+      - schemas/playable_prototype_model.schema.json
+      - schemas/figma_playable_writer_input.schema.json
+      - schemas/prototype_canvas_view_model.schema.json
+      - schemas/figma_live_readback_snapshot.schema.json
+      - schemas/figma_geometry_audit.schema.json
+      - schemas/figma_screenshot_manifest.schema.json
+      - schemas/figma_visual_semantic_audit.schema.json
+      - schemas/model_figma_visual_comprehension.schema.json
+      - schemas/semantic_prototype_payload.schema.json
+      - schemas/figma_semantic_writer_input.schema.json
+      - schemas/model_user_journey_v3_2.schema.json
+      - schemas/model_interaction_state_machine_v3_2.schema.json
+      - schemas/model_component_blueprint_v3_2.schema.json
+      - schemas/final_materialization_v3_2.schema.json
+      - schemas/coverage_manifest_v3_2.schema.json
+      - schemas/figma_write_plan.schema.json
+      - schemas/figma_write_report.schema.json
+      - schemas/gate_report_v3_2.schema.json
+      - schemas/name_alias_map_v3_2.schema.json
     sample_artifacts:
       - examples/screen_role_obligations.sample.yaml
       - examples/design_kernel.sample.yaml

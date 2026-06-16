@@ -5,6 +5,15 @@ figma_projection_rules:
 
   projection_order:
     - validate_completed_runtime
+    - validate_render_payload_readiness
+    - build_figma_render_plan
+    - validate_figma_render_plan
+    - renderer_loop_gate_if_plan_fails
+    - build_prototype_ui_blueprint
+    - validate_prototype_ui_blueprint
+    - build_figma_prototype_materialization
+    - validate_figma_prototype_materialization
+    - validate_figma_write_readiness
     - validate_uxwriter_copy_catalog
     - resolve_renderer_skill_pack
     - create_layout_route_blueprint
@@ -13,6 +22,10 @@ figma_projection_rules:
     - fill_components_patterns_and_copy
     - create_interaction_comments
     - create_real_prototype_reactions
+    - create_prototype_starting_point
+    - generate_figma_post_write_audit
+    - validate_figma_post_write_audit
+    - post_write_loop_gate_if_audit_fails
     - create_visual_pen_line_flow_map
     - validate_projection_and_maps
 
@@ -57,6 +70,16 @@ figma_projection_rules:
     - render_stage
 
   output_maps:
+    figma_render_plan: "io/output/figma-render-plan.yaml"
+    figma_render_plan_review: "prd_orchestrator/prototype_projection_reports/figma_render_plan_review.md"
+    prototype_ui_blueprint: "io/output/prototype_ui_blueprint.yaml"
+    figma_writer_input_full: "io/output/figma-writer-input.full.json"
+    figma_prototype_materialization: "io/output/figma-prototype-materialization.yaml"
+    figma_prototype_materialization_review: "prd_orchestrator/prototype_projection_reports/figma_prototype_materialization_review.md"
+    figma_write_readiness_gate: "validate-figma-write-readiness"
+    figma_post_write_audit: "io/output/figma-post-write-audit.yaml"
+    figma_renderer_loop_gate: "prd_orchestrator/loop_gates/FIGMA-RENDER-GATE-<run-id>/"
+    figma_post_write_loop_gate: "prd_orchestrator/loop_gates/FIGMA-POST-WRITE-GATE-<run-id>/"
     figma_sync_map: "io/output/figma-sync-map.yaml"
     figma_interaction_map: "io/output/figma-interaction-map.yaml"
     figma_comment_map: "io/output/figma-comment-map.yaml"

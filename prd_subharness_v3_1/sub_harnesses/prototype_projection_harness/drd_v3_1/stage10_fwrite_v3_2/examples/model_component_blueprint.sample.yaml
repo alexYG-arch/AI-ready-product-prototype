@@ -1,0 +1,32 @@
+model_component_blueprint:
+  version: 3.2.0
+  mode: DRD_TO_FIGMA_WRITE
+  run_id: RUN-DEMO
+  source_refs:
+  - PRD.md#7.1:ROW-UPLOAD-COUNT
+  components:
+  - component_id: CMP-PICKER-CONFIRM
+    component_name_zh: 确认按钮
+    primitive_path: surface.system_picker/action_bar/confirm_button
+    expected_figma_node_type: component_instance_or_button_frame
+    layout_region: picker_action_bar
+    interaction_hotspot_node_role: commit_control
+    component_state_matrix:
+    - state_id: PICKER-SELECT-1
+      enabled: false
+      reason_zh: 低于最小数量 3 张
+    - state_id: PICKER-SELECT-3
+      enabled: true
+      reason_zh: 达到最小合法数量
+    source_refs:
+    - PRD.md#7.1:ROW-UPLOAD-COUNT
+  - component_id: CMP-PICKER-COUNT-HINT
+    component_name_zh: 数量强提醒
+    primitive_path: surface.system_picker/feedback_region/inline_hint
+    expected_figma_node_type: text_or_callout
+    layout_region: picker_feedback_region
+    content_slots:
+    - slot_id: hint_text
+      slot_zh: 强提醒文案
+    source_refs:
+    - PRD.md#7.1:ROW-UPLOAD-COUNT

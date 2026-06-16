@@ -1,0 +1,121 @@
+stage10_pipeline_plan:
+  version: 3.2.0
+  mode: DRD_TO_FIGMA_WRITE
+  name_zh: Stage10+ 生成与 Figma 写入计划
+  authority_zh: Stage10+ 只生成投射物化产物，不写 PRD 事实源。
+  stages:
+  - id: GEN-10
+    name: SOURCE-SLICES
+    name_zh: 来源切片读取与补齐
+    outputs:
+    - source_slice_index.yaml
+    - source_atom_coverage_report.yaml
+  - id: GEN-11
+    name: DETERMINISTIC-DRAFT
+    name_zh: 确定性草稿
+    outputs:
+    - deterministic_draft.yaml
+    - draft_gaps.yaml
+  - id: GEN-12
+    name: CARRIER-HANDOFF-DRAFT
+    name_zh: 承载面与系统交接草稿
+    outputs:
+    - carrier_handoff_draft.yaml
+    - surface_candidates.yaml
+    - handoff_candidates.yaml
+  - id: GEN-13
+    name: CONTRACT-PROMOTION
+    name_zh: 模型契约晋升判断
+    outputs:
+    - model_contract_promotion_report.yaml
+    - model_contracts/*.yaml
+  - id: GEN-14
+    name: MODEL-SURFACE-OWNERSHIP
+    name_zh: 页面职责与边界模型推理
+    outputs:
+    - model_surface_ownership.yaml
+    - surface_boundary_decisions.yaml
+  - id: GEN-15
+    name: MODEL-USER-JOURNEY
+    name_zh: 真实用户链路模型推理
+    outputs:
+    - model_user_journey.yaml
+    - journey_missing_step_report.yaml
+  - id: GEN-16
+    name: MODEL-INTERACTION-STATE-MACHINE
+    name_zh: 页面内状态机模型推理
+    outputs:
+    - model_interaction_state_machine.yaml
+    - state_transition_obligations.yaml
+  - id: GEN-17
+    name: MODEL-COMPONENT-BLUEPRINT
+    name_zh: 组件与元素蓝图模型推理
+    outputs:
+    - model_component_blueprint.yaml
+    - component_blueprint_gap_report.yaml
+  - id: GEN-18
+    name: FINAL-MATERIALIZATION
+    name_zh: 最终物化
+    outputs:
+    - final_materialization.yaml
+    - prototype.validation.runtime.yaml
+    - narrative_materialization_packets/*.yaml
+    - board_frame_packets.yaml
+    - interaction_hotspots.yaml
+    - logic_sidecar_cards.yaml
+  - id: GEN-19
+    name: REVIEW-VIEW-MODEL
+    name_zh: 评审视图模型
+    outputs:
+    - review_view_model.yaml
+    - review_attention_items.yaml
+  - id: GEN-20
+    name: COVERAGE-MANIFEST
+    name_zh: 覆盖清单与报告入口
+    outputs:
+    - coverage_manifest.yaml
+    - coverage_gate_report.yaml
+    - source_to_output_trace.yaml
+    - projection_report_entry.yaml
+  - id: GATE-20A
+    name: FIGMA-WRITE-READINESS-GATE
+    name_zh: Figma 写入就绪闸门
+    outputs:
+    - figma_write_readiness_gate_report.yaml
+  - id: FWRITE-01
+    name: FIGMA-WRITE-PREPARE
+    name_zh: Figma 写入准备
+    outputs:
+    - figma_write_plan.yaml
+  - id: FWRITE-02
+    name: WRITE-BOARD-FRAMES
+    name_zh: 写入状态画布
+    outputs:
+    - figma_node_map.frames.yaml
+  - id: FWRITE-03
+    name: WRITE-COMPONENT-INSTANCES
+    name_zh: 写入组件实例
+    outputs:
+    - figma_node_map.components.yaml
+  - id: FWRITE-04
+    name: WRITE-SIDECAR-CARDS
+    name_zh: 写入逻辑侧车卡片
+    outputs:
+    - figma_node_map.sidecar_cards.yaml
+  - id: FWRITE-05
+    name: WRITE-ANNOTATION-STUBS
+    name_zh: 写入 Dev Mode 备注短桩
+    outputs:
+    - figma-annotation-map.yaml
+  - id: FWRITE-06
+    name: WRITE-ANCHOR-BADGES
+    name_zh: 写入锚点编号
+    outputs:
+    - anchor_badge_map.yaml
+    - leader_line_map.yaml
+  - id: FWRITE-07
+    name: WRITE-MAPS-AND-REPORTS
+    name_zh: 写入 maps 与报告
+    outputs:
+    - figma-sync-map.yaml
+    - figma_write_report.yaml

@@ -1,0 +1,17 @@
+figma_live_gate_rules:
+  version: 3.2.0
+  name_zh: Figma 写后 Live Gate
+  required_after_fwrite:
+  - figma_live_readback_snapshot
+  - figma_geometry_audit
+  - figma_visual_semantic_audit
+  - figma_write_report
+  blocks_if:
+  - readback_missing
+  - node_count_mismatch
+  - managed_node_missing_metadata
+  - sidecar_cards_not_written
+  - annotation_stubs_not_attached
+  - component_instances_missing
+  - visual_semantic_audit_failed
+  review_target_after_gate_zh: Figma 生成物。

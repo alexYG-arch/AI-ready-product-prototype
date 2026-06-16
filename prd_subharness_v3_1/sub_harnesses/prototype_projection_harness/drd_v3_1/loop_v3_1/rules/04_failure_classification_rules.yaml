@@ -71,6 +71,218 @@ failure_classification_rules:
         - RND-08A
       patch_type: layout_patch
 
+    - class_id: FC-PAYLOAD-USABILITY-COLLAPSE
+      class_id_zh: payload 可用性坍缩
+      definition_zh: >
+        payload 或 UI blueprint 虽然对象数量完整，但缺少人可读页面摘要、frame_kind、
+        一控一意图绑定、显示文案或承载面可用性证据，导致最终 Figma 只能画出状态卡片或泛化按钮。
+      examples:
+        - screen_name_is_machine_id
+        - frame_kind_missing
+        - one_component_multiple_interactions
+        - generic_action_copy
+        - post_write_readability_audit_missing
+      default_route:
+        - GEN-RUNTIME-PAYLOAD
+        - FIGMA-UI-BLUEPRINT
+        - FIGMA-MATERIALIZATION
+      patch_type: materialization_patch
+
+    - class_id: FC-FIGMA-PAGE-COMPOSITION-COLLAPSE
+      class_id_zh: Figma 页面构成坍缩
+      definition_zh: >
+        最终 Figma 画布把状态全部铺成矩阵、混入旧 SCREEN / PROTOTYPE-RUNTIME 分组，
+        或缺少按用户任务链组织的 scene cluster。
+      examples:
+        - state_matrix_detected
+        - old_screen_group_in_final_page
+        - scene_without_cluster
+      default_route:
+        - FIGMA-SCENE-GRAPH
+        - FIGMA-WRITER
+      patch_type: figma_writer_repair_recommendation
+
+    - class_id: FC-FIGMA-CARRIER-MISMATCH
+      class_id_zh: Figma 承载面不一致
+      definition_zh: screen、state/frame、component、interaction 的承载面判断不一致，或 live readback carrier 与 surface_hierarchy_map 不一致。
+      examples:
+        - frame_surface_none
+        - screen_frame_carrier_override_missing
+        - live_readback_carrier_mismatch
+      default_route:
+        - FIGMA-SURFACE-HIERARCHY
+        - FIGMA-MATERIALIZATION
+      patch_type: carrier_mapping_patch
+
+    - class_id: FC-FIGMA-HUMAN-READABILITY-MISSING
+      class_id_zh: Figma 人类可读说明缺失
+      definition_zh: 页面名称、功能作用、状态说明、交互说明没有进入 prototype_canvas_view_model 或最终画布说明区。
+      examples:
+        - page_description_missing
+        - state_description_leaks_machine_id
+        - interaction_explanation_region_missing
+      default_route:
+        - FIGMA-CANVAS-VIEW-MODEL
+        - FIGMA-WRITER
+      patch_type: review_projection_patch
+
+    - class_id: FC-FIGMA-INTERACTION-EXPLANATION-MISSING
+      class_id_zh: Figma 交互说明缺失
+      definition_zh: 可点击控件有 reaction 或 hotspot，但缺少点击前条件、点击后结果、系统交接或失败恢复说明。
+      examples:
+        - hotspot_without_explanation
+        - operation_chain_only_id
+        - transparent_hotspot_without_target_text
+      default_route:
+        - FIGMA-CANVAS-VIEW-MODEL
+        - FIGMA-WRITER
+      patch_type: interaction_explanation_patch
+
+    - class_id: FC-FIGMA-GEOMETRY-READABILITY-FAILED
+      class_id_zh: Figma 几何与可读性回读失败
+      definition_zh: Figma live readback 或 geometry audit 发现文本/组件出界、重叠、过密、泛化文本过多或 hotspot 不可理解。
+      examples:
+        - text_outside_scene
+        - overlapping_text_nodes
+        - generic_text_count_exceeded
+        - dense_scene_count
+      default_route:
+        - FIGMA-WRITER
+        - FIGMA-LIVE-READBACK
+      patch_type: visual_layout_patch
+
+    - class_id: FC-FIGMA-VISUAL-PROTOTYPE-INSUFFICIENT
+      class_id_zh: Figma 可体验原型不足
+      definition_zh: 最终画布虽然有节点、reaction 或说明文字，但整体仍像模块板、说明板、状态索引或不可体验页面。
+      examples:
+        - visible_canvas_is_module_board
+        - writer_only_draws_semantic_boxes
+        - page_composition_not_human_usable
+      default_route:
+        - FIGMA-WRITER
+        - FIGMA-LIVE-READBACK
+      patch_type: visual_layout_patch
+
+    - class_id: FC-FIGMA-MACHINE-ID-LEAK
+      class_id_zh: Figma 可见机器 ID 泄漏
+      definition_zh: final canvas 可见标题、按钮、说明或系统交接区域出现 INT/FRAME/CMP/PLAYABLE/PROTOTYPE 等工程 ID。
+      examples:
+        - visible_text_contains_interaction_id
+        - page_group_title_uses_node_name
+        - button_copy_falls_back_to_machine_id
+      default_route:
+        - FIGMA-CANVAS-VIEW-MODEL
+        - FIGMA-WRITER
+        - FIGMA-LIVE-READBACK
+      patch_type: review_projection_patch
+
+    - class_id: FC-FIGMA-PRIMITIVE-NOT-REALIZED
+      class_id_zh: Figma primitive 未真实落形
+      definition_zh: level_selector、media_picker、keyboard_ai_panel 等 primitive 只被画成普通文本框或说明卡，没有真实控件结构。
+      examples:
+        - level_selector_missing_options
+        - media_picker_missing_grid_counter_action_feedback
+        - keyboard_panel_is_plain_box
+      default_route:
+        - FIGMA-UI-BLUEPRINT
+        - FIGMA-MATERIALIZATION
+        - FIGMA-WRITER
+      patch_type: figma_writer_repair_recommendation
+
+    - class_id: FC-FIGMA-HIDDEN-TARGET-VISIBLE-MATRIX
+      class_id_zh: 隐藏 target 干扰主视觉画布
+      definition_zh: hidden prototype target 被铺在主视觉区域，使最终页看起来仍是状态矩阵。
+      examples:
+        - hidden_targets_in_main_canvas
+        - hidden_targets_laid_out_next_to_visible_pages
+      default_route:
+        - FIGMA-PLAYABLE-MODEL
+        - FIGMA-WRITER
+      patch_type: figma_writer_repair_recommendation
+
+    - class_id: FC-FIGMA-HUMAN-READABILITY-FAIL
+      class_id_zh: Figma 人类可读性失败
+      definition_zh: live screenshot 或模型视觉理解认为画布不可读、不可体验或像说明板。
+      examples:
+        - screenshot_not_understandable
+        - visible_canvas_is_module_board
+        - explanation_card_disguised_as_prototype
+      default_route:
+        - FIGMA-CANVAS-VIEW-MODEL
+        - FIGMA-WRITER
+        - FIGMA-LIVE-READBACK
+      patch_type: visual_layout_patch
+
+    - class_id: FC-FIGMA-LIVE-AUDIT-MISSING
+      class_id_zh: Figma live 回读证据缺失
+      definition_zh: post-write gate 缺少 live readback、geometry audit、semantic audit 或模型视觉理解结果。
+      examples:
+        - missing_figma_live_readback_snapshot
+        - missing_model_figma_visual_comprehension
+      default_route:
+        - FIGMA-LIVE-READBACK
+      patch_type: audit_evidence_patch
+
+    - class_id: FC-SEMANTIC-PAYLOAD-MISSING
+      class_id_zh: 语义原型 payload 缺失
+      definition_zh: v3.2 可播放原型写入缺少 semantic_prototype_payload.yaml，或该 payload 没有自然语义与机器锚点。
+      examples:
+        - semantic_prototype_payload_missing
+        - page_semantics_missing
+        - machine_anchor_missing
+      default_route:
+        - GEN-SEMANTIC-PROTOTYPE-PAYLOAD
+        - FIGMA-WRITE-READINESS-GATE
+      patch_type: semantic_payload_patch
+
+    - class_id: FC-SEMANTIC-PAYLOAD-COMPACTED
+      class_id_zh: 语义原型 payload 被压扁
+      definition_zh: semantic payload 或 writer input 退化为 component_id / role / copy、summary card 或说明板，无法支撑真实原型写入。
+      examples:
+        - component_role_copy_only
+        - summary_board_payload
+        - natural_semantics_missing
+      default_route:
+        - GEN-SEMANTIC-PROTOTYPE-PAYLOAD
+        - FWRITE-SEMANTIC-PROTOTYPE
+      patch_type: semantic_payload_patch
+
+    - class_id: FC-FIGMA-WRITER-USED-DRD-BOARD-INPUT
+      class_id_zh: Figma writer 使用了 DRD board 输入
+      definition_zh: v3.2 原型写入没有消费 figma-semantic-writer-input.full.json，而是消费 DRD board packets、review MD、canvas view model 或旧 compact input。
+      examples:
+        - writer_consumed_drd_board_packets
+        - writer_consumed_review_md
+        - compact_writer_input_used
+      default_route:
+        - FWRITE-SEMANTIC-PROTOTYPE
+        - FIGMA-WRITE-READINESS-GATE
+      patch_type: figma_writer_repair_recommendation
+
+    - class_id: FC-FIGMA-DOCBOARD-DOMINATES-PROTOTYPE
+      class_id_zh: Figma 说明板支配原型
+      definition_zh: 最终画布主要是页面组、模块说明、功能/承载面说明或状态索引，而不是可体验产品界面。
+      examples:
+        - documentation_board_dominates
+        - module_board_dominates
+        - explanation_cards_as_main_ui
+      default_route:
+        - FWRITE-SEMANTIC-PROTOTYPE
+        - FIGMA-LIVE-READBACK
+      patch_type: visual_layout_patch
+
+    - class_id: FC-FIGMA-SEMANTIC-MISMATCH
+      class_id_zh: Figma 与语义 payload 不一致
+      definition_zh: live readback / semantic audit 发现画布节点、控件、承载面或交互与 semantic_prototype_payload.yaml 不一致。
+      examples:
+        - live_page_missing_from_semantic_payload
+        - interaction_target_mismatch
+        - carrier_mismatch_with_semantic_payload
+      default_route:
+        - FWRITE-SEMANTIC-PROTOTYPE
+        - FIGMA-LIVE-READBACK
+      patch_type: semantic_alignment_patch
+
     - class_id: FC-SCHEMA-INTEGRITY
       class_id_zh: 结构完整性问题
       definition_zh: YAML/schema/source refs/hash 等结构问题。
@@ -100,5 +312,22 @@ failure_classification_rules:
     - FC-MATERIALIZATION-MISSING
     - FC-HOTSPOT-ANCHOR-MISSING
     - FC-SIDECAR-MISSING
+    - FC-PAYLOAD-USABILITY-COLLAPSE
+    - FC-FIGMA-PAGE-COMPOSITION-COLLAPSE
+    - FC-FIGMA-CARRIER-MISMATCH
+    - FC-FIGMA-MACHINE-ID-LEAK
+    - FC-FIGMA-PRIMITIVE-NOT-REALIZED
+    - FC-FIGMA-HIDDEN-TARGET-VISIBLE-MATRIX
+    - FC-FIGMA-HUMAN-READABILITY-FAIL
+    - FC-FIGMA-HUMAN-READABILITY-MISSING
+    - FC-FIGMA-INTERACTION-EXPLANATION-MISSING
+    - FC-SEMANTIC-PAYLOAD-MISSING
+    - FC-SEMANTIC-PAYLOAD-COMPACTED
+    - FC-FIGMA-WRITER-USED-DRD-BOARD-INPUT
+    - FC-FIGMA-DOCBOARD-DOMINATES-PROTOTYPE
+    - FC-FIGMA-SEMANTIC-MISMATCH
+    - FC-FIGMA-GEOMETRY-READABILITY-FAILED
+    - FC-FIGMA-VISUAL-PROTOTYPE-INSUFFICIENT
+    - FC-FIGMA-LIVE-AUDIT-MISSING
     - FC-LAYOUT-READABILITY
     - FC-SCHEMA-INTEGRITY

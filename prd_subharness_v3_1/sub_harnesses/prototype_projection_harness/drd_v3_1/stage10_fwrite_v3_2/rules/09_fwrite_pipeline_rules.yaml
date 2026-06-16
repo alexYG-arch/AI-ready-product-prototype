@@ -1,0 +1,64 @@
+fwrite_pipeline_rules:
+  version: 3.2.0
+  name_zh: Figma 纯写入层规则
+  purity_zh: FWRITE 只写入，不推理；只消费最终物化和评审视图。
+  stages:
+  - id: FWRITE-01
+    name_zh: 写入准备
+    reads:
+    - final_materialization.yaml
+    - review_view_model.yaml
+    - coverage_manifest.yaml
+    writes:
+    - figma_write_plan.yaml
+  - id: FWRITE-02
+    name_zh: 写入状态画布
+    reads:
+    - board_frame_packets.yaml
+    writes:
+    - figma_node_map.frames.yaml
+  - id: FWRITE-03
+    name_zh: 写入组件实例
+    reads:
+    - component_instance_packets.yaml
+    - model_component_blueprint.yaml
+    writes:
+    - figma_node_map.components.yaml
+  - id: FWRITE-04
+    name_zh: 写入侧车卡片
+    reads:
+    - logic_sidecar_cards.yaml
+    writes:
+    - figma_node_map.sidecar_cards.yaml
+  - id: FWRITE-05
+    name_zh: 写入 Dev Mode 备注短桩
+    reads:
+    - annotation_stubs.yaml
+    writes:
+    - figma-annotation-map.yaml
+  - id: FWRITE-06
+    name_zh: 写入锚点编号
+    reads:
+    - anchor_badges.yaml
+    writes:
+    - anchor_badge_map.yaml
+    - leader_line_map.yaml
+  - id: FWRITE-07
+    name_zh: 写入 maps 与报告
+    reads:
+    - figma_node_map.*
+    - coverage_manifest.yaml
+    writes:
+    - figma-sync-map.yaml
+    - figma_write_report.yaml
+  forbidden:
+  - read_prd_directly
+  - call_model
+  - infer_missing_component
+  - invent_copy
+  - write_prd_fact_store
+  - write_real_reactions_unless_playable_profile
+  blocks_if:
+  - fwrite_stage_invokes_model
+  - fwrite_writes_unsourced_node
+  - fwrite_skips_final_materialization

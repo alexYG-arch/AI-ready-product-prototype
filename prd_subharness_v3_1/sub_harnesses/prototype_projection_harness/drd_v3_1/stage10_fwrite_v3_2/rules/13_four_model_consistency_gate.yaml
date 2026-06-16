@@ -1,0 +1,19 @@
+four_model_consistency_gate:
+  version: 3.2.0
+  gate_id: FOUR-MODEL-CONSISTENCY-GATE
+  gate_id_zh: 四段模型一致性闸门
+  models:
+  - model_surface_ownership.yaml
+  - model_user_journey.yaml
+  - model_interaction_state_machine.yaml
+  - model_component_blueprint.yaml
+  checks:
+  - surface_used_by_journey_exists
+  - state_machine_transitions_reference_journey_steps
+  - component_blueprint_covers_state_machine_controls
+  - forbidden_realizations_not_materialized
+  blocks_if:
+  - surface_journey_conflict
+  - state_component_conflict
+  - component_surface_conflict
+  - unresolved_model_conflict

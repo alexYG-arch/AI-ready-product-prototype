@@ -1,0 +1,12 @@
+stage10_run_manifest:
+  version: 3.2.0
+  run_id: RUN-STAGE10-DEMO
+  profile: DRD_TO_FIGMA_WRITE
+  canonical_stage_range:
+  - GEN-10
+  - GEN-20
+  - FWRITE-01
+  - FWRITE-07
+  input_lock: render_input.lock.yaml
+  target_review: figma_artifact
+  notes_zh: 示例展示 coverage gate 通过后进入 FWRITE，而不是停在文字 review。

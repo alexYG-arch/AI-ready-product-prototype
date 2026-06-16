@@ -1,0 +1,52 @@
+version_compatibility_policy:
+  version: 3.2.0
+  name_zh: 名称与版本兼容策略
+  canonical_version: 3.2.0
+  compatible_input_versions:
+  - '2.1'
+  - '3.1'
+  - 3.1.1
+  - 3.1.2
+  - 3.1.3
+  canonical_profile: DRD_TO_FIGMA_WRITE
+  alias_policy_zh: 旧名称允许读取，不允许新增写入；所有新 artifact 必须使用 canonical names。
+  stage_aliases:
+  - old_id: RND-03
+    maps_to_zh: GEN-18 + FWRITE-02
+    write_allowed: false
+  - old_id: RND-04
+    maps_to_zh: GEN-17 + FWRITE-03
+    write_allowed: false
+  - old_id: RND-06
+    maps_to_zh: FWRITE-05
+    write_allowed: false
+  - old_id: RND-07
+    maps_to_zh: PLAYABLE_PROTOTYPE_WRITE only
+    write_allowed: false
+  - old_id: RND-08
+    maps_to_zh: FWRITE-06 anchor badge / short leader only
+    write_allowed: false
+  - old_id: RND-09
+    maps_to_zh: GEN-20 + FWRITE-07
+    write_allowed: false
+  artifact_aliases:
+  - old: user_operation_chain.yaml
+    canonical: model_user_journey.yaml
+    read_allowed: true
+    write_allowed: false
+  - old: prototype_ui_blueprint.yaml
+    canonical: model_component_blueprint.yaml
+    read_allowed: true
+    write_allowed: false
+  - old: figma-comment-map.yaml
+    canonical: figma-annotation-map.yaml
+    read_allowed: true
+    write_allowed: false
+  - old: frame_packets.yaml
+    canonical: board_frame_packets.yaml
+    read_allowed: true
+    write_allowed: false
+  - old: figma_render_plan.yaml
+    canonical: figma_write_plan.yaml
+    read_allowed: true
+    write_allowed: false

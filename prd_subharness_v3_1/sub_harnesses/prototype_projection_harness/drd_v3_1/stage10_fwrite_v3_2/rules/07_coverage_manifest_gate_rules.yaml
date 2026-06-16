@@ -1,0 +1,18 @@
+coverage_manifest_gate_rules:
+  version: 3.2.0
+  name_zh: 覆盖清单闸门规则
+  checks:
+  - source_slice_consumed
+  - model_contract_invoked
+  - model_output_materialized
+  - required_state_has_frame_or_folded_reason
+  - hotspot_has_sidecar
+  - sidecar_has_anchor
+  - forbidden_realization_checked
+  blocks_if:
+  - uncovered_source_slice
+  - missing_model_output
+  - missing_materialized_frame
+  - missing_hotspot_sidecar
+  - missing_anchor_badge
+  - unresolved_forbidden_realization

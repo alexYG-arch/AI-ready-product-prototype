@@ -1,0 +1,32 @@
+figma_write_readiness_gate:
+  version: 3.2.0
+  gate_id: FIGMA-WRITE-READINESS-GATE
+  gate_id_zh: Figma 写入就绪闸门
+  required_gates_passed:
+  - MODEL-CONTRACT-GATE
+  - USER-JOURNEY-GATE
+  - INTERACTION-STATE-MACHINE-GATE
+  - COMPONENT-BLUEPRINT-GATE
+  - FOUR-MODEL-CONSISTENCY-GATE
+  - FINAL-MATERIALIZATION-GATE
+  - COVERAGE-MANIFEST-GATE
+  required_inputs:
+  - source_slice_index.yaml
+  - deterministic_draft.yaml
+  - carrier_handoff_draft.yaml
+  - model_surface_ownership.yaml
+  - model_user_journey.yaml
+  - model_interaction_state_machine.yaml
+  - model_component_blueprint.yaml
+  - final_materialization.yaml
+  - review_view_model.yaml
+  - coverage_manifest.yaml
+  - figma_write_plan.yaml
+  blocks_if:
+  - writer_input_missing
+  - writer_input_uses_compact_payload
+  - unresolved_human_review_required_items_exist
+  - fwrite_attempts_to_reason
+  - forbidden_realization_detected
+  pass_action: enter_fwrite_pipeline
+  fail_action: write_gate_report_and_loop

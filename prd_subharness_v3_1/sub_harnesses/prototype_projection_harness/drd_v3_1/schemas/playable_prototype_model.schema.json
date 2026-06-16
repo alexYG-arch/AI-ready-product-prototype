@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/playable_prototype_model.schema.json",
+  "title": "Playable Prototype Model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["playable_prototype_model"],
+  "properties": {
+    "playable_prototype_model": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "version",
+        "mode",
+        "run_id",
+        "source_refs",
+        "rule_trace",
+        "raw_counts",
+        "visibility_policy",
+        "visible_main_scenes",
+        "hidden_target_scenes",
+        "overlay_scenes",
+        "inline_feedback_scenes",
+        "page_flow_edges",
+        "same_page_state_changes",
+        "writer_contract"
+      ],
+      "properties": {
+        "version": { "const": "3.1.4" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_trace": { "$ref": "#/$defs/rule_trace" },
+        "raw_counts": {
+          "type": "object",
+          "required": ["raw_state_count", "raw_scene_count", "raw_interaction_count", "visible_main_scene_count"],
+          "additionalProperties": true
+        },
+        "visibility_policy": {
+          "type": "object",
+          "required": ["one_state_one_visible_scene_forbidden", "hidden_targets_allowed", "visible_main_scene_must_be_less_than_raw_state_count"],
+          "additionalProperties": true,
+          "properties": {
+            "one_state_one_visible_scene_forbidden": { "const": true },
+            "hidden_targets_allowed": { "const": true },
+            "visible_main_scene_must_be_less_than_raw_state_count": { "const": true }
+          }
+        },
+        "visible_main_scenes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/playable_scene" } },
+        "hidden_target_scenes": { "type": "array", "items": { "$ref": "#/$defs/playable_scene" } },
+        "overlay_scenes": { "type": "array", "items": { "$ref": "#/$defs/playable_scene" } },
+        "inline_feedback_scenes": { "type": "array", "items": { "$ref": "#/$defs/playable_scene" } },
+        "page_flow_edges": { "type": "array", "items": { "$ref": "#/$defs/playable_edge" } },
+        "same_page_state_changes": { "type": "array", "items": { "$ref": "#/$defs/playable_edge" } },
+        "writer_contract": {
+          "type": "object",
+          "required": ["writer_input_format", "compact_writer_input_forbidden", "writer_must_consume_playable_model", "live_visual_gate_required"],
+          "additionalProperties": true,
+          "properties": {
+            "writer_input_format": { "const": "playable_prototype_writer_input_v3_1_4" },
+            "compact_writer_input_forbidden": { "const": true },
+            "writer_must_consume_playable_model": { "const": true },
+            "live_visual_gate_required": { "const": true }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "rule_trace": {
+      "type": "object",
+      "required": ["rule_ids"],
+      "additionalProperties": true,
+      "properties": {
+        "rule_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "playable_scene": {
+      "type": "object",
+      "required": [
+        "playable_scene_id",
+        "source_scene_id",
+        "frame_id",
+        "state_id",
+        "screen_id",
+        "visibility_class",
+        "target_node_role",
+        "source_refs",
+        "rule_ids"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "playable_scene_id": { "type": "string", "minLength": 1 },
+        "source_scene_id": { "type": "string", "pattern": "^PROTOTYPE-SCENE:" },
+        "frame_id": { "type": "string", "minLength": 1 },
+        "state_id": { "type": "string", "minLength": 1 },
+        "screen_id": { "type": "string", "minLength": 1 },
+        "visibility_class": {
+          "enum": ["visible_page", "same_page_variant", "system_overlay", "modal_overlay", "inline_feedback", "hidden_prototype_target"]
+        },
+        "target_node_role": {
+          "enum": ["visible_main_scene", "hidden_prototype_target", "overlay_target", "inline_feedback_target"]
+        },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    },
+    "playable_edge": {
+      "type": "object",
+      "required": ["interaction_id", "source_scene_id", "target_scene_id", "transition_kind", "source_refs", "rule_ids"],
+      "additionalProperties": true,
+      "properties": {
+        "interaction_id": { "type": "string", "minLength": 1 },
+        "source_scene_id": { "type": "string", "pattern": "^PROTOTYPE-SCENE:" },
+        "target_scene_id": { "type": "string", "pattern": "^PROTOTYPE-SCENE:" },
+        "transition_kind": { "type": "string", "minLength": 1 },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_ids": { "$ref": "#/$defs/source_refs" }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+schema:
+  id: model_contract_promotion_report.schema
+  version: 3.2.0
+  required_root: model_contract_promotion_report
+  required_fields:
+  - version
+  - mode
+  - run_id
+  - promotions
+  promotion_required_fields:
+  - contract_id
+  - reason_zh
+  - source_refs
+  - target_model_stage

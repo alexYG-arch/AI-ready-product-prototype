@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/figma_post_write_audit.schema.json",
+  "title": "Figma Post-Write Audit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["figma_post_write_audit"],
+  "properties": {
+    "figma_post_write_audit": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "version",
+        "mode",
+        "run_id",
+        "final_canvas_kind",
+        "source_refs",
+        "rule_trace",
+        "source_materialization_spec",
+        "figma_page_id",
+        "figma_page_name",
+        "actual_counts",
+        "reaction_audit",
+        "visual_prototype_audit",
+        "forbidden_canvas_audit",
+        "prototype_entry_audit"
+      ],
+      "properties": {
+        "version": { "const": "3.1.2" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "final_canvas_kind": { "const": "interactive_prototype" },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_trace": { "$ref": "#/$defs/rule_traced_object" },
+        "source_materialization_spec": {
+          "type": "object",
+          "required": ["path", "sha256"],
+          "additionalProperties": true
+        },
+        "figma_page_id": { "type": "string", "minLength": 1 },
+        "figma_page_name": { "type": "string", "minLength": 1 },
+        "actual_counts": {
+          "type": "object",
+          "required": [
+            "top_level_prototype_screens",
+            "state_frames",
+            "visible_component_nodes",
+            "system_handoff_surfaces"
+          ],
+          "additionalProperties": true
+        },
+        "reaction_audit": {
+          "type": "object",
+          "required": [
+            "navigation_or_overlay_reactions",
+            "primary_scroll_to_reactions"
+          ],
+          "additionalProperties": true
+        },
+        "visual_prototype_audit": {
+          "type": "object",
+          "required": [
+            "full_writer_input_used",
+            "compact_writer_input_used",
+            "real_hotspot_nodes",
+            "transparent_hotspot_fallback_nodes",
+            "frame_level_reaction_fallbacks",
+            "primitive_node_counts",
+            "media_picker_structure_count",
+            "keyboard_carrier_structure_count",
+            "result_card_structure_count",
+            "repeated_handoff_template_count",
+            "primitive_collapse_detected"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "full_writer_input_used": { "const": true },
+            "compact_writer_input_used": { "const": false },
+            "real_hotspot_nodes": { "type": "integer", "minimum": 0 },
+            "transparent_hotspot_fallback_nodes": { "type": "integer", "minimum": 0 },
+            "frame_level_reaction_fallbacks": { "type": "integer", "minimum": 0 },
+            "primitive_node_counts": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            },
+            "media_picker_structure_count": { "type": "integer", "minimum": 0 },
+            "keyboard_carrier_structure_count": { "type": "integer", "minimum": 0 },
+            "result_card_structure_count": { "type": "integer", "minimum": 0 },
+            "repeated_handoff_template_count": { "type": "integer", "minimum": 0 },
+            "primitive_collapse_detected": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "forbidden_canvas_audit": {
+          "type": "object",
+          "required": [
+            "review_board_nodes",
+            "interaction_index_nodes",
+            "status_card_only_nodes"
+          ],
+          "additionalProperties": true
+        },
+        "prototype_entry_audit": {
+          "type": "object",
+          "required": ["starting_points"],
+          "additionalProperties": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "rule_traced_object": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["rule_ids"],
+      "properties": {
+        "rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

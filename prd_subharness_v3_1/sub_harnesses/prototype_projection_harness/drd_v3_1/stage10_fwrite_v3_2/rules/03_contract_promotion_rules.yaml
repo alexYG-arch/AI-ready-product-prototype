@@ -1,0 +1,20 @@
+contract_promotion_rules:
+  version: 3.2.0
+  name_zh: 模型契约晋升规则
+  promotion_required_when_zh:
+  - 存在系统或宿主表面
+  - 存在 min/max/range/permission 约束
+  - 存在真实用户链路缺中间步骤
+  - 存在页面边界不清
+  - 存在页面内状态机
+  - 存在组件构成不明确
+  - 存在异步、失败恢复、权限、会员或高风险动作
+  contracts_to_generate:
+  - surface_ownership_contract
+  - user_journey_contract
+  - interaction_state_machine_contract
+  - component_blueprint_contract
+  blocks_if:
+  - required_contract_missing
+  - contract_has_no_source_refs
+  - promoted_contract_not_invoked_by_model_stage

@@ -1,0 +1,22 @@
+package_manifest:
+  package_id: prototype_harness_stage10_fwrite_optimization_v3_2
+  package_name_zh: 原型 Harness Stage10+ 与 Figma 写入优化包 v3.2
+  version: 3.2.0
+  compatible_with:
+  - prd_subharness_v3_1
+  - prototype_projection_harness_drd_v3_1
+  - prototype_projection_harness_2_1_rules
+  upgrade_scope_zh: 只调整 Stage10 及以后；Figma 写入层完全重构为 FWRITE；保留 v3.1 alias 兼容。
+  canonical_profile: DRD_TO_FIGMA_WRITE
+  does_not_change:
+  - PRD fact authority
+  - existing fact store ownership
+  - pre-Stage10 source authority
+  - reverse sync candidate-only boundary
+  primary_files:
+  - rules/17_complete_stage10_fwrite_rules.yaml
+  - rules/08_figma_write_readiness_gate.yaml
+  - rules/09_fwrite_pipeline_rules.yaml
+  - docs/STAGE10_FWRITE_OPTIMIZATION_CN.md
+  - codex/CODEX_STAGE10_FWRITE_UPGRADE_PROMPT.md
+  created_for_user_request_zh: 结合 Stage10+ 新 GEN 链路、FWRITE 写入重构与当前 v3.1 检查结论生成完整优化方案包。

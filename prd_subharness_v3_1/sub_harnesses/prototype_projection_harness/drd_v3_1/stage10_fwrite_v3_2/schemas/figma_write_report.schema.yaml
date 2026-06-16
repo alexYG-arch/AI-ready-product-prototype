@@ -1,0 +1,16 @@
+schema:
+  id: figma_write_report.schema
+  version: 3.2.0
+  required_root: figma_write_report
+  required_fields:
+  - version
+  - mode
+  - run_id
+  - status
+  - written_nodes
+  - source_refs
+  node_required_fields:
+  - node_ref
+  - semantic_id
+  - artifact_ref
+  - source_refs

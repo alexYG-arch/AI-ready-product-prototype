@@ -1,0 +1,10 @@
+gate_report:
+  gate_id: FIGMA-WRITE-READINESS-GATE
+  status: pass
+  checked_at: '2026-06-16T00:00:00Z'
+  inputs:
+  - final_materialization.yaml
+  - coverage_manifest.yaml
+  - figma_write_plan.yaml
+  findings: []
+  pass_action: enter_fwrite_pipeline

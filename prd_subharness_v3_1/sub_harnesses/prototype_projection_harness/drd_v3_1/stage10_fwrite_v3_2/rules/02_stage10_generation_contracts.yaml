@@ -1,0 +1,49 @@
+stage10_generation_contracts:
+  version: 3.2.0
+  name_zh: Stage10+ 生成契约
+  principles_zh:
+  - GEN stage 可以调用模型推理；FWRITE stage 禁止模型推理。
+  - GEN-SOURCE-SLICES 必须读取已冻结 source 或 PRD fact bundle，不得绕开前序权威边界。
+  - GEN-FINAL-MATERIALIZATION 必须消费四段模型输出，不得只消费确定性草稿。
+  contracts:
+  - stage_id: GEN-10
+    must_read:
+    - render_input.lock.yaml
+    - prd_fact_bundle or source_slice_index
+    must_write:
+    - source_slice_index.yaml
+    blocks_if:
+    - source_slice_has_no_source_ref
+    - whole_chapter_as_single_slice
+  - stage_id: GEN-11
+    must_write:
+    - deterministic_draft.yaml
+    blocks_if:
+    - draft_invents_user_flow
+    - draft_marks_gap_as_confirmed
+  - stage_id: GEN-12
+    must_write:
+    - carrier_handoff_draft.yaml
+    blocks_if:
+    - system_or_host_action_without_handoff_candidate
+  - stage_id: GEN-13
+    must_write:
+    - model_contract_promotion_report.yaml
+    blocks_if:
+    - complex_constraint_not_promoted
+    - system_handoff_not_promoted
+  - stage_id: GEN-18
+    must_write:
+    - final_materialization.yaml
+    - board_frame_packets.yaml
+    - logic_sidecar_cards.yaml
+    blocks_if:
+    - four_model_outputs_not_consumed
+    - materialization_conflict_unresolved
+  - stage_id: GEN-20
+    must_write:
+    - coverage_manifest.yaml
+    - coverage_gate_report.yaml
+    blocks_if:
+    - source_to_output_trace_missing
+    - coverage_failed

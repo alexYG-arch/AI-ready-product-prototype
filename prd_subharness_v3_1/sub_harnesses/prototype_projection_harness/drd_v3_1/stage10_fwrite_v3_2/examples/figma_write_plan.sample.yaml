@@ -1,0 +1,20 @@
+figma_write_plan:
+  version: 3.2.0
+  mode: DRD_TO_FIGMA_WRITE
+  run_id: RUN-DEMO
+  target_scope:
+    figma_file_key: <file>
+    page_name: Prototype DRD
+  write_units:
+  - unit_id: WU-FRAME-PICKER-SELECT-1
+    unit_type: board_frame
+    source_artifact: board_frame_packets.yaml#FR-PICKER-SELECT-1
+    target_figma_area: BOARD-IMAGE-UPLOAD
+    source_refs:
+    - PRD.md#7.1:ROW-UPLOAD-COUNT
+  - unit_id: WU-SIDECAR-MIN-COUNT
+    unit_type: logic_sidecar_card
+    source_artifact: logic_sidecar_cards.yaml#SC-MIN-COUNT
+    target_figma_area: right_sidecar_column
+    source_refs:
+    - PRD.md#7.1:ROW-UPLOAD-COUNT

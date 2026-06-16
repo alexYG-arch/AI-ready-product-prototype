@@ -1,0 +1,24 @@
+schema:
+  id: model_interaction_state_machine.schema
+  version: 3.2.0
+  required_root: model_interaction_state_machine
+  required_fields:
+  - version
+  - mode
+  - run_id
+  - source_refs
+  - states
+  - transitions
+  state_required_fields:
+  - state_id
+  - surface_ref
+  - state_name_zh
+  - source_refs
+  transition_required_fields:
+  - transition_id
+  - source_state
+  - trigger
+  - guard_or_no_guard_reason
+  - target_state_or_effect
+  - feedback_timing
+  - source_refs

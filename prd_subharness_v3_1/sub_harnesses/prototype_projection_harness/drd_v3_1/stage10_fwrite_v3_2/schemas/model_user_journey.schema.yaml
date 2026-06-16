@@ -1,0 +1,26 @@
+schema:
+  id: model_user_journey.schema
+  version: 3.2.0
+  required_root: model_user_journey
+  required_fields:
+  - version
+  - mode
+  - run_id
+  - source_refs
+  - chains
+  chain_required_fields:
+  - chain_id
+  - chain_name_zh
+  - steps
+  step_required_fields:
+  - step_id
+  - actor
+  - surface_ref
+  - action_zh
+  - object_zh
+  - result_zh
+  - source_refs
+  path_required_fields:
+  - from_step
+  - action_zh
+  - result_zh

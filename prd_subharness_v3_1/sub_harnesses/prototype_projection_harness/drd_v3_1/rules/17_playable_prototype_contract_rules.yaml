@@ -1,0 +1,52 @@
+prototype_harness_playable_prototype_contract_rules:
+  id: PLAYABLE_PROTOTYPE_CONTRACT_RULES_V3_1_4
+  id_zh: 原型 Harness 可播放原型总契约规则 v3.1.4
+  version: "3.1.4"
+  mode: DRD_MODE
+  purpose_zh: >
+    建立 Figma writer 的唯一施工真相源，防止 payload、scene_graph、canvas_view_model
+    和 writer 各自解释页面，导致最终画布回退为模块板、状态矩阵或说明板。
+
+  rules:
+    - rule_id: PLAYABLE_DED_001
+      name_zh: 必须生成唯一 playable prototype model
+      rule_zh: >
+        最终 Figma writer 不得直接消费 payload、scene_graph 或 review/canvas MD。
+        writer 前必须生成 playable_prototype_model.yaml，并把真实页面、同页状态、
+        overlay、系统交接面和隐藏 prototype target 分类清楚。
+      blocks_when_zh: 缺 playable_prototype_model.yaml，或 writer input 没有引用并嵌入该模型。
+
+    - rule_id: PLAYABLE_DED_002
+      name_zh: raw state 不得全部成为 visible top-level scene
+      rule_zh: >
+        payload / scene_graph 中的 raw state 可以作为 prototype target，但不得全部直接
+        变成最终画布可见顶层 scene。可见主场景数必须小于 raw state 数。
+      blocks_when_zh: visible_main_scene_count 大于等于 raw_state_count，或 final page 出现状态矩阵。
+
+    - rule_id: PLAYABLE_DED_003
+      name_zh: 同页状态必须归入页面内状态或隐藏 target
+      rule_zh: >
+        same_surface_state_change、inline_feedback 等同页状态变化必须作为同一页面的
+        variant、inline feedback 或 hidden prototype target 表达，不能铺成跨页面卡片。
+      blocks_when_zh: 同页状态被渲染成 visible top-level scene，或被画进页面流转图。
+
+    - rule_id: PLAYABLE_DED_004
+      name_zh: 系统交接必须作为 overlay/handoff 链路
+      rule_zh: >
+        系统选择器、SDK、授权、宿主能力和外部能力调用必须挂在对应页面链路下，
+        表达为 system_overlay / modal_overlay / handoff target，而不是普通独立业务页面。
+      blocks_when_zh: 系统交接面被提升成普通 visible page，或缺进入、操作、取消、失败、返回路径。
+
+    - rule_id: PLAYABLE_DED_005
+      name_zh: writer 只能消费 playable writer input
+      rule_zh: >
+        Figma writer runtime 只能消费 figma-playable-writer-input.full.json，且该文件必须来自
+        playable_prototype_model.yaml。禁止 compact scene array、compact tuple input 和直接扫 payload。
+      blocks_when_zh: writer input 格式不是 playable_prototype_writer_input_v3_1_4，或 runtime 中出现旧 compact payload 入口。
+
+    - rule_id: PLAYABLE_DED_006
+      name_zh: live gate 必须验证人类可用性
+      rule_zh: >
+        写入后必须基于 Figma live readback、几何审计、视觉语义审计和模型视觉理解判断
+        是否为人能看懂、能点击、能体验的原型。只检查文字 token 或节点数量不得通过。
+      blocks_when_zh: 缺 live visual artifacts，或 live gate 没有检测状态矩阵、过密、泛化文本、缺说明和承载面对齐。

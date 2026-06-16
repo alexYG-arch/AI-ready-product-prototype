@@ -1,0 +1,26 @@
+final_materialization_rules:
+  version: 3.2.0
+  name_zh: 最终物化规则
+  input_required:
+  - model_surface_ownership.yaml
+  - model_user_journey.yaml
+  - model_interaction_state_machine.yaml
+  - model_component_blueprint.yaml
+  - deterministic_draft.yaml
+  - carrier_handoff_draft.yaml
+  - source_slice_index.yaml
+  output_required:
+  - final_materialization.yaml
+  - prototype.validation.runtime.yaml
+  - narrative_materialization_packets
+  - board_frame_packets.yaml
+  - interaction_hotspots.yaml
+  - logic_sidecar_cards.yaml
+  - annotation_stubs.yaml
+  - anchor_badges.yaml
+  consistency_zh: surface ownership 决定画布分组；user journey 决定链路顺序；state machine 决定状态与热点；component
+    blueprint 决定元素构成。
+  blocks_if:
+  - surface_journey_state_component_conflict
+  - component_blueprint_not_mapped_to_frame
+  - state_machine_transition_not_materialized

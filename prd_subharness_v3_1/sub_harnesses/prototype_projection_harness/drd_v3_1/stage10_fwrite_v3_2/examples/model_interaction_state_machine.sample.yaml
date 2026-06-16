@@ -1,0 +1,26 @@
+model_interaction_state_machine:
+  version: 3.2.0
+  mode: DRD_TO_FIGMA_WRITE
+  run_id: RUN-DEMO
+  source_refs:
+  - PRD.md#7.1:ROW-UPLOAD-COUNT
+  states:
+  - state_id: PICKER-SELECT-1
+    surface_ref: SURFACE-PHOTO-PICKER
+    state_name_zh: 选择 1 张，确认按钮置灰
+    source_refs:
+    - PRD.md#7.1:ROW-UPLOAD-COUNT
+  - state_id: PICKER-SELECT-3
+    surface_ref: SURFACE-PHOTO-PICKER
+    state_name_zh: 选择 3 张，确认可用
+    source_refs:
+    - PRD.md#7.1:ROW-UPLOAD-COUNT
+  transitions:
+  - transition_id: TR-SELECT-1
+    source_state: PICKER-EMPTY
+    trigger: ON_SELECT_ASSET
+    guard_or_no_guard_reason: selected_count == 1
+    target_state_or_effect: PICKER-SELECT-1 + confirm_disabled + strong_hint
+    feedback_timing: before_confirm
+    source_refs:
+    - PRD.md#7.1:ROW-UPLOAD-COUNT

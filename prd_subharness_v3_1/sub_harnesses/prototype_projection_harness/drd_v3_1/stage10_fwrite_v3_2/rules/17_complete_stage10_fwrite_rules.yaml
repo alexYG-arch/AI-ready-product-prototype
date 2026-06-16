@@ -1,0 +1,23 @@
+complete_stage10_fwrite_rules:
+  version: 3.2.0
+  name_zh: Stage10+ 与 FWRITE 完整规则索引
+  includes:
+  - 00_version_compatibility_policy.yaml
+  - 01_stage10_pipeline_plan.yaml
+  - 02_stage10_generation_contracts.yaml
+  - 03_contract_promotion_rules.yaml
+  - 04_model_stage_contracts.yaml
+  - 05_final_materialization_rules.yaml
+  - 06_review_non_blocking_policy.yaml
+  - 07_coverage_manifest_gate_rules.yaml
+  - 08_figma_write_readiness_gate.yaml
+  - 09_fwrite_pipeline_rules.yaml
+  - 10_user_journey_gate.yaml
+  - 11_interaction_state_machine_gate.yaml
+  - 12_component_blueprint_gate.yaml
+  - 13_four_model_consistency_gate.yaml
+  - 14_figma_live_gate_rules.yaml
+  - 15_profile_compatibility_rules.yaml
+  - 16_name_alias_compatibility_rules.yaml
+  canonical_flow_zh: GEN-10 至 GEN-20 生成可写入数据；FIGMA-WRITE-READINESS-GATE 通过后进入 FWRITE-01
+    至 FWRITE-07；最终 review Figma 生成物。

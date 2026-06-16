@@ -1,0 +1,17 @@
+profile_compatibility_rules:
+  version: 3.2.0
+  name_zh: Profile 兼容规则
+  profiles:
+  - profile_id: DRD_TEXT_ONLY
+    figma_write_enabled: false
+    write_real_figma_reactions: false
+    description_zh: 仅文本/规则审计模式。
+  - profile_id: DRD_TO_FIGMA_WRITE
+    figma_write_enabled: true
+    write_real_figma_reactions: false
+    description_zh: 默认推荐：写 Figma DRD 画布，但不写真实 reactions。
+  - profile_id: PLAYABLE_PROTOTYPE_WRITE
+    figma_write_enabled: true
+    write_real_figma_reactions: true
+    description_zh: 可播放原型模式，需额外通过 reaction gate。
+  deprecates_zh: 旧 renderer_materialization_deferred 不能与 DRD_TO_FIGMA_WRITE 同时为 true。

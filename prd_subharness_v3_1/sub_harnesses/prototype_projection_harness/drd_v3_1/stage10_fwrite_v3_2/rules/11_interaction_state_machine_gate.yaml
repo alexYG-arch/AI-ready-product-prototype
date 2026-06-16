@@ -1,0 +1,19 @@
+interaction_state_machine_gate:
+  version: 3.2.0
+  gate_id: INTERACTION-STATE-MACHINE-GATE
+  gate_id_zh: 交互状态机闸门
+  minimum_transition_fields:
+  - transition_id
+  - source_state
+  - trigger
+  - guard_or_no_guard_reason
+  - target_state_or_effect
+  - feedback_timing
+  - source_refs
+  blocks_if:
+  - transition_missing_trigger_guard_effect
+  - state_missing_surface
+  - same_surface_state_rendered_as_visible_page
+  - feedback_timing_missing
+  - disabled_control_state_missing
+  - recovery_path_missing_without_reason

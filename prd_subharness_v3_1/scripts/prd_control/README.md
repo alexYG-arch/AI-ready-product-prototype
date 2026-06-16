@@ -27,8 +27,14 @@ python scripts/prd_control/harnessctl.py validate-prd-template
 python scripts/prd_control/harnessctl.py check-prd-sync
 python scripts/prd_control/harnessctl.py search REQ-AUTH-001
 python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 generate-prototype-artifacts --source inputs/PRD.md --codex-inference required
+python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 validate-four-model-consistency
+python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 validate-semantic-prototype-payload --input runs/RUN-001/io/output/semantic_prototype_payload.yaml
+python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 build-figma-semantic-writer-input
+python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 validate-figma-semantic-writer-input --input runs/RUN-001/io/output/figma-semantic-writer-input.full.json
+python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 build-figma-semantic-writer-runtime
 python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 validate-render-readiness --runtime runs/RUN-001/io/output/prototype.runtime.candidate.json --payload runs/RUN-001/io/output/prototype-render-payload.yaml
 python scripts/prd_control/prototypectl.py validate-generation-lifecycle-rules
+python scripts/prd_control/prototypectl.py validate-stage10-fwrite-rules
 python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 validate-generation-job-queue --input runs/RUN-001/io/state/generation_job_queue.yaml
 python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 validate-generation-trace --input runs/RUN-001/io/state/generation_trace.yaml
 python scripts/prd_control/prototypectl.py --instance-root ../prd_instances/my-product-prd --run-id RUN-001 validate-model-execution-contract --input runs/RUN-001/io/state/model_execution_contract.yaml
@@ -56,6 +62,8 @@ Figma 只用于最终原型画布写入。任何 gate 结果、validator 报告�
 Prototype-only 跑原型时使用 `prototypectl.py generate-prototype-artifacts --source inputs/PRD.md`。v3.1.1 会先把 Markdown 标题、流程、列表和表格逐行拆成可追溯 `source_atoms`，再生成 obligations、design kernel、composition、hotspots、sidecar、runtime 和 payload。该命令不触发 PRD harness，不生成 `source_extraction` / `human_review`，只在 run root 下写 `io/output`、`io/state` 和 `prototype_projection_reports`，随后用 generated runtime + payload + `source_coverage_report` 跑 `validate-render-readiness`。
 
 `generate-prototype-artifacts --codex-inference required` 会调用 Codex CLI 做只读模型审查，并写入 `runs/<run-id>/io/state/codex_inference_review.yaml`；`off` 可用于结构化回归，`optional` 在 Codex CLI 不可用时不阻断。无论是否调用模型，都会生成 `runs/<run-id>/prd_orchestrator/prototype_projection_reports/prototype_blueprint_review.md` 作为写入 Figma 前的人工 review 蓝图，包含页面数量、页面归属、组件构成、交互链路、分支依据和模型审查意见。
+
+v3.2 最终写入 Figma 前必须先生成 `semantic_prototype_payload.yaml`，再运行 `build-figma-semantic-writer-input` 和 `build-figma-semantic-writer-runtime`。真实写入默认 profile 是 `PLAYABLE_PROTOTYPE_WRITE`，writer 只能消费 `figma-semantic-writer-input.full.json`；禁止继续消费 compact payload、DRD board packets、review MD、canvas view model 或只含 `component_id / role / copy` 的压扁数组。`prototype_ui_blueprint.yaml` 和 `playable_prototype_model.yaml` 仍是结构约束源，但不是 writer 的唯一施工输入。最终 `validate-figma-write-readiness` 必须同时看到 semantic payload、semantic writer input、四段模型输出、playable model、coverage、live gate plan 后才会 PASS。写入后还必须运行 live readback、geometry、semantic、model visual comprehension 四类审计，并用 `gate-figma-live-visual-audit` 做最终 loop gate。
 
 生成链路拆成 deterministic generator 和 model generator。`generation_job_queue.yaml` 是机器可读队列，每个 job 都必须有 `completion_criteria`；deterministic jobs 生成 source atoms、DRD artifacts、runtime、payload、coverage 和 manifest，model job 只做 blueprint review。模型调用由 `model_execution_contract.yaml` 约束为只读审查，并由 `model_invocation_trace.yaml` 记录 prompt hash、只读命令、耗时、exit code、raw output path 和 completion criteria。
 

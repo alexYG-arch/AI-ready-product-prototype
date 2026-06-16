@@ -1,0 +1,21 @@
+coverage_manifest:
+  version: 3.2.0
+  mode: DRD_TO_FIGMA_WRITE
+  run_id: RUN-DEMO
+  source_refs:
+  - PRD.md#7.1:ROW-UPLOAD-COUNT
+  coverage_items:
+  - coverage_id: COV-001
+    source_ref: PRD.md#7.1:ROW-UPLOAD-COUNT
+    expected_output: PICKER-SELECT-1 frame + disabled confirm + sidecar
+    covered: true
+    evidence_refs:
+    - model_interaction_state_machine.yaml#PICKER-SELECT-1
+    - model_component_blueprint.yaml#CMP-PICKER-CONFIRM
+  gate_results:
+  - gate_id: USER-JOURNEY-GATE
+    status: pass
+  - gate_id: INTERACTION-STATE-MACHINE-GATE
+    status: pass
+  - gate_id: COMPONENT-BLUEPRINT-GATE
+    status: pass

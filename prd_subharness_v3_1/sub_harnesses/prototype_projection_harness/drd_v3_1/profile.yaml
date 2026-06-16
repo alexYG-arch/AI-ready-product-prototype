@@ -1,12 +1,15 @@
 drd_v3_1_profile:
-  version: "3.1"
+  version: "3.2"
   mode: DRD_MODE
-  mode_zh: 设计评审文档模式
+  mode_zh: 可播放原型写入模式
   authority_role: projection_validation_rules
   rules_entrypoint: rules/12_complete_deductive_rules.yaml
   package_manifest: package_manifest.yaml
+  default_figma_write_profile: PLAYABLE_PROTOTYPE_WRITE
+  archived_compatibility_profiles:
+    - DRD_TO_FIGMA_WRITE
   default_behavior:
-    write_real_figma_reactions: false
+    write_real_figma_reactions: true
     draw_full_pen_lines: false
     use_annotation_stub: true
     use_logic_sidecar_cards: true
@@ -16,22 +19,23 @@ drd_v3_1_profile:
     adapter_ref: ../adapters/design_systems/sds_monochrome_adapter.yaml
     source_snapshot_ref: ../adapters/design_systems/figma-sds.SOURCE.md
     required_for_component_binding_validation: true
-    renderer_materialization_deferred: true
+    renderer_materialization_deferred: false
   first_phase_scope:
     - rules_archive
     - executable_schemas
     - sample_artifacts
     - read_only_cli_validators
+    - semantic_payload_writer
   explicitly_deferred:
     - role_to_patch_artifact_generation
-    - figma_canvas_rendering
-    - figma_reaction_writing
     - prd_fact_store_migration
   schema_entrypoints:
     screen_role_obligations: schemas/screen_role_obligations.schema.json
     design_kernel: schemas/design_kernel.schema.json
     logic_sidecar_card_map: schemas/logic_sidecar_card_map.schema.json
     local_materialization_patch: schemas/local_materialization_patch.schema.json
+    semantic_prototype_payload: schemas/semantic_prototype_payload.schema.json
+    figma_semantic_writer_input: schemas/figma_semantic_writer_input.schema.json
   sample_artifacts:
     screen_role_obligations: examples/screen_role_obligations.sample.yaml
     design_kernel: examples/design_kernel.sample.yaml

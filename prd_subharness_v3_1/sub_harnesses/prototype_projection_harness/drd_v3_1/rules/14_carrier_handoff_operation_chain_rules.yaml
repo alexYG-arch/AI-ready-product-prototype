@@ -22,16 +22,27 @@ prototype_harness_carrier_handoff_operation_chain_rules:
       blocks_when_zh: 非 app_page 承载面被标记 standalone_page_allowed=true。
 
     - rule_id: HANDOFF_DED_001
-      name_zh: 外部能力触发系统交接面
+      name_zh: 可见外部能力触发系统交接面
       rule_zh: >
-        当动作依赖媒体选择、文件选择、联系人、定位、授权、支付、登录、分享、剪贴板等外部能力时，
-        必须生成 system_handoff_map 条目，并关联 interaction、capability 和返回状态。
-      blocks_when_zh: interaction 标记 requires_system_handoff=true 但没有 handoff 或 capability_ids。
+        只有当前交互的触发动作明确要求进入媒体选择、文件选择、联系人、定位、授权、支付、
+        登录、分享等可见外部承载面时，才生成 system_handoff_map 条目，并关联 interaction、
+        capability 和返回状态。剪贴板写入等后台系统服务只进入 capability_assessment 和
+        user_operation_chain，不得默认升级成可见系统交接面。失败、成功、分析中、生成中、
+        结果展示、恢复重试等结果态不得反向生成新的 handoff。
+      blocks_when_zh: >
+        interaction 标记 requires_system_handoff=true 但没有 handoff_capability_ids；
+        或 capability_detection_scope 不是 direct_external_action；
+        或结果态/展示入口态被标记为系统交接。
 
     - rule_id: HANDOFF_DED_002
       name_zh: 系统交接必须含完整路径
-      rule_zh: 系统交接必须包含进入、系统操作、校验或取消、返回宿主承载面，同时说明取消路径和失败路径。
-      blocks_when_zh: handoff 缺 enter_handoff_surface、perform_system_operation、validate_or_cancel、return_to_host_surface 任一步。
+      rule_zh: >
+        系统交接必须包含进入、系统操作、校验或取消、返回宿主承载面，同时说明取消路径和失败路径。
+        多条同类型交接可以在 review view model 中聚合为一类，但 system_handoff_map 中每条 handoff
+        不得只是完全相同的模板复制，必须保留触发、能力或返回状态差异。
+      blocks_when_zh: >
+        handoff 缺 enter_handoff_surface、perform_system_operation、validate_or_cancel、return_to_host_surface 任一步；
+        或 system_handoff_map 出现重复的无差异模板。
 
     - rule_id: OPS_DED_001
       name_zh: 禁止操作结果二段式

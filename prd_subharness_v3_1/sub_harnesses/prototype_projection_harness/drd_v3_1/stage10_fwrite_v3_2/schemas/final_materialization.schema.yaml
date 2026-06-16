@@ -1,0 +1,16 @@
+schema:
+  id: final_materialization.schema
+  version: 3.2.0
+  required_root: final_materialization
+  required_fields:
+  - version
+  - mode
+  - run_id
+  - source_refs
+  - consumed_model_outputs
+  - materialized_artifacts
+  artifact_required_fields:
+  - artifact_type
+  - path
+  - source_refs
+  - coverage_status
