@@ -5,13 +5,13 @@ pyruntime_rule_registry:
   handlers:
     - handler_id: build_surface_mode_contract_doc
       command: build-surface-mode-contract
-      rule_ids: [MODE_DED_001, MODE_DED_002, MODE_DED_003, RUNTIME_RULE_DED_001, GENERALITY_DED_003]
+      rule_ids: [MODE_DED_001, MODE_DED_002, MODE_DED_003, RUNTIME_RULE_DED_001, GENERALITY_DED_001, GENERALITY_DED_003]
       inputs: [prototype_source_brief, interaction_carrier_map, system_handoff_map, user_operation_chain, model_surface_ownership, model_interaction_state_machine]
       outputs: [surface_mode_contract]
       failure_classes: [FC-SURFACE-MODE-MISSING, FC-SURFACE-MODE-MUTUAL-EXCLUSION, FC-PYRUNTIME-HIDDEN-RULE]
     - handler_id: build_layout_invariant_contract_doc
       command: build-layout-invariant-contract
-      rule_ids: [LAYOUT_DED_001, LAYOUT_DED_002, LAYOUT_DED_003, LAYOUT_DED_004, RUNTIME_RULE_DED_001]
+      rule_ids: [LAYOUT_DED_001, LAYOUT_DED_002, LAYOUT_DED_003, LAYOUT_DED_004, MODE_DED_001, RUNTIME_RULE_DED_001]
       inputs: [surface_mode_contract, interaction_carrier_map, system_handoff_map]
       outputs: [layout_invariant_contract]
       failure_classes: [FC-LAYOUT-INVARIANT-BROKEN, FC-PYRUNTIME-HIDDEN-RULE]

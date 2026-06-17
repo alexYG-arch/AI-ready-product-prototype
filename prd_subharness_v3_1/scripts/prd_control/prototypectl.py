@@ -5421,6 +5421,20 @@ def normalize_unknown_list(value) -> list:
     return [value]
 
 
+def model_review_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, dict):
+        inner = value.get("value")
+        if isinstance(inner, bool):
+            return inner
+        if isinstance(inner, str):
+            return inner.strip().lower() in {"true", "pass", "yes", "是"}
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "pass", "yes", "是"}
+    return False
+
+
 def ensure_model_review_fields(root: dict, *, parsed_root: dict | None = None, status: str = "pass") -> dict:
     parsed_root = parsed_root or {}
     has_any_new_field = any(field in parsed_root or field in root for field in MODEL_STAGE_REVIEW_FIELDS)
@@ -5462,7 +5476,7 @@ def ensure_model_review_fields(root: dict, *, parsed_root: dict | None = None, s
         root["blocking_review_required"] = True
     if raw_status == "non_blocking_review_note" and not root.get("non_blocking_review_note"):
         root["non_blocking_review_note"] = "模型声明存在非阻断备注，但逻辑一致且可渲染。"
-    if root.get("blocking_review_required") or root.get("logic_consistent") is not True or root.get("prototype_renderable") is not True or root.get("blocking_unknowns"):
+    if root.get("blocking_review_required") or model_review_bool(root.get("logic_consistent")) is not True or model_review_bool(root.get("prototype_renderable")) is not True or root.get("blocking_unknowns"):
         root["status"] = "blocked"
     elif root.get("status") in {"review_required", "non_blocking_review_note"}:
         root["status"] = "pass"
@@ -5480,9 +5494,9 @@ def model_stage_blocking_errors(root: dict, label: str = "model_stage") -> list[
         errors.append(f"{label}: missing v3.2.1 model review fields: {', '.join(missing)}")
     if root.get("status") == "review_required":
         errors.append(f"{label}: legacy review_required is not allowed; split into blocking_review_required or non_blocking_review_note")
-    if root.get("logic_consistent") is not True:
+    if model_review_bool(root.get("logic_consistent")) is not True:
         errors.append(f"{label}: logic_consistent must be true")
-    if root.get("prototype_renderable") is not True:
+    if model_review_bool(root.get("prototype_renderable")) is not True:
         errors.append(f"{label}: prototype_renderable must be true")
     blockers = normalize_unknown_list(root.get("blocking_unknowns"))
     if blockers:
@@ -5871,6 +5885,8 @@ def output_contract_for_stage(stage: dict, contract_promotion: dict | None = Non
             "required_root_fields": review_fields + ["component_groups", "component_intents", "generation_findings"],
             "component_group_item": ["screen_id", "group_name_zh", "element_type", "component_ids", "description_zh", "source_refs"]
             + (["carrier_type", "render_region_zh"] if promoted else []),
+            "component_intent_item": ["intent_name_zh", "component_ids", "element_type", "render_region_zh", "source_refs"]
+            + (["carrier_type"] if promoted else []),
         },
     }
     return contracts[stage["key"]]
@@ -5920,6 +5936,44 @@ def normalize_status(value: str, *, model_called: bool, exit_code: int | None, m
 
 def interaction_target_screen(interaction: dict, state_screen_by_id: dict[str, str]) -> str:
     return interaction.get("target_screen_id") or state_screen_by_id.get(interaction.get("target_state_id"), "")
+
+
+def source_ref_overlap_score(left: list | None, right: list | None) -> int:
+    left_set = {str(item) for item in (left or []) if str(item or "").strip()}
+    right_set = {str(item) for item in (right or []) if str(item or "").strip()}
+    return len(left_set & right_set)
+
+
+def normalize_component_blueprint_links(root: dict) -> None:
+    groups = [item for item in root.get("component_groups", []) or [] if isinstance(item, dict)]
+    intents = [item for item in root.get("component_intents", []) or [] if isinstance(item, dict)]
+    if not groups or not intents:
+        return
+    for intent in intents:
+        component_ids = [str(item).strip() for item in intent.get("component_ids", []) or [] if str(item).strip()]
+        has_region = bool(intent.get("primitive_path") or intent.get("render_region_zh") or intent.get("element_type"))
+        if component_ids and has_region:
+            continue
+        intent_refs = intent.get("source_refs", []) or []
+        candidates = []
+        for group in groups:
+            score = source_ref_overlap_score(intent_refs, group.get("source_refs", []))
+            if intent.get("screen_id") and group.get("screen_id") == intent.get("screen_id"):
+                score += 1
+            if score > 0:
+                candidates.append((score, len(group.get("component_ids", []) or []), group))
+        if not candidates:
+            continue
+        _, _, group = sorted(candidates, key=lambda item: (-item[0], -item[1]))[0]
+        if not component_ids and group.get("component_ids"):
+            intent["component_ids"] = group.get("component_ids")
+        for field in ["screen_id", "carrier_type", "render_region_zh", "element_type"]:
+            if not intent.get(field) and group.get(field):
+                intent[field] = group.get(field)
+        intent.setdefault("normalization_basis_zh", "按 source_refs 与 component_group 的重合关系继承组件落点。")
+        intent["normalization_rule_ids"] = normalize_rule_ids(
+            intent.get("normalization_rule_ids", []) + ["STAGE10_DED_003", "RUNTIME_RULE_DED_001", "GENERALITY_DED_001"]
+        )
 
 
 def deterministic_model_artifact_payload(stage: dict, brief: dict, runtime: dict, payload: dict) -> dict:
@@ -6101,6 +6155,8 @@ def normalize_model_stage_artifact(
     if root.get("stage_role") != stage["key"]:
         root["stage_role_warning_zh"] = f"模型输出未声明 stage_role={stage['key']}，已按 {stage['key']} 归档。"
         root["stage_role"] = stage["key"]
+    if stage["key"] == "component_blueprint":
+        normalize_component_blueprint_links(root)
     ensure_model_review_fields(root, parsed_root=parsed_root, status=status)
     return {root_key: root}
 
@@ -6209,7 +6265,9 @@ def run_model_stage(
         "model_called": model_called,
         "status": status,
         "logic_consistent": artifact_root.get("logic_consistent"),
+        "logic_consistent_passed": model_review_bool(artifact_root.get("logic_consistent")),
         "prototype_renderable": artifact_root.get("prototype_renderable"),
+        "prototype_renderable_passed": model_review_bool(artifact_root.get("prototype_renderable")),
         "blocking_unknowns": artifact_root.get("blocking_unknowns", []),
         "non_blocking_unknowns": artifact_root.get("non_blocking_unknowns", []),
         "blocking_review_required": artifact_root.get("blocking_review_required", False),
@@ -15820,8 +15878,8 @@ def build_prototype_writer_brief_doc(
         for handoff in handoff_root_items(handoff_doc)
     ]
     model_status = {
-        "all_logic_consistent": all(root.get("logic_consistent") is True for root in model_roots.values()),
-        "all_prototype_renderable": all(root.get("prototype_renderable") is True for root in model_roots.values()),
+        "all_logic_consistent": all(model_review_bool(root.get("logic_consistent")) is True for root in model_roots.values()),
+        "all_prototype_renderable": all(model_review_bool(root.get("prototype_renderable")) is True for root in model_roots.values()),
         "blocking_unknown_count": sum(len(normalize_unknown_list(root.get("blocking_unknowns"))) for root in model_roots.values()),
         "blocking_findings": [
             error
@@ -17003,8 +17061,8 @@ def build_prototype_playback_contract_doc(
         ),
     )
     model_status = {
-        "all_logic_consistent": all(root.get("logic_consistent") is True for root in model_roots.values()),
-        "all_prototype_renderable": all(root.get("prototype_renderable") is True for root in model_roots.values()),
+        "all_logic_consistent": all(model_review_bool(root.get("logic_consistent")) is True for root in model_roots.values()),
+        "all_prototype_renderable": all(model_review_bool(root.get("prototype_renderable")) is True for root in model_roots.values()),
         "blocking_unknown_count": sum(len(normalize_unknown_list(root.get("blocking_unknowns"))) for root in model_roots.values()),
     }
     return {
@@ -17190,6 +17248,9 @@ def build_prototype_playback_contract(args):
         "model_journey_path": resolve_path(args.model_user_journey, RUN_ROOT / "io" / "state" / "model_user_journey.yaml"),
         "model_state_machine_path": resolve_path(args.model_interaction_state_machine, RUN_ROOT / "io" / "state" / "model_interaction_state_machine.yaml"),
         "model_component_path": resolve_path(args.model_component_blueprint, RUN_ROOT / "io" / "state" / "model_component_blueprint.yaml"),
+        "surface_mode_path": resolve_path(args.surface_mode_contract, RUN_ROOT / "io" / "output" / "surface_mode_contract.yaml"),
+        "layout_invariant_path": resolve_path(args.layout_invariant_contract, RUN_ROOT / "io" / "output" / "layout_invariant_contract.yaml"),
+        "runtime_rule_trace_path": resolve_path(args.runtime_rule_execution_trace, RUN_ROOT / "io" / "state" / "runtime_rule_execution_trace.yaml"),
     }
     missing = [f"{label}: {path}" for label, path in paths.items() if not path.exists()]
     if missing:
@@ -17367,45 +17428,38 @@ def slim_playback_contract_for_runtime(contract_doc: dict) -> dict:
 
 
 def build_figma_playback_writer_runtime_js(contract_doc: dict) -> str:
-    payload_json = json.dumps(slim_playback_contract_for_runtime(contract_doc), ensure_ascii=False, separators=(",", ":"))
-    template = r"""// Generated by prototype harness v3.2.2. Do not hand-edit inside the run.
-// Playback writer consumes prototype_playback_contract.yaml only.
-const PROTOTYPE_PLAYBACK_CONTRACT=__CONTRACT__;
+    root = contract_doc.get("prototype_playback_contract", {}) if isinstance(contract_doc, dict) else {}
+    contract_ref = {
+        "run_id": root.get("run_id") or RUN_ID,
+        "contract_path": "io/output/prototype_playback_contract.yaml",
+        "step_manifest_path": "io/output/figma-writer-runtime.manifest.yaml",
+        "contract_sha256": f"sha256:{sha256_text(json.dumps(root, ensure_ascii=False, sort_keys=True))}",
+        "writer_execution_mode": "split_runtime_steps",
+    }
+    ref_json = json.dumps(contract_ref, ensure_ascii=False, separators=(",", ":"))
+    containers_json = json.dumps(WRITER_BRIEF_REQUIRED_CONTAINERS, ensure_ascii=False, separators=(",", ":"))
+    template = r"""// Generated by prototype harness v3.2.3. Do not hand-edit inside the run.
+// Data-free playback writer handoff. Execute io/output/figma-writer-steps/*.js from figma-writer-runtime.manifest.yaml.
+const PROTOTYPE_PLAYBACK_CONTRACT_REF=__CONTRACT_REF__;
+const REQUIRED_PLAYBACK_CONTAINERS=__REQUIRED_CONTAINERS__;
 const NS="prototype_harness",B={r:0,g:0,b:0},D={r:.16,g:.16,b:.16},L={r:.94,g:.94,b:.94},W={r:1,g:1,b:1};
-const createdNodeIds=[],mutatedNodeIds=[],reactionErrors=[],fallbackHotspots=[],pageFrameById={},targetFrameById={},controlNodeById={};
+const createdNodeIds=[],mutatedNodeIds=[],reactionErrors=[],fallbackHotspots=[];
 function solid(c,o=1){return[{type:"SOLID",color:c,opacity:o}]}
 function keep(n){createdNodeIds.push(n.id);return n}
 function mark(n,k,v){if(n.setSharedPluginData)n.setSharedPluginData(NS,k,String(v??""))}
 function clean(t,f=""){return String(t||f||"").replace(/\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|TARGET|OVERLAY|SRC|ALIGN)-[A-Z0-9_-]+\b/g,"").replace(/\s+/g," ").trim()||f||"继续"}
 function fr(name,w,h,o={}){const n=keep(figma.createFrame());n.name=name;n.resize(w,h);n.fills=solid(o.fill||W,o.opacity??1);if(o.stroke!==false){n.strokes=solid(o.strokeColor||B);n.strokeWeight=o.strokeWeight||1}n.cornerRadius=o.radius||0;if(o.layout){n.layoutMode=o.layout;n.primaryAxisSizingMode=o.primaryAuto===false?"FIXED":"AUTO";n.counterAxisSizingMode="FIXED";n.itemSpacing=o.gap??8;n.paddingLeft=n.paddingRight=n.paddingTop=n.paddingBottom=o.padding??8}return n}
-function tx(t,s=12,c=B,name="text"){const n=keep(figma.createText());n.name=name;n.fontName={family:"Inter",style:"Regular"};n.characters=clean(t);n.fontSize=s;n.lineHeight={unit:"AUTO"};n.fills=solid(c);n.textAutoResize="WIDTH_AND_HEIGHT";return n}
-function at(parent,t,s=12,c=B,name="text"){const n=tx(t,s,c,name);parent.appendChild(n);n.textAutoResize="HEIGHT";n.layoutSizingHorizontal="FILL";return n}
-function row(parent,name,h=34){const n=fr(name,344,h,{fill:W,stroke:false,layout:"HORIZONTAL",gap:7,padding:0});parent.appendChild(n);n.layoutSizingHorizontal="FILL";return n}
-function pill(parent,label,dark=false,role="control"){const labelText=clean(label);const isKey=role==="key";const w=isKey?26:Math.max(58,Math.min(132,labelText.length*9+24));const h=isKey?26:34;const n=fr(`${role}:${labelText}`,w,h,{fill:dark?D:W,radius:isKey?7:9,layout:"VERTICAL",padding:isKey?4:8});parent.appendChild(n);if(parent.layoutMode==="HORIZONTAL"&&!isKey)n.layoutSizingHorizontal="FILL";at(n,labelText,isKey?10:10,dark?W:B);return n}
-function controlsFor(pageId,regionId){return (PROTOTYPE_PLAYBACK_CONTRACT.controls||[]).filter(c=>c.page_id===pageId&&(!regionId||c.region_id===regionId))}
-function explanationsFor(pageId){return (PROTOTYPE_PLAYBACK_CONTRACT.interaction_explanations||[]).filter(e=>e.page_id===pageId)}
-function requirementTexts(surface){const texts=[];for(const r of PROTOTYPE_PLAYBACK_CONTRACT.source_alignment_requirements||[]){if(!surface||r.expected_surface===surface)for(const t of r.expected_visible_texts||[])if(t&&!texts.includes(t))texts.push(t)}return texts}
-function drawHost(phone,page){const host=fr("host_chat_surface",360,154,{fill:L,radius:18,layout:"VERTICAL",gap:8,padding:12});phone.appendChild(host);host.layoutSizingHorizontal="FILL";mark(host,"harnessRole","host_chat_surface");at(host,page.page_name_zh||"输入法 AI",17,B,"product_title");at(host,"对话消息区域",11,D,"host_surface_label");const bubble=fr("message_context",236,46,{fill:W,radius:14,layout:"VERTICAL",gap:3,padding:9});host.appendChild(bubble);at(bubble,page.page_purpose_zh||"在聊天里使用输入法 AI 能力。",10,D);const input=fr("input_bar",336,42,{fill:W,radius:18,layout:"HORIZONTAL",gap:8,padding:8});host.appendChild(input);mark(input,"harnessRole","input_bar");at(input,"输入栏",11,B,"input_bar_text")}
-function drawKeyboard(phone,page){const activeMode=page.default_active_mode_id||"text_keyboard";const kb=fr("keyboard_area",360,306,{fill:L,radius:22,layout:"VERTICAL",gap:8,padding:10});phone.appendChild(kb);kb.layoutSizingHorizontal="FILL";mark(kb,"harnessRole","keyboard_area");mark(kb,"activeMode",activeMode);const candidate=row(kb,"candidate_bar",30);mark(candidate,"harnessRole","candidate_bar");["候选","联想","符号"].forEach(x=>pill(candidate,x,false,"candidate"));if(activeMode==="text_keyboard"){const keys=fr("keyboard_key_grid",340,112,{fill:W,radius:12,layout:"VERTICAL",gap:6,padding:8});kb.appendChild(keys);mark(keys,"harnessRole","keyboard_key_grid");["Q W E R T Y U I O P","A S D F G H J K L","Z X C V B N M"].forEach(line=>{const r=row(keys,"key_row",26);line.split(" ").forEach(k=>pill(r,k,false,"key"))})}const toolbar=row(kb,"keyboard_ai_toolbar",40);mark(toolbar,"harnessRole","keyboard_ai_toolbar");const toolbarControls=controlsFor(page.page_id,"keyboard_ai_toolbar").slice(0,4);(toolbarControls.length?toolbarControls:[{visible_text_zh:"功能入口"}]).forEach((c,i)=>{const node=pill(toolbar,c.visible_text_zh,i===0,"toolbar_action");if(c.control_id){mark(node,"component_id",c.control_id);controlNodeById[c.control_id]=node}});if(activeMode!=="text_keyboard"){const panel=fr("keyboard_ai_panel",340,132,{fill:W,radius:14,layout:"VERTICAL",gap:6,padding:10});kb.appendChild(panel);mark(panel,"harnessRole","keyboard_ai_panel");at(panel,"功能面板",13,B,"ai_panel_title");const panelRows=[controlsFor(page.page_id,"keyboard_ai_panel"),controlsFor(page.page_id,"system_picker_overlay")].flat().slice(0,8);for(let i=0;i<panelRows.length;i+=3){const r=row(panel,"panel_controls",34);panelRows.slice(i,i+3).forEach((c,j)=>{const node=pill(r,c.visible_text_zh,j===0&&i===0,"primary_action");mark(node,"component_id",c.control_id);controlNodeById[c.control_id]=node})}const result=fr("result_card",320,72,{fill:L,radius:12,layout:"VERTICAL",gap:5,padding:10});panel.appendChild(result);mark(result,"harnessRole","result_card");at(result,"结果区域",13,B,"result_card_title");at(result,page.page_purpose_zh||"展示当前任务结果。",9,D,"result_card_copy");const feedback=fr("inline_feedback",320,30,{fill:L,radius:8,layout:"VERTICAL",padding:6});panel.appendChild(feedback);mark(feedback,"harnessRole","inline_feedback");at(feedback,"反馈出现在最早可反馈的位置。",9,D,"inline_feedback_text")}}
-function drawPicker(phone,page){const pickerReq=requirementTexts("system_picker_overlay");if(!(page.visible_regions||[]).includes("system_picker_overlay")&&!pickerReq.length)return;const overlay=fr("system_picker_overlay",336,Math.max(214,214+pickerReq.length*13),{fill:W,radius:16,layout:"VERTICAL",gap:8,padding:10});overlay.x=28;overlay.y=218;phone.appendChild(overlay);mark(overlay,"harnessRole","system_picker_overlay");at(overlay,"系统选择器",14,B,"picker_header");pickerReq.forEach(t=>at(overlay,t,9,D,"picker_source_requirements"));const grid=fr("picker_grid_region",316,100,{fill:L,radius:10,layout:"HORIZONTAL",gap:7,padding:8});overlay.appendChild(grid);mark(grid,"harnessRole","picker_grid_region");const cellTexts=(pickerReq.length?pickerReq:["选择项"]).slice(0,8);for(let i=0;i<Math.max(4,cellTexts.length);i++){const label=cellTexts[i]||`选项 ${i+1}`;const tile=fr(`picker_choice_${i+1}`,Math.max(58,Math.min(94,label.length*8+18)),82,{fill:W,radius:8,layout:"VERTICAL",gap:4,padding:5});grid.appendChild(tile);at(tile,String(i+1),14,B,"tile_index");at(tile,label,7,D,"tile_hint")}const actions=row(overlay,"picker_action_bar",34);mark(actions,"harnessRole","picker_action_bar");pill(actions,"取消",false,"cancel_action");pill(actions,"确认",true,"confirm_action");const fb=fr("picker_feedback_region",316,Math.max(30,24+pickerReq.length*12),{fill:L,radius:8,layout:"VERTICAL",padding:6});overlay.appendChild(fb);mark(fb,"harnessRole","picker_feedback_region");(pickerReq.length?pickerReq:["选择时在当前选择器内反馈。"]).forEach(t=>at(fb,t,9,D,"picker_feedback"))}
-function drawExplanation(group,page){const items=explanationsFor(page.page_id);const box=fr("interaction_explanation_region",392,Math.max(96,30+items.length*24),{fill:W,stroke:false,layout:"VERTICAL",gap:4,padding:0});group.appendChild(box);mark(box,"harnessRole","interaction_explanation_region");at(box,"交互说明",11,B,"interaction_explanation_title");if(items.length){items.forEach(item=>at(box,item.text_zh,9,D,"interaction_hint"))}else{at(box,"点击后会进入下一步或显示对应反馈。",9,D,"interaction_hint")}}
-function drawPage(pageSpec,index){const group=fr(`PLAYABLE-PAGE-GROUP:${pageSpec.page_id}`,430,880,{fill:W,radius:0,layout:"VERTICAL",gap:10,padding:16});group.x=430+(index%3)*470;group.y=Math.floor(index/3)*960;figma.currentPage.appendChild(group);mark(group,"sceneId",`SCENE-${pageSpec.page_id}`);mark(group,"frameId",pageSpec.page_id);mark(group,"carrier",pageSpec.carrier_type||"embedded_host_panel");pageFrameById[pageSpec.page_id]=group;const phone=fr("phone_shell",392,704,{fill:W,radius:30,layout:"VERTICAL",gap:10,padding:14});group.appendChild(phone);mark(phone,"harnessRole","phone_shell");const status=row(phone,"status_bar",24);at(status,"9:41",10,B,"status_time");drawHost(phone,pageSpec);drawKeyboard(phone,pageSpec);drawPicker(phone,pageSpec);drawExplanation(group,pageSpec)}
-function drawOffstageTarget(id,label,idx){const t=fr(`PROTOTYPE-TARGET:${id}`,390,620,{fill:W,radius:0,layout:"VERTICAL",gap:8,padding:16});t.x=6000+(idx%5)*430;t.y=Math.floor(idx/5)*680;figma.currentPage.appendChild(t);mark(t,"offstage","true");mark(t,"targetNodeRole","hidden_prototype_target");at(t,label||id,16,B,"target_title");at(t,"此 Frame 是 Figma reaction 的顶层目标，用于表达同页状态、overlay 或系统交接。",11,D,"target_note");targetFrameById[id]=t;return t}
-async function attachReaction(flow){const src=controlNodeById[flow.source_control_id];let dest=null;const rt=flow.reaction_target||{};if(rt.target_kind==="visible_page")dest=pageFrameById[rt.target_id]||pageFrameById[flow.target_page_id];else dest=targetFrameById[rt.target_id]||drawOffstageTarget(rt.target_id||flow.interaction_id,flow.result_zh||flow.target_state_id,Object.keys(targetFrameById).length);if(!src||!dest||!("setReactionsAsync"in src)){reactionErrors.push({interaction_id:flow.interaction_id,error:"missing source or destination"});return}const action={type:"NODE",destinationId:dest.id,navigation:"NAVIGATE",transition:{type:"DISSOLVE",easing:{type:"EASE_OUT"},duration:.2},preserveScrollPosition:false};try{await src.setReactionsAsync([{trigger:{type:"ON_CLICK"},actions:[action]}]);mark(src,"interactionId",flow.interaction_id);mutatedNodeIds.push(src.id)}catch(err){const fb=figma.createRectangle();keep(fb);fb.name=`hotspot_fallback:${flow.interaction_id}`;fb.resize(Math.max(80,src.width||80),Math.max(34,src.height||34));fb.x=(src.absoluteBoundingBox?src.absoluteBoundingBox.x:src.x)||0;fb.y=(src.absoluteBoundingBox?src.absoluteBoundingBox.y:src.y)||0;fb.fills=solid(B,0.01);figma.currentPage.appendChild(fb);mark(fb,"reactionFallback","transparent_hotspot_overlay");mark(fb,"interactionId",flow.interaction_id);try{await fb.setReactionsAsync([{trigger:{type:"ON_CLICK"},actions:[action]}]);fallbackHotspots.push(fb.id);mutatedNodeIds.push(fb.id)}catch(err2){reactionErrors.push({interaction_id:flow.interaction_id,error:String(err2&&err2.message||err2)})}}}
-await figma.loadFontAsync({family:"Inter",style:"Regular"});
-const finalPageName=`PROTOTYPE-FINAL-${PROTOTYPE_PLAYBACK_CONTRACT.run_id||"manual"}`;
-for(const p of figma.root.children.filter(p=>p.name===finalPageName))p.remove();
-const page=figma.createPage();page.name=finalPageName;await figma.setCurrentPageAsync(page);
-const entry=fr("PROTOTYPE-FINAL-ENTRY",390,150,{fill:W,radius:0,layout:"VERTICAL",gap:8,padding:16});entry.x=0;entry.y=0;page.appendChild(entry);mark(entry,"harnessRole","prototype_entry");mark(entry,"writerFormat","prototype_playback_contract_v3_2_3");at(entry,"可播放原型",20,B,"entry_title");at(entry,"主画布显示真实承载面；同页状态和系统交接通过顶层 target 保证 reaction 可播放。",12,D,"entry_copy");
-(PROTOTYPE_PLAYBACK_CONTRACT.pages||[]).forEach((p,i)=>drawPage(p,i));
-(PROTOTYPE_PLAYBACK_CONTRACT.overlays||[]).forEach((o,i)=>drawOffstageTarget(o.overlay_id,o.enter_zh,i));
-(PROTOTYPE_PLAYBACK_CONTRACT.hidden_targets||[]).forEach((h,i)=>drawOffstageTarget(h.target_id,h.target_id,i+(PROTOTYPE_PLAYBACK_CONTRACT.overlays||[]).length));
-for(const flow of (PROTOTYPE_PLAYBACK_CONTRACT.interaction_flows||[])) await attachReaction(flow);
-const audit=fr("LIVE-AUDIT-MARKERS:playback-writer-runtime",310,96,{fill:L,radius:6,layout:"VERTICAL",gap:4,padding:8});audit.x=0;audit.y=170;page.appendChild(audit);mark(audit,"createdByHarnessRuntime","figma-playback-writer-runtime.js");mark(audit,"expectedReactionCount",(PROTOTYPE_PLAYBACK_CONTRACT.interaction_flows||[]).length);mark(audit,"reactionErrorCount",reactionErrors.length);mark(audit,"fallbackHotspotCount",fallbackHotspots.length);mark(audit,"reactionErrorsJson",JSON.stringify(reactionErrors.slice(0,20)));at(audit,`页面 ${(PROTOTYPE_PLAYBACK_CONTRACT.pages||[]).length}\n反应 ${mutatedNodeIds.length}\n失败 ${reactionErrors.length}\nfallback ${fallbackHotspots.length}`,10,B,"audit_text");
-figma.viewport.scrollAndZoomIntoView([entry]);
-return {status:reactionErrors.length?"blocked":"pass",pageId:page.id,pageName:finalPageName,createdNodeIds,mutatedNodeIds,visiblePageCount:(PROTOTYPE_PLAYBACK_CONTRACT.pages||[]).length,expectedReactionCount:(PROTOTYPE_PLAYBACK_CONTRACT.interaction_flows||[]).length,reactionCount:mutatedNodeIds.length,reactionErrors,fallbackHotspots,topLevelNodeNames:page.children.map(n=>n.name)};
+function drawOffstageTarget(id,label,idx){return {id,label,idx,targetNodeRole:"hidden_prototype_target"}}
+async function attachReaction(sourceNode,destinationNode){if(sourceNode&&destinationNode&&sourceNode.setReactionsAsync){await sourceNode.setReactionsAsync([{trigger:{type:"ON_CLICK"},actions:[{type:"NODE",destinationId:destinationNode.id,navigation:"NAVIGATE"}]}])}}
+return {
+  status:"handoff",
+  writerExecutionMode:"split_runtime_steps",
+  contractRef:PROTOTYPE_PLAYBACK_CONTRACT_REF,
+  requiredContainers:REQUIRED_PLAYBACK_CONTAINERS,
+  instruction:"Execute the step files listed in figma-writer-runtime.manifest.yaml; this handoff runtime intentionally contains no PRD-specific payload."
+};
 """
-    return template.replace("__CONTRACT__", payload_json)
+    return template.replace("__CONTRACT_REF__", ref_json).replace("__REQUIRED_CONTAINERS__", containers_json)
 
 
 def chunked(items: list, size: int) -> list[list]:
@@ -17725,8 +17779,8 @@ def figma_playback_writer_runtime_errors(path: Path) -> list[str]:
     if not path.exists():
         return [rule_error("PLAYBACK_DED_001", f"missing playback writer runtime {path}")]
     text = path.read_text(encoding="utf-8")
-    if "PROTOTYPE_PLAYBACK_CONTRACT" not in text:
-        errors.append(rule_error("PLAYBACK_DED_001", "playback writer runtime must embed PROTOTYPE_PLAYBACK_CONTRACT"))
+    if "PROTOTYPE_PLAYBACK_CONTRACT_REF" not in text and "PROTOTYPE_PLAYBACK_CONTRACT" not in text:
+        errors.append(rule_error("PLAYBACK_DED_001", "playback writer runtime must reference prototype_playback_contract"))
     for forbidden in ["PROTOTYPE_DIRECT_WRITER_BRIEF", "prototype_writer_brief", "SEMANTIC_WRITER_PAYLOAD", "semantic_prototype_payload", "figma_prototype_materialization", "HARNESS_WRITER_PAYLOAD", "PLAYABLE_WRITER_PAYLOAD"]:
         if forbidden in text:
             errors.append(rule_error("PLAYBACK_DED_002", f"playback writer runtime must not consume {forbidden}"))
@@ -18069,7 +18123,10 @@ def generate_prototype_artifacts(args):
 
     runtime_trace_entries = []
     handler_rules = {
-        "build_surface_mode_contract_doc": rule_ids_for_artifact("surface_mode_contract"),
+        "build_surface_mode_contract_doc": rule_ids_for_artifact(
+            "surface_mode_contract",
+            extra_rule_ids=["GENERALITY_DED_001"],
+        ),
         "build_layout_invariant_contract_doc": rule_ids_for_artifact("layout_invariant_contract"),
     }
     for handler_id, rule_ids in handler_rules.items():
