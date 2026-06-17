@@ -21,6 +21,39 @@ prototype_harness_carrier_handoff_operation_chain_rules:
         不得默认当作独立 app page。
       blocks_when_zh: 非 app_page 承载面被标记 standalone_page_allowed=true。
 
+    - rule_id: CARRIER_DED_003
+      name_zh: 同一任务链路继承入口承载面
+      rule_zh: >
+        当用户从某个入口承载面进入同一任务链路时，后续选择、上传、加载、分析、结果、
+        失败恢复等状态默认继承入口承载面。只有 source 明确说明跳转独立 App 页面、
+        打开独立页面、进入详情页、设置页、SDK/WebView 页面等导航证据时，才允许升格为 app_page。
+      blocks_when_zh: >
+        同一任务链路没有独立页面导航证据，却把中间态或结果态标记为 app_page；
+        或缺少 carrier_resolution_rule_id / carrier_resolution_zh 说明继承依据。
+
+    - rule_id: CARRIER_DED_004
+      name_zh: 外部能力不改变主任务承载面
+      rule_zh: >
+        媒体选择、文件选择、联系人选择、授权、上传、OCR、复制、分享等能力只改变当前操作的
+        handoff/overlay 或后台能力状态，不得自动改变主任务 screen/state 的承载面。
+        handoff 完成后必须回到发起任务的承载面继续展示反馈或结果。
+      blocks_when_zh: 外部能力结束后将主任务结果态错误提升为 app_page，或 return_carrier_type 不是发起承载面。
+
+    - rule_id: CARRIER_DED_005
+      name_zh: 独立页面升格必须有明确导航证据
+      rule_zh: >
+        app_page 是显式结论，不是 fallback。只有 source 中存在明确导航语义和独立页面语义时，
+        才能把 target carrier 标为 app_page；否则必须继承入口承载面或标为 overlay/modal/handoff。
+      blocks_when_zh: 仅因为状态名称包含上传、分析、结果、设置等词就默认升格 app_page。
+
+    - rule_id: CARRIER_DED_006
+      name_zh: 可演绎承载面冲突不得阻断
+      rule_zh: >
+        如果 apparent carrier conflict 可由 CARRIER_DED_003、CARRIER_DED_004 或 CARRIER_DED_005
+        直接演绎消解，模型 stage 应输出 logic_consistent=true，并记录 carrier_resolution_rule_id
+        与 carrier_resolution_zh；只有 source 明确给出互斥承载面事实时，才允许 blocking_review_required=true。
+      blocks_when_zh: 可由继承/交接/导航证据规则消解的冲突被当作 PRD blocker。
+
     - rule_id: HANDOFF_DED_001
       name_zh: 可见外部能力触发系统交接面
       rule_zh: >

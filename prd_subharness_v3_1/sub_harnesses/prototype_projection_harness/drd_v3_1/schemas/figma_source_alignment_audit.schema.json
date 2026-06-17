@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/figma_source_alignment_audit.schema.json",
+  "title": "Figma Source Alignment Audit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["figma_source_alignment_audit"],
+  "properties": {
+    "figma_source_alignment_audit": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["version", "mode", "run_id", "status", "source_refs", "rule_trace", "checks", "blocker_findings"],
+      "properties": {
+        "version": { "const": "3.2.2" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["pass", "blocked"] },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_trace": { "$ref": "#/$defs/rule_trace" },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["requirement_id", "source_state_id", "status", "expected_visible_texts", "matched_visible_texts", "missing_visible_texts", "source_refs"]
+          }
+        },
+        "blocker_findings": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "$defs": {
+    "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "rule_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "rule_trace": {
+      "type": "object",
+      "required": ["rule_ids"],
+      "additionalProperties": true,
+      "properties": { "rule_ids": { "$ref": "#/$defs/rule_ids" } }
+    }
+  }
+}

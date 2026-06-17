@@ -10,6 +10,7 @@ gate_only_harness_alignment:
     gate_only_enabled: true
     automatic_patch_apply_enabled: false
     automatic_rerun_enabled: false
+    bounded_projection_auto_repair_enabled: true
     prototype_payload_generation_enabled: false
     figma_write_enabled: false
     allowed_writes:
@@ -19,6 +20,14 @@ gate_only_harness_alignment:
       - runs/<run-id>/prd_orchestrator/loop_gates/<gate-id>/final_loop_report.md
       - runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.yaml
       - runs/<run-id>/prd_orchestrator/stop_the_line/*.stop_the_line.md
+      - runs/<run-id>/io/output/prototype_playback_contract.yaml
+      - runs/<run-id>/io/output/figma-writer-runtime.js
+      - runs/<run-id>/io/output/figma-writer-runtime.manifest.yaml
+      - runs/<run-id>/io/output/figma-live-readback-runtime.js
+      - runs/<run-id>/io/output/figma-screenshot-plan.yaml
+      - runs/<run-id>/io/output/figma-write-handoff.yaml
+      - runs/<run-id>/io/output/figma_projection_auto_repair_report.yaml
+      - runs/<run-id>/io/output/figma_projection_auto_repair_report.md
     forbidden_writes:
       - product-spec/PRD.md
       - product-spec/requirements.yaml
@@ -56,7 +65,10 @@ gate_only_harness_alignment:
   repair_plan_policy:
     may_record_route_targets: true
     may_record_patch_recommendations: true
+    may_rebuild_run_root_projection_artifacts: true
+    projection_auto_repair_scope: playback_contract_and_figma_runtime_only
     must_not_apply_patch_set: true
     must_not_rerun_affected_scopes: true
+    must_not_execute_figma_write_from_loop: true
     local_patch_writes_prd_must_be_false: true
     semantic_defect_must_stop_the_line: true

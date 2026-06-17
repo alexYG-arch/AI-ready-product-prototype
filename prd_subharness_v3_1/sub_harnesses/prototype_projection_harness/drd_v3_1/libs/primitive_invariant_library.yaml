@@ -1,0 +1,14 @@
+primitive_invariant_library:
+  version: "3.2.3"
+  mode: DRD_MODE
+  primitive_slots:
+    - slot_id: software_keyboard_bottom_slot
+      slot_kind: physical_surface_slot
+      default_anchor: bottom
+      expected_regions: [candidate_bar, keyboard_ai_toolbar]
+      mutually_exclusive_regions: [keyboard_key_grid, keyboard_ai_panel]
+      rule_ids: [MODE_DED_001, LAYOUT_DED_001, LAYOUT_DED_002]
+    - slot_id: system_handoff_overlay_slot
+      slot_kind: overlay_surface_slot
+      required_regions: [picker_header, picker_grid_region, picker_action_bar, picker_feedback_region]
+      rule_ids: [LAYOUT_DED_003, VISUAL_GATE_DED_001]

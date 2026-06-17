@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "runtime_rule_execution_trace.schema.json",
+  "type": "object",
+  "required": ["runtime_rule_execution_trace"],
+  "properties": {
+    "runtime_rule_execution_trace": {
+      "type": "object",
+      "required": ["version", "mode", "run_id", "registry_ref", "executed_rules", "source_refs", "rule_trace"],
+      "properties": {
+        "version": {"const": "3.2.3"},
+        "mode": {"const": "DRD_MODE"},
+        "run_id": {"type": "string", "minLength": 1},
+        "registry_ref": {"type": "object"},
+        "source_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "rule_trace": {"type": "object"},
+        "executed_rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["rule_id", "handler_id", "trigger_reason_zh", "input_hashes", "output_refs", "status"],
+            "properties": {
+              "rule_id": {"type": "string", "minLength": 1},
+              "handler_id": {"type": "string", "minLength": 1},
+              "trigger_reason_zh": {"type": "string", "minLength": 1},
+              "input_hashes": {"type": "array", "items": {"type": "object"}},
+              "output_refs": {"type": "array", "items": {"type": "string"}},
+              "status": {"enum": ["pass", "skipped", "blocked"]},
+              "fallback_used": {"type": "boolean"},
+              "skip_reason_zh": {"type": "string"}
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

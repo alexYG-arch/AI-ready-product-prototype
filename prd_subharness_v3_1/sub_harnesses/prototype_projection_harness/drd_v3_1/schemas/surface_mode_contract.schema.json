@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "surface_mode_contract.schema.json",
+  "type": "object",
+  "required": ["surface_mode_contract"],
+  "properties": {
+    "surface_mode_contract": {
+      "type": "object",
+      "required": ["version", "mode", "run_id", "mode_definitions", "mutual_exclusion_groups", "scene_mode_assignments", "source_refs", "rule_trace"],
+      "properties": {
+        "version": {"const": "3.2.3"},
+        "mode": {"const": "DRD_MODE"},
+        "run_id": {"type": "string", "minLength": 1},
+        "source_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "rule_trace": {"type": "object"},
+        "mode_definitions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["mode_id", "physical_slot", "visible_regions", "hidden_regions", "rule_ids"],
+            "properties": {
+              "mode_id": {"type": "string", "minLength": 1},
+              "physical_slot": {"type": "string", "minLength": 1},
+              "visible_regions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+              "hidden_regions": {"type": "array", "items": {"type": "string"}},
+              "source_refs": {"type": "array", "items": {"type": "string"}},
+              "rule_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+            },
+            "additionalProperties": true
+          }
+        },
+        "mutual_exclusion_groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["group_id", "physical_slot", "regions", "rule_ids"],
+            "properties": {
+              "group_id": {"type": "string", "minLength": 1},
+              "physical_slot": {"type": "string", "minLength": 1},
+              "regions": {"type": "array", "items": {"type": "string"}, "minItems": 2},
+              "allow_override": {"type": "boolean"},
+              "override_source_refs": {"type": "array", "items": {"type": "string"}},
+              "rule_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+            },
+            "additionalProperties": true
+          }
+        },
+        "scene_mode_assignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["scene_id", "page_id", "active_mode_id", "visible_regions", "hidden_regions", "source_refs", "rule_ids"],
+            "properties": {
+              "scene_id": {"type": "string", "minLength": 1},
+              "page_id": {"type": "string", "minLength": 1},
+              "state_id": {"type": "string"},
+              "active_mode_id": {"type": "string", "minLength": 1},
+              "visible_regions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+              "hidden_regions": {"type": "array", "items": {"type": "string"}},
+              "source_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+              "rule_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+            },
+            "additionalProperties": true
+          }
+        },
+        "override_allowances": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

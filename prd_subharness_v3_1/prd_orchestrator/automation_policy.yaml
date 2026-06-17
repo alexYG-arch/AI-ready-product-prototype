@@ -60,9 +60,13 @@ automation_policy:
       can_write_stop_the_line: true
       can_apply_patch_set: false
       can_rerun_affected_scopes: false
+      can_rebuild_run_root_projection_artifacts: true
+      projection_auto_repair_scope: "prototype_playback_contract_and_figma_runtime_only"
       can_generate_prototype_payload: false
       can_write_figma: false
       can_write_prd_fact_store: false
+      projection_auto_repair_must_not_write_figma: true
+      projection_auto_repair_must_not_write_product_spec: true
     prototype_artifact_generator_policy:
       can_read_inputs_prd_md: true
       can_write_io_output_candidates: true

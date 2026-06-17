@@ -36,6 +36,10 @@ prototype_harness_drd_deductive_complete_rules:
       role_zh: 可播放原型总契约
     - file: rules/18_stage10_fwrite_semantic_payload_rules.yaml
       role_zh: Stage10/FWRITE 与自然语义原型 Payload
+    - file: rules/19_direct_writer_visual_alignment_rules.yaml
+      role_zh: 轻量直写与视觉反推对照
+    - file: rules/20_runtime_primitive_invariant_rules.yaml
+      role_zh: pyruntime 显化规则与通用 primitive invariant
     - file: rules/13_rule_projection_map.yaml
       role_zh: 规则编号投射表
 

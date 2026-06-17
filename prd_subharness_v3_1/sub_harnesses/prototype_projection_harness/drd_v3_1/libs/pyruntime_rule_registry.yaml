@@ -1,0 +1,41 @@
+pyruntime_rule_registry:
+  version: "3.2.3"
+  mode: DRD_MODE
+  purpose_zh: Python runtime 只允许执行本登记表中的通用规则 handler。
+  handlers:
+    - handler_id: build_surface_mode_contract_doc
+      command: build-surface-mode-contract
+      rule_ids: [MODE_DED_001, MODE_DED_002, MODE_DED_003, RUNTIME_RULE_DED_001, GENERALITY_DED_003]
+      inputs: [prototype_source_brief, interaction_carrier_map, system_handoff_map, user_operation_chain, model_surface_ownership, model_interaction_state_machine]
+      outputs: [surface_mode_contract]
+      failure_classes: [FC-SURFACE-MODE-MISSING, FC-SURFACE-MODE-MUTUAL-EXCLUSION, FC-PYRUNTIME-HIDDEN-RULE]
+    - handler_id: build_layout_invariant_contract_doc
+      command: build-layout-invariant-contract
+      rule_ids: [LAYOUT_DED_001, LAYOUT_DED_002, LAYOUT_DED_003, LAYOUT_DED_004, RUNTIME_RULE_DED_001]
+      inputs: [surface_mode_contract, interaction_carrier_map, system_handoff_map]
+      outputs: [layout_invariant_contract]
+      failure_classes: [FC-LAYOUT-INVARIANT-BROKEN, FC-PYRUNTIME-HIDDEN-RULE]
+    - handler_id: build_prototype_playback_contract_doc
+      command: build-prototype-playback-contract
+      rule_ids: [PLAYBACK_DED_001, PLAYBACK_DED_002, PLAYBACK_DED_003, PLAYBACK_DED_004, MODE_DED_002, LAYOUT_DED_001, GENERALITY_DED_002, GENERALITY_DED_003, GENERALITY_DED_004, RUNTIME_RULE_DED_001]
+      inputs: [prototype_source_brief, model_surface_ownership, model_user_journey, model_interaction_state_machine, model_component_blueprint, interaction_carrier_map, system_handoff_map, user_operation_chain, surface_mode_contract, layout_invariant_contract, runtime_rule_execution_trace]
+      outputs: [prototype_playback_contract]
+      failure_classes: [FC-FIGMA-STAGE-ALIGNMENT-MISMATCH, FC-PRODUCTION-HARDCODE]
+    - handler_id: build_figma_playback_writer_runtime
+      command: build-figma-playback-writer-runtime
+      rule_ids: [PLAYBACK_DED_001, PLAYBACK_DED_005, MODE_DED_001, MODE_DED_002, LAYOUT_DED_001, LAYOUT_DED_002, LAYOUT_DED_003, GENERALITY_DED_005, RUNTIME_RULE_DED_001]
+      inputs: [prototype_playback_contract, surface_mode_contract, layout_invariant_contract]
+      outputs: [figma_playback_writer_runtime]
+      failure_classes: [FC-FIGMA-WRITER-PRIMITIVE-COLLAPSE, FC-PRODUCTION-HARDCODE]
+    - handler_id: build_figma_layout_invariant_audit_doc
+      command: build-figma-layout-invariant-audit
+      rule_ids: [LAYOUT_DED_001, LAYOUT_DED_002, LAYOUT_DED_003, LAYOUT_DED_004, MODE_DED_001, VISUAL_GATE_DED_001]
+      inputs: [figma_live_readback_snapshot, surface_mode_contract, layout_invariant_contract, prototype_playback_contract]
+      outputs: [figma_layout_invariant_audit]
+      failure_classes: [FC-FIGMA-LAYOUT-INVARIANT-FAILED]
+    - handler_id: figma_live_visual_gate_errors
+      command: gate-figma-live-visual-audit
+      rule_ids: [VISUAL_GATE_DED_001, VISUAL_GATE_DED_002, LAYOUT_DED_004, MODE_DED_001, SOURCE_ALIGN_DED_001]
+      inputs: [figma_live_readback_snapshot, figma_geometry_audit, figma_layout_invariant_audit, figma_visual_reverse_inference, figma_stage_alignment_audit, figma_source_alignment_audit, prototype_playback_contract]
+      outputs: [loop_finding, repair_plan, loop_manifest]
+      failure_classes: [FC-FIGMA-LAYOUT-INVARIANT-FAILED, FC-FIGMA-STAGE-ALIGNMENT-MISMATCH, FC-FIGMA-KEYBOARD-CARRIER-MISSING]

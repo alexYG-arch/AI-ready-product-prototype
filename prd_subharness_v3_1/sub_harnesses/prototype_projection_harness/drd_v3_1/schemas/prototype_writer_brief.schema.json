@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prd-harness.local/schemas/prototype_writer_brief.schema.json",
+  "title": "Prototype Writer Brief",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prototype_writer_brief"],
+  "properties": {
+    "prototype_writer_brief": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "version",
+        "mode",
+        "run_id",
+        "playable_profile",
+        "source_refs",
+        "rule_trace",
+        "input_artifacts",
+        "forbidden_writer_sources",
+        "model_status",
+        "required_visual_containers",
+        "scenes",
+        "interaction_playback_contracts",
+        "handoff_visual_contracts"
+      ],
+      "properties": {
+        "version": { "const": "3.2.1" },
+        "mode": { "const": "DRD_MODE" },
+        "run_id": { "type": "string", "minLength": 1 },
+        "playable_profile": { "const": "PLAYABLE_PROTOTYPE_WRITE" },
+        "source_refs": { "$ref": "#/$defs/source_refs" },
+        "rule_trace": { "$ref": "#/$defs/rule_trace" },
+        "input_artifacts": { "type": "object", "additionalProperties": true },
+        "forbidden_writer_sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "model_status": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["all_logic_consistent", "all_prototype_renderable", "blocking_unknown_count"],
+          "properties": {
+            "all_logic_consistent": { "type": "boolean" },
+            "all_prototype_renderable": { "type": "boolean" },
+            "blocking_unknown_count": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "required_visual_containers": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "scenes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": [
+              "scene_id",
+              "page_id",
+              "page_name_zh",
+              "page_purpose_zh",
+              "carrier_type",
+              "visual_scene_contract",
+              "visible_ui_regions",
+              "required_controls",
+              "source_refs",
+              "rule_ids"
+            ],
+            "properties": {
+              "scene_id": { "type": "string", "minLength": 1 },
+              "page_id": { "type": "string", "minLength": 1 },
+              "page_name_zh": { "type": "string", "minLength": 1 },
+              "page_purpose_zh": { "type": "string", "minLength": 1 },
+              "carrier_type": { "type": "string", "minLength": 1 },
+              "visual_scene_contract": {
+                "type": "object",
+                "required": ["must_render", "forbidden_main_ui"],
+                "additionalProperties": true
+              },
+              "visible_ui_regions": { "type": "array", "items": { "type": "object" } },
+              "required_controls": { "type": "array", "minItems": 1, "items": { "type": "object" } },
+              "source_refs": { "$ref": "#/$defs/source_refs" },
+              "rule_ids": { "$ref": "#/$defs/rule_ids" }
+            }
+          }
+        },
+        "interaction_playback_contracts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["interaction_id", "source_page_id", "target_page_id", "source_control_id", "user_visible_trigger_zh", "transition_kind", "source_refs", "rule_ids"],
+            "properties": {
+              "interaction_id": { "type": "string", "minLength": 1 },
+              "source_page_id": { "type": "string", "minLength": 1 },
+              "target_page_id": { "type": "string", "minLength": 1 },
+              "source_control_id": { "type": "string", "minLength": 1 },
+              "user_visible_trigger_zh": { "type": "string", "minLength": 1 },
+              "transition_kind": { "type": "string", "minLength": 1 },
+              "source_refs": { "$ref": "#/$defs/source_refs" },
+              "rule_ids": { "$ref": "#/$defs/rule_ids" }
+            }
+          }
+        },
+        "handoff_visual_contracts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["handoff_id", "expected_overlay_regions", "source_refs", "rule_ids"]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source_refs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "rule_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+    "rule_trace": {
+      "type": "object",
+      "required": ["rule_ids"],
+      "additionalProperties": true,
+      "properties": { "rule_ids": { "$ref": "#/$defs/rule_ids" } }
+    }
+  }
+}

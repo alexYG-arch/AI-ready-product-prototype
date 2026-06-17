@@ -1,0 +1,62 @@
+direct_writer_visual_alignment_rules:
+  id: DIRECT_WRITER_VISUAL_ALIGNMENT_RULES_V3_2_2
+  id_zh: Playback Contract 直写与视觉反推对照规则 v3.2.2
+  version: "3.2.2"
+  mode: DRD_MODE
+  purpose_zh: >
+    将最终 Figma 写入从 semantic/materialization/writer_brief 强编译或压扁路径切换到
+    prototype_playback_contract 直写路径，并要求写后从 Figma live readback 反推真实页面、承载面和交互，
+    再与 PRD source atoms 和四段模型推理产物对照。
+  rules:
+    - rule_id: PLAYBACK_DED_001
+      name_zh: playback contract 是唯一最终施工源
+      rule_zh: 最终 Figma writer 默认只能消费 prototype_playback_contract.yaml；该 contract 必须来自 source atoms、四段模型推理、carrier/handoff/operation chain。
+      blocks_when_zh: final writer 直接扫 payload、review MD、semantic payload、materialization、writer brief 或 DRD board packets。
+    - rule_id: PLAYBACK_DED_002
+      name_zh: 禁止旧施工源参与默认写入
+      rule_zh: prototype_writer_brief、semantic_prototype_payload 和 figma_prototype_materialization 只能作为 legacy/diagnostic 产物，不能作为默认 Figma writer 施工源。
+      blocks_when_zh: writer runtime 或 writer handoff 引用 writer brief、semantic/materialization/compact payload/review 文档。
+    - rule_id: PLAYBACK_DED_003
+      name_zh: 控件必须是真实可见产品控件
+      rule_zh: playback contract 中每个 control 必须有真实可见文案、所在页面、所在区域、source_refs 和 rule_ids；不得出现泛化占位文案。
+      blocks_when_zh: 出现“展示可点击入口”“选择或输入内容”“结果内容”“应用页面内容区”等泛化文案。
+    - rule_id: PLAYBACK_DED_004
+      name_zh: 交互流必须可播放
+      rule_zh: 每条 interaction_flow 必须绑定真实 source_control_id、目标页面或目标状态、点击前条件、点击后结果和 reaction target。
+      blocks_when_zh: 只有交互说明文字但没有真实可点击控件，或 interaction_flow 缺 source/target。
+    - rule_id: PLAYBACK_DED_005
+      name_zh: Figma reaction 目标必须是不同顶层 Frame
+      rule_zh: 同页状态变化和 overlay 必须生成 hidden prototype target 或 overlay target，不能让 reaction 指向当前源控件所在的同一个 visible page frame。
+      blocks_when_zh: Figma API 拒绝 reaction，或 reaction target 不是顶层 frame。
+    - rule_id: PLAYBACK_DED_006
+      name_zh: 交互说明是一等施工对象
+      rule_zh: 每个主交互必须有可读 interaction_explanation，并写到页面说明区；说明不得替代真实 UI。
+      blocks_when_zh: 页面只有一句通用说明，或者只有说明没有真实控件。
+    - rule_id: SOURCE_ALIGN_DED_001
+      name_zh: Figma 画布必须对照 PRD source atoms
+      rule_zh: live gate 必须用 source_alignment_requirements 对照 Figma live readback，确认 required state、边界、失败和恢复在画布中可见。
+      blocks_when_zh: PRD/source atoms 中的 required state 或约束没有在 Figma 反推结果中出现。
+    - rule_id: DIRECT_WRITE_DED_001
+      name_zh: legacy writer brief 只允许诊断
+      rule_zh: prototype_writer_brief.yaml 不再是默认最终写入源，仅保留为 legacy/diagnostic。
+      blocks_when_zh: final writer 仍消费 prototype_writer_brief.yaml。
+    - rule_id: DIRECT_WRITE_DED_002
+      name_zh: 禁止 legacy 强编译源参与最终写入
+      rule_zh: semantic_prototype_payload 和 figma_prototype_materialization 只能作为 legacy/diagnostic 产物，不能作为最终 Figma writer 施工源。
+      blocks_when_zh: writer runtime 或 writer handoff 引用 semantic/materialization/compact payload/review 文档。
+    - rule_id: DIRECT_WRITE_DED_003
+      name_zh: 输入法真实容器必须成立
+      rule_zh: direct writer 必须画出 phone shell、宿主聊天区、输入栏、候选栏、键盘区域、AI 工具栏、AI 面板、结果卡和反馈区。
+      blocks_when_zh: 画布只出现 keyboard_ai_panel 文字块、模块卡片或缺少输入法基础结构。
+    - rule_id: DIRECT_WRITE_DED_004
+      name_zh: 交互播放契约必须落到真实控件
+      rule_zh: writer brief 中每条主链路必须有 source control、target page/state、transition kind 和 reaction 目标；runtime 必须把 reaction 挂到真实可点击控件。
+      blocks_when_zh: 只有交互说明文字，但 live readback 反推不出可点击链路或 reaction。
+    - rule_id: VISUAL_ALIGN_DED_001
+      name_zh: live gate 必须反推视觉语义
+      rule_zh: 写后必须从 Figma live node tree 和截图/readback 反推页面、承载面、控件、系统交接和交互状态。
+      blocks_when_zh: gate 只检查节点数量、reaction 数、机器 ID 或泛化文本，不检查真实输入法容器和操作链。
+    - rule_id: VISUAL_ALIGN_DED_002
+      name_zh: 反推结果必须对照 stage 推理
+      rule_zh: figma_stage_alignment_audit 必须将反推结果逐项对照 writer brief、user journey、state machine、component blueprint 和 operation chain。
+      blocks_when_zh: 画布语义与 stage 推理不一致，或缺少主链路、系统交接、边界反馈、输入法承载面。

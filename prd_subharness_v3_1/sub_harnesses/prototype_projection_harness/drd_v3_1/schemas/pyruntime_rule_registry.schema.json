@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pyruntime_rule_registry.schema.json",
+  "type": "object",
+  "required": ["pyruntime_rule_registry"],
+  "properties": {
+    "pyruntime_rule_registry": {
+      "type": "object",
+      "required": ["version", "mode", "handlers"],
+      "properties": {
+        "version": {"const": "3.2.3"},
+        "mode": {"const": "DRD_MODE"},
+        "handlers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["handler_id", "command", "rule_ids", "inputs", "outputs", "failure_classes"],
+            "properties": {
+              "handler_id": {"type": "string", "minLength": 1},
+              "command": {"type": "string", "minLength": 1},
+              "rule_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+              "inputs": {"type": "array", "items": {"type": "string"}},
+              "outputs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+              "failure_classes": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 import argparse
 import hashlib
+import inspect
 import json
 import os
 import re
@@ -34,21 +36,34 @@ RUN_ROOT = ROOT / "runs" / RUN_ID
 INSTANCE_ROOT_PROVIDED = False
 RUN_ID_PROVIDED = False
 ALLOW_HARNESS_WRITES = False
+DEFAULT_MODEL_STAGE_TIMEOUT_SECONDS = 900
 
 WRITE_COMMANDS = {
+    "build-figma-direct-writer-runtime",
+    "build-figma-write-handoff",
     "build-figma-semantic-writer-input",
     "build-figma-semantic-writer-runtime",
     "build-figma-prototype-materialization",
     "build-figma-live-audit-artifacts",
     "build-figma-playable-writer-input",
+    "build-figma-playback-writer-runtime",
+    "build-figma-layout-invariant-audit",
+    "repair-figma-projection-loop",
     "build-figma-render-plan",
     "build-figma-writer-runtime",
+    "build-figma-source-alignment-audit",
     "build-playable-prototype-model",
+    "build-prototype-playback-contract",
+    "build-prototype-writer-brief",
+    "build-surface-mode-contract",
+    "build-layout-invariant-contract",
     "build-prototype-canvas-view-model",
     "build-prototype-scene-graph",
     "build-surface-hierarchy-map",
     "build-prototype-ui-blueprint",
     "build-semantic-prototype-payload",
+    "build-figma-visual-reverse-inference",
+    "build-figma-stage-alignment-audit",
     "classify-figma-diff",
     "generate-prototype-artifacts",
     "gate-figma-live-visual-audit",
@@ -395,6 +410,8 @@ def drd_required_files() -> list[str]:
         "sub_harnesses/prototype_projection_harness/drd_v3_1/rules/16_figma_live_visual_comprehension_rules.yaml",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/rules/17_playable_prototype_contract_rules.yaml",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/rules/18_stage10_fwrite_semantic_payload_rules.yaml",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/rules/19_direct_writer_visual_alignment_rules.yaml",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/rules/20_runtime_primitive_invariant_rules.yaml",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/stage10_fwrite_v3_2/package_manifest.yaml",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/stage10_fwrite_v3_2/package_manifest.harness_aligned.yaml",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/stage10_fwrite_v3_2/rules/17_complete_stage10_fwrite_rules.yaml",
@@ -410,6 +427,17 @@ def drd_required_files() -> list[str]:
         "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/model_figma_visual_comprehension.schema.json",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/semantic_prototype_payload.schema.json",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/figma_semantic_writer_input.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/prototype_writer_brief.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/prototype_playback_contract.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/surface_mode_contract.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/layout_invariant_contract.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/pyruntime_rule_registry.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/runtime_rule_execution_trace.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/figma_layout_invariant_audit.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/rule_runtime_projection_report.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/figma_visual_reverse_inference.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/figma_stage_alignment_audit.schema.json",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/figma_source_alignment_audit.schema.json",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/model_user_journey_v3_2.schema.json",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/model_interaction_state_machine_v3_2.schema.json",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/schemas/model_component_blueprint_v3_2.schema.json",
@@ -423,6 +451,8 @@ def drd_required_files() -> list[str]:
         "sub_harnesses/prototype_projection_harness/drd_v3_1/libs/obligation_primitive_library.yaml",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/libs/sidecar_card_template_library.yaml",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/libs/capability_primitive_library.yaml",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/libs/pyruntime_rule_registry.yaml",
+        "sub_harnesses/prototype_projection_harness/drd_v3_1/libs/primitive_invariant_library.yaml",
         "sub_harnesses/prototype_projection_harness/drd_v3_1/contract_upgrade_manifest.yaml",
         "sub_harnesses/prototype_projection_harness/adapters/design_systems/sds_monochrome_adapter.yaml",
         "sub_harnesses/prototype_projection_harness/adapters/design_systems/figma-sds.SOURCE.md",
@@ -745,6 +775,23 @@ def status(args):
             "build-figma-semantic-writer-input",
             "validate-figma-semantic-writer-input",
             "build-figma-semantic-writer-runtime",
+            "build-figma-write-handoff",
+            "build-prototype-playback-contract",
+            "validate-prototype-playback-contract",
+            "build-surface-mode-contract",
+            "validate-surface-mode-contract",
+            "build-layout-invariant-contract",
+            "validate-layout-invariant-contract",
+            "validate-pyruntime-rule-registry",
+            "validate-runtime-rule-execution-trace",
+            "validate-no-project-specific-production-rule",
+            "validate-no-hidden-python-rule",
+            "validate-rule-runtime-projection",
+            "build-figma-playback-writer-runtime",
+            "build-prototype-writer-brief",
+            "validate-prototype-writer-brief",
+            "build-figma-direct-writer-runtime",
+            "validate-figma-direct-writer-runtime",
             "validate-stage10-fwrite-rules",
             "validate-four-model-consistency",
             "validate-final-materialization-v3-2",
@@ -760,6 +807,14 @@ def status(args):
             "validate-figma-visual-semantic-audit",
             "validate-model-figma-visual-comprehension",
             "build-figma-live-audit-artifacts",
+            "build-figma-visual-reverse-inference",
+            "validate-figma-visual-reverse-inference",
+            "build-figma-layout-invariant-audit",
+            "validate-figma-layout-invariant-audit",
+            "build-figma-source-alignment-audit",
+            "validate-figma-source-alignment-audit",
+            "build-figma-stage-alignment-audit",
+            "validate-figma-stage-alignment-audit",
             "gate-figma-live-visual-audit",
         ]:
             exists = command in source
@@ -805,8 +860,8 @@ def validate_drd_rules(args):
         errors.extend(validate_json_schema_file(schema))
 
     profile = yload(DRD_ROOT / "profile.yaml").get("drd_v3_1_profile", {})
-    if profile.get("version") not in {"3.1", "3.2"}:
-        errors.append("drd_v3_1/profile.yaml version must be 3.1 or 3.2")
+    if profile.get("version") not in {"3.1", "3.2", "3.2.3"}:
+        errors.append("drd_v3_1/profile.yaml version must be 3.1, 3.2, or 3.2.3")
     if profile.get("mode") != "DRD_MODE":
         errors.append("drd_v3_1/profile.yaml mode must be DRD_MODE")
     defaults = profile.get("default_behavior", {}) or {}
@@ -894,6 +949,15 @@ def validate_drd_rules(args):
         "figma_live_visual_audit",
         "semantic_prototype_payload",
         "figma_semantic_writer_input",
+        "prototype_writer_brief",
+        "surface_mode_contract",
+        "layout_invariant_contract",
+        "pyruntime_rule_registry",
+        "runtime_rule_execution_trace",
+        "figma_layout_invariant_audit",
+        "rule_runtime_projection_report",
+        "figma_visual_reverse_inference",
+        "figma_stage_alignment_audit",
         "stage10_fwrite_rules",
     ]:
         if artifact_key not in (projection.get("artifacts", {}) or {}):
@@ -1368,13 +1432,6 @@ def atom_type_for(text: str, headers: list[str] | None, raw_ids: list[str]) -> s
     return "table_row" if headers else "text"
 
 
-PROTOTYPE_STATE_PREFIXES = (
-    "TOOLBAR-",
-    "TOPIC-",
-    "INTIMACY-",
-    "RELATION-",
-)
-
 NON_SURFACE_ID_PREFIXES = (
     "MET-",
     "EVT-",
@@ -1392,7 +1449,14 @@ NON_SURFACE_ID_PREFIXES = (
 
 
 def looks_like_prototype_state_id(value: str) -> bool:
-    return str(value).startswith(PROTOTYPE_STATE_PREFIXES)
+    text = str(value or "").strip()
+    if not text or looks_like_non_surface_id(text):
+        return False
+    if text.startswith("STATE-"):
+        return True
+    # Generic stable source IDs from PRDs are commonly ALL-CAPS tokens joined by
+    # hyphens. Treat them as state-like only when they are not fact-store IDs.
+    return bool(re.fullmatch(r"[A-Z][A-Z0-9]+(?:-[A-Z0-9]+){1,5}", text))
 
 
 def looks_like_non_surface_id(value: str) -> bool:
@@ -1932,11 +1996,18 @@ def build_surface_ownership(screen_candidates: list[dict], states: list[dict]) -
             for state in screen_states
             for key in semantic_keys_for_state(state)
         })
-        if idx == 1:
+        basis_text = " ".join([
+            screen_id,
+            screen.get("title_zh", ""),
+            *[state.get("state_zh", "") for state in screen_states],
+            *[state.get("trigger_zh", "") for state in screen_states],
+            *component_rules,
+        ])
+        if idx == 1 or text_contains_any(basis_text, ["入口", "工具栏", "toolbar", "键盘"]):
             role = "entry_surface"
-        elif "SETTING" in screen_id:
+        elif text_contains_any(basis_text, ["设置", "配置", "等级", "偏好"]):
             role = "setting_surface"
-        elif "RELATION" in screen_id:
+        elif text_contains_any(basis_text, ["分析", "识别", "生成", "结果", "推荐"]):
             role = "analysis_surface"
         else:
             role = "task_surface"
@@ -1958,113 +2029,50 @@ def build_surface_ownership(screen_candidates: list[dict], states: list[dict]) -
 
 
 def explicit_target_state_id(state_id: str) -> str:
-    explicit = {
-        "TOOLBAR-VISIBLE": "TOOLBAR-TOPIC-TAP",
-        "TOOLBAR-TOPIC-TAP": "TOPIC-IMAGE-SELECT",
-        "TOOLBAR-INTIMACY-TAP": "INTIMACY-DEFAULT-LEVEL2",
-        "TOOLBAR-RELATION-TAP": "RELATION-SELECT-SCREENSHOTS",
-        "TOPIC-IMAGE-SELECT": "TOPIC-ANALYZING",
-        "TOPIC-ANALYZING": "TOPIC-FREE-RESULT",
-        "TOPIC-FREE-RESULT": "TOPIC-MEMBER-RESULT",
-        "TOPIC-MEMBER-RESULT": "TOPIC-REGENERATING",
-        "TOPIC-REGENERATING": "TOPIC-MEMBER-RESULT",
-        "TOPIC-COPY-SINGLE": "TOPIC-MEMBER-RESULT",
-        "TOPIC-COPY-ALL": "TOPIC-MEMBER-RESULT",
-        "TOPIC-UPLOAD-FAILED": "TOPIC-IMAGE-SELECT",
-        "TOPIC-IMAGE-UNRECOGNIZED": "TOPIC-IMAGE-SELECT",
-        "TOPIC-GENERATION-FAILED": "TOPIC-IMAGE-SELECT",
-        "TOPIC-CLIPBOARD-COPY-FAILED": "TOPIC-MEMBER-RESULT",
-        "INTIMACY-DEFAULT-LEVEL2": "INTIMACY-EDITING",
-        "INTIMACY-EDITING": "INTIMACY-SAVING",
-        "INTIMACY-SAVING": "INTIMACY-SAVED",
-        "RELATION-SELECT-SCREENSHOTS": "RELATION-UPLOADING",
-        "RELATION-BLOCK-LESS-THAN-3": "RELATION-SELECT-SCREENSHOTS",
-        "RELATION-BLOCK-MORE-THAN-5": "RELATION-SELECT-SCREENSHOTS",
-        "RELATION-UPLOADING": "RELATION-OCR-PROCESSING",
-        "RELATION-OCR-PROCESSING": "RELATION-ANALYZING",
-        "RELATION-OCR-FAILED": "RELATION-SELECT-SCREENSHOTS",
-        "RELATION-ANALYZING": "RELATION-FREE-RESULT",
-        "RELATION-FREE-RESULT": "RELATION-MEMBER-RESULT",
-        "RELATION-MEMBER-RESULT": "RELATION-MANUAL-SYNC-PROMPT",
-        "RELATION-MANUAL-SYNC-PROMPT": "INTIMACY-EDITING",
-    }
-    direct_target = explicit.get(state_id)
-    if direct_target:
-        return direct_target
-    if state_id.startswith("STATE-RELATION-SELECT-SCREENSHOTS-BELOW_MIN"):
-        return "RELATION-BLOCK-LESS-THAN-3"
-    if state_id.startswith("STATE-RELATION-SELECT-SCREENSHOTS-MIN"):
-        return "RELATION-UPLOADING"
-    if state_id.startswith("STATE-RELATION-SELECT-SCREENSHOTS-MAX"):
-        return "RELATION-UPLOADING"
-    if state_id.startswith("STATE-RELATION-SELECT-SCREENSHOTS-ABOVE_MAX"):
-        return "RELATION-BLOCK-MORE-THAN-5"
-    if state_id.startswith("STATE-INTIMACY-EDITING-BELOW_MIN"):
-        return "INTIMACY-EDITING"
-    if state_id.startswith("STATE-INTIMACY-EDITING-MIN"):
-        return "INTIMACY-SAVING"
-    if state_id.startswith("STATE-INTIMACY-EDITING-MAX"):
-        return "INTIMACY-SAVING"
-    if state_id.startswith("STATE-INTIMACY-EDITING-ABOVE_MAX"):
-        return "INTIMACY-EDITING"
+    # Explicit target maps must come from source/model artifacts. The production
+    # deterministic fallback intentionally avoids project-specific state lists.
     return ""
 
 
 def branch_target_state_ids(state_id: str, state_by_id: dict[str, dict]) -> list[str]:
-    static_branches = {
-        "TOOLBAR-VISIBLE": [
-            "TOOLBAR-TOPIC-TAP",
-            "TOOLBAR-INTIMACY-TAP",
-            "TOOLBAR-RELATION-TAP",
-        ],
-        "TOPIC-IMAGE-SELECT": [
-            "TOPIC-UPLOAD-FAILED",
-            "TOPIC-IMAGE-UNRECOGNIZED",
-        ],
-        "TOPIC-ANALYZING": [
-            "TOPIC-GENERATION-FAILED",
-        ],
-        "TOPIC-MEMBER-RESULT": [
-            "TOPIC-COPY-SINGLE",
-            "TOPIC-COPY-ALL",
-        ],
-        "TOPIC-COPY-SINGLE": [
-            "TOPIC-CLIPBOARD-COPY-FAILED",
-        ],
-        "TOPIC-COPY-ALL": [
-            "TOPIC-CLIPBOARD-COPY-FAILED",
-        ],
-        "RELATION-OCR-PROCESSING": [
-            "RELATION-OCR-FAILED",
-        ],
-    }
-    targets = list(static_branches.get(state_id, []))
-    if state_id == "INTIMACY-EDITING":
+    state = state_by_id.get(state_id, {})
+    source_text = " ".join([
+        state.get("state_id", ""),
+        state.get("state_zh", ""),
+        state.get("trigger_zh", ""),
+        state.get("feedback_zh", ""),
+        " ".join(state.get("categories", []) or []),
+    ])
+    screen_id = state.get("screen_id", "")
+    screen_states = [
+        item for item in state_by_id.values()
+        if item.get("screen_id") == screen_id and item.get("state_id") != state_id
+    ]
+    targets: list[str] = []
+    if infer_frame_kind(state) in {"primary", "input_selection"} or text_contains_any(source_text, ["入口", "选择", "上传", "设置", "点击"]):
+        branch_kinds = {"boundary", "error", "recovery", "feedback", "input_selection"}
         targets.extend(
-            item
-            for item in state_by_id
-            if item.startswith("STATE-INTIMACY-EDITING-")
+            item["state_id"]
+            for item in sorted(screen_states, key=state_sort_key)
+            if infer_frame_kind(item) in branch_kinds
         )
-    if state_id == "RELATION-SELECT-SCREENSHOTS":
+    if text_contains_any(source_text, ["处理中", "分析", "识别", "生成", "保存"]):
         targets.extend(
-            item
-            for item in state_by_id
-            if item.startswith("STATE-RELATION-SELECT-SCREENSHOTS-")
+            item["state_id"]
+            for item in sorted(screen_states, key=state_sort_key)
+            if infer_frame_kind(item) in {"error", "recovery", "result"}
         )
     return [target for target in dict.fromkeys(targets) if target in state_by_id and target != state_id]
 
 
 def suppress_primary_transition(state_id: str) -> bool:
-    return state_id in {"TOOLBAR-VISIBLE"}
+    return False
 
 
 def primary_interaction_variant(state_id: str, target_state_id: str) -> str:
     if state_id == target_state_id:
         return "terminal_stay"
-    if (state_id, target_state_id) in {
-        ("TOPIC-FREE-RESULT", "TOPIC-MEMBER-RESULT"),
-        ("RELATION-FREE-RESULT", "RELATION-MEMBER-RESULT"),
-    }:
+    if any(token in target_state_id.upper() for token in ["BELOW", "ABOVE", "MIN", "MAX", "FAILED", "ERROR", "BLOCK"]):
         return "conditional_branch"
     return "primary"
 
@@ -2072,40 +2080,18 @@ def primary_interaction_variant(state_id: str, target_state_id: str) -> str:
 def primary_route_basis_zh(state_id: str, target_state_id: str, fallback: str) -> str:
     if state_id == target_state_id:
         return "终止或停留状态：源 PRD 未提供后续导航，原型保持当前状态供人工确认。"
-    if (state_id, target_state_id) in {
-        ("TOPIC-FREE-RESULT", "TOPIC-MEMBER-RESULT"),
-        ("RELATION-FREE-RESULT", "RELATION-MEMBER-RESULT"),
-    }:
-        return "会员身份鉴别或解锁后的条件分支，不表达免费结果自动升级。"
-    if (state_id, target_state_id) == ("RELATION-MANUAL-SYNC-PROMPT", "INTIMACY-EDITING"):
-        return "用户主动选择手动修改亲密度时跨页进入设置面。"
+    if any(token in target_state_id.upper() for token in ["BELOW", "ABOVE", "MIN", "MAX", "FAILED", "ERROR", "BLOCK"]):
+        return "由边界、失败或恢复语义触发的条件分支，不表达自动成功。"
     return fallback
 
 
 def transition_trigger_zh(source_state: dict, target_state: dict, variant: str) -> str:
-    pair = (source_state.get("state_id"), target_state.get("state_id"))
-    special = {
-        ("TOOLBAR-VISIBLE", "TOOLBAR-TOPIC-TAP"): "用户点击话题推荐入口",
-        ("TOOLBAR-VISIBLE", "TOOLBAR-INTIMACY-TAP"): "用户点击亲密度设置入口",
-        ("TOOLBAR-VISIBLE", "TOOLBAR-RELATION-TAP"): "用户点击关系分析入口",
-        ("TOPIC-IMAGE-SELECT", "TOPIC-ANALYZING"): "用户选择图片/截图并提交",
-        ("TOPIC-FREE-RESULT", "TOPIC-MEMBER-RESULT"): "用户完成会员身份鉴别或解锁",
-        ("RELATION-FREE-RESULT", "RELATION-MEMBER-RESULT"): "用户完成会员身份鉴别或解锁",
-        ("INTIMACY-EDITING", "INTIMACY-SAVING"): "用户选择亲密度等级并点击保存",
-        ("INTIMACY-SAVED", "INTIMACY-SAVED"): "保存成功后停留当前页",
-        ("RELATION-SELECT-SCREENSHOTS", "RELATION-UPLOADING"): "用户选择 3 到 5 张聊天截图并提交",
-        ("RELATION-MANUAL-SYNC-PROMPT", "INTIMACY-EDITING"): "用户点击手动修改亲密度",
-    }
-    if pair in special:
-        return special[pair]
     if variant != "primary":
         return target_state.get("trigger_zh") or source_state.get("trigger_zh") or "用户触发"
     return source_state.get("trigger_zh") or "用户触发"
 
 
 def branch_route_basis_zh(source_state_id: str, target_state_id: str) -> str:
-    if source_state_id == "TOOLBAR-VISIBLE":
-        return "同一工具栏入口包含多个功能按钮，按入口表面补齐并列可达路径。"
     if target_state_id.startswith("STATE-"):
         return "源文本存在明确 min/max 约束，按边界值分析补齐分支状态。"
     if any(token in target_state_id for token in ["FAILED", "UNRECOGNIZED", "BLOCK"]):
@@ -3328,6 +3314,29 @@ def carrier_type_for_text(text: str, fallback: str = "app_page") -> str:
     return fallback
 
 
+def explicit_independent_page_evidence(text: str) -> bool:
+    basis = str(text)
+    navigation_terms = [
+        "跳转", "打开", "进入", "前往", "吊起", "唤起", "新页面", "独立页面",
+        "app 页面", "App 页面", "应用内页面", "详情页", "设置页", "SDK 页面",
+        "webview", "WebView",
+    ]
+    page_terms = ["独立", "App", "app", "应用内", "详情页", "设置页", "页面", "SDK", "webview", "WebView"]
+    return text_contains_any(basis, navigation_terms) and text_contains_any(basis, page_terms)
+
+
+def should_inherit_entry_carrier(text: str, entry_carrier_type: str) -> bool:
+    if entry_carrier_type not in {"embedded_host_panel", "overlay_or_modal"}:
+        return False
+    if explicit_independent_page_evidence(text):
+        return False
+    if text_contains_any(text, SYSTEM_HANDOFF_SURFACE_TERMS):
+        return True
+    # Loading, analysis, upload, result, feedback and recovery states belong to the task surface
+    # unless the source explicitly says they navigate to an independent page.
+    return True
+
+
 def carrier_label_zh(carrier_type: str) -> str:
     labels = {
         "app_page": "应用内页面",
@@ -3406,8 +3415,8 @@ def build_interaction_carrier_map(brief: dict, runtime: dict, payload: dict) -> 
     screen_by_id = screen_lookup(runtime)
     carrier_rule_ids = rule_ids_for_artifact("interaction_carrier_map")
 
-    screen_carriers = []
-    state_carriers = []
+    screen_basis_by_id: dict[str, str] = {}
+    screen_raw_carrier_by_id: dict[str, str] = {}
     for screen in runtime.get("screens", []) or []:
         screen_states = screen.get("states", []) or []
         basis = " ".join([
@@ -3415,14 +3424,66 @@ def build_interaction_carrier_map(brief: dict, runtime: dict, payload: dict) -> 
             *(state.get("state_zh", "") for state in screen_states),
             *(state.get("feedback_zh", "") for state in screen_states),
         ])
-        carrier_type = carrier_type_for_text(basis)
+        screen_basis_by_id[screen.get("screen_id", "")] = basis
+        screen_raw_carrier_by_id[screen.get("screen_id", "")] = carrier_type_for_text(basis)
+    screen_carrier_by_id = dict(screen_raw_carrier_by_id)
+    inheritance_sources: dict[str, dict] = {}
+    for _ in range(max(1, len(screen_carrier_by_id))):
+        changed = False
+        for interaction in payload_root.get("interactions", []) or []:
+            source_screen_id = (
+                interaction.get("source_screen_id")
+                or state_by_id.get(interaction.get("source_state_id"), {}).get("screen_id")
+            )
+            target_screen_id = (
+                interaction.get("target_screen_id")
+                or state_by_id.get(interaction.get("target_state_id"), {}).get("screen_id")
+            )
+            if not source_screen_id or not target_screen_id or source_screen_id == target_screen_id:
+                continue
+            source_carrier = screen_carrier_by_id.get(source_screen_id)
+            target_basis = screen_basis_by_id.get(target_screen_id, "")
+            if not should_inherit_entry_carrier(target_basis, source_carrier or ""):
+                continue
+            if screen_carrier_by_id.get(target_screen_id) != source_carrier:
+                screen_carrier_by_id[target_screen_id] = source_carrier
+                inheritance_sources[target_screen_id] = {
+                    "inherited_from_screen_id": source_screen_id,
+                    "inherited_by_interaction_id": interaction.get("interaction_id"),
+                    "carrier_resolution_rule_id": "CARRIER_DED_003",
+                    "carrier_resolution_zh": (
+                        "同一任务链路没有明确独立页面导航证据，目标 screen 继承入口承载面；"
+                        "系统选择器、上传、OCR、分析和结果态只作为任务链路内状态或 handoff，不默认升格 app_page。"
+                    ),
+                }
+                changed = True
+        if not changed:
+            break
+
+    screen_carriers = []
+    state_carriers = []
+    for screen in runtime.get("screens", []) or []:
+        screen_states = screen.get("states", []) or []
+        basis = screen_basis_by_id.get(screen.get("screen_id", ""), "")
+        raw_carrier_type = screen_raw_carrier_by_id.get(screen.get("screen_id", ""), "app_page")
+        carrier_type = screen_carrier_by_id.get(screen.get("screen_id", ""), raw_carrier_type)
+        inheritance = inheritance_sources.get(screen.get("screen_id", ""), {})
         screen_carriers.append({
             "screen_id": screen.get("screen_id"),
             "screen_name_zh": screen.get("screen_zh"),
             "carrier_type": carrier_type,
             "carrier_zh": carrier_label_zh(carrier_type),
+            "raw_carrier_type": raw_carrier_type,
             "host_context_zh": "宿主环境内展示" if carrier_type == "embedded_host_panel" else "应用内原型候选承载",
             "standalone_page_allowed": carrier_type == "app_page",
+            "explicit_independent_page_evidence": explicit_independent_page_evidence(basis),
+            "carrier_resolution_rule_id": inheritance.get("carrier_resolution_rule_id", "CARRIER_DED_001"),
+            "carrier_resolution_zh": inheritance.get(
+                "carrier_resolution_zh",
+                "由页面、状态和平台承载面语义直接判断；未出现跨任务继承修正。",
+            ),
+            "inherited_from_screen_id": inheritance.get("inherited_from_screen_id", ""),
+            "inherited_by_interaction_id": inheritance.get("inherited_by_interaction_id", ""),
             "source_refs": screen.get("source_refs", []),
             "rule_ids": carrier_rule_ids,
         })
@@ -3435,15 +3496,25 @@ def build_interaction_carrier_map(brief: dict, runtime: dict, payload: dict) -> 
                 atom_text.get(state.get("source_atom_id", ""), ""),
             ])
             state_carrier_type = carrier_type_for_text(state_basis, carrier_type)
-            if state_carrier_type == "system_handoff_surface" and carrier_type == "embedded_host_panel":
-                state_carrier_type = "embedded_host_panel"
+            raw_state_carrier_type = state_carrier_type
+            if should_inherit_entry_carrier(state_basis, carrier_type):
+                state_carrier_type = carrier_type
             state_carriers.append({
                 "state_id": state.get("state_id"),
                 "screen_id": screen.get("screen_id"),
                 "carrier_type": state_carrier_type,
+                "raw_carrier_type": raw_state_carrier_type,
                 "carrier_zh": carrier_label_zh(state_carrier_type),
                 "host_context_zh": "该状态仍归属宿主嵌入区域；如需外部能力，另由 system_handoff_map 表达。",
                 "standalone_page_allowed": state_carrier_type == "app_page",
+                "explicit_independent_page_evidence": explicit_independent_page_evidence(state_basis),
+                "entry_carrier_type": carrier_type,
+                "carrier_resolution_rule_id": "CARRIER_DED_004" if state_carrier_type != raw_state_carrier_type else "CARRIER_DED_001",
+                "carrier_resolution_zh": (
+                    "状态继承所属任务 screen 的入口承载面；外部能力由 system_handoff_map 表达，不改变主任务承载面。"
+                    if state_carrier_type != raw_state_carrier_type else
+                    "由状态文本和 screen 入口承载面一致判断。"
+                ),
                 "source_refs": state.get("source_refs", []),
                 "rule_ids": carrier_rule_ids,
             })
@@ -3493,6 +3564,16 @@ def build_interaction_carrier_map(brief: dict, runtime: dict, payload: dict) -> 
             "source_carrier_zh": source_carrier.get("carrier_zh", carrier_label_zh("app_page")),
             "target_carrier_type": target_carrier_type,
             "target_carrier_zh": carrier_label_zh(target_carrier_type),
+            "entry_carrier_type": source_carrier.get("entry_carrier_type") or source_carrier.get("carrier_type"),
+            "target_entry_carrier_type": target_carrier.get("entry_carrier_type") or target_carrier.get("carrier_type"),
+            "carrier_resolution_rule_id": "HANDOFF_DED_001" if requires_handoff else (
+                "CARRIER_DED_003" if same_screen or source_carrier.get("carrier_type") == target_carrier.get("carrier_type") else "CARRIER_DED_005"
+            ),
+            "carrier_resolution_zh": (
+                "该交互进入可见外部能力面，目标 carrier 暂时为 handoff surface；完成后返回 source_carrier_type。"
+                if requires_handoff else
+                "同一任务链路继承入口承载面；没有明确独立页面导航证据时，不把结果态升格为 app_page。"
+            ),
             "transition_scope": "same_surface_state_change" if same_screen and same_carrier else "carrier_or_page_transition",
             "requires_system_handoff": requires_handoff,
             "capability_ids": capabilities,
@@ -3742,7 +3823,14 @@ def build_contract_promotion_report(brief: dict, carrier_bundle: dict, args) -> 
             },
             "required_artifacts": required_artifacts,
             "required_model_fields": {
-                "surface_ownership": ["carrier_type", "host_context_zh", "standalone_page_allowed", "system_surface_refs"],
+                "surface_ownership": [
+                    "carrier_type",
+                    "host_context_zh",
+                    "standalone_page_allowed",
+                    "system_surface_refs",
+                    "carrier_resolution_rule_id",
+                    "carrier_resolution_zh",
+                ],
                 "user_journey": ["operation_chain_id", "carrier_transition_type", "handoff_ids"],
                 "interaction_state_machine": ["edge_type", "stays_on_same_surface", "feedback_surface_zh"],
                 "component_blueprint": ["carrier_type", "render_region_zh"],
@@ -4974,8 +5062,8 @@ def model_stage_timeout_seconds() -> int:
         try:
             return max(60, int(raw_value))
         except ValueError:
-            return 300
-    return 300
+            return DEFAULT_MODEL_STAGE_TIMEOUT_SECONDS
+    return DEFAULT_MODEL_STAGE_TIMEOUT_SECONDS
 
 
 def model_command_policy() -> dict:
@@ -5022,6 +5110,8 @@ def summarize_carrier_handoff_context(carrier_bundle: dict | None) -> dict:
     capability_root = (carrier_bundle.get("capability_assessment") or {}).get("capability_assessment", {})
     prompt_detail_limit = 24
     carrier_items = carrier_root.get("interaction_carriers") or carrier_root.get("carrier_assignments") or []
+    screen_carrier_items = carrier_root.get("screen_carriers") or []
+    state_carrier_items = carrier_root.get("state_carriers") or []
     handoff_items = handoff_root.get("handoffs") or []
     operation_items = operation_root.get("chains") or operation_root.get("operation_chains") or []
     capability_items = capability_root.get("capabilities") or []
@@ -5036,6 +5126,8 @@ def summarize_carrier_handoff_context(carrier_bundle: dict | None) -> dict:
         "summary_kind": "compact_carrier_handoff_context",
         "summary_guidance_zh": "complete_*_index 是全量权威索引；*_details 只是少量详细样本。模型不得因为 details 截断而新编 operation_chain_id、handoff_id 或 interaction_id。",
         "counts": {
+            "screen_carriers": len(screen_carrier_items),
+            "state_carriers": len(state_carrier_items),
             "carrier_assignments": len(carrier_items),
             "handoffs": len(handoff_items),
             "operation_chains": len(operation_items),
@@ -5043,6 +5135,50 @@ def summarize_carrier_handoff_context(carrier_bundle: dict | None) -> dict:
             "handoff_required_interactions": len(handoff_required),
         },
         "carrier_types": carrier_types,
+        "carrier_inheritance_policy_zh": (
+            "同一任务链路默认继承入口承载面；系统选择器、授权、上传、OCR、分析和结果态只作为 "
+            "handoff/overlay 或同一任务状态。只有 source 明确写出跳转独立页面、打开 App 页面、SDK 页面等导航证据，"
+            "才允许升格 app_page。"
+        ),
+        "screen_carrier_index": [
+            compact_prompt_item(
+                item,
+                [
+                    "screen_id",
+                    "carrier_type",
+                    "raw_carrier_type",
+                    "standalone_page_allowed",
+                    "explicit_independent_page_evidence",
+                    "carrier_resolution_rule_id",
+                    "carrier_resolution_zh",
+                    "inherited_from_screen_id",
+                    "inherited_by_interaction_id",
+                    "source_refs",
+                ],
+                max_refs=2,
+                max_chars=180,
+            )
+            for item in screen_carrier_items
+        ],
+        "state_carrier_index": [
+            compact_prompt_item(
+                item,
+                [
+                    "state_id",
+                    "screen_id",
+                    "carrier_type",
+                    "raw_carrier_type",
+                    "entry_carrier_type",
+                    "standalone_page_allowed",
+                    "explicit_independent_page_evidence",
+                    "carrier_resolution_rule_id",
+                    "source_refs",
+                ],
+                max_refs=2,
+                max_chars=140,
+            )
+            for item in state_carrier_items
+        ],
         "complete_carrier_index": [
             compact_prompt_item(
                 item,
@@ -5056,6 +5192,10 @@ def summarize_carrier_handoff_context(carrier_bundle: dict | None) -> dict:
                     "requires_system_handoff",
                     "capability_ids",
                     "standalone_page_allowed",
+                    "entry_carrier_type",
+                    "target_entry_carrier_type",
+                    "carrier_resolution_rule_id",
+                    "carrier_resolution_zh",
                     "source_refs",
                 ],
                 max_refs=2,
@@ -5078,6 +5218,10 @@ def summarize_carrier_handoff_context(carrier_bundle: dict | None) -> dict:
                     "requires_system_handoff",
                     "capability_ids",
                     "standalone_page_allowed",
+                    "entry_carrier_type",
+                    "target_entry_carrier_type",
+                    "carrier_resolution_rule_id",
+                    "carrier_resolution_zh",
                     "source_refs",
                 ],
             )
@@ -5261,6 +5405,93 @@ def summarize_prior_model_outputs(prior_roots: dict) -> dict:
     return summarized
 
 
+MODEL_STAGE_REVIEW_FIELDS = [
+    "logic_consistent",
+    "prototype_renderable",
+    "blocking_unknowns",
+    "non_blocking_unknowns",
+]
+
+
+def normalize_unknown_list(value) -> list:
+    if value in [None, ""]:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def ensure_model_review_fields(root: dict, *, parsed_root: dict | None = None, status: str = "pass") -> dict:
+    parsed_root = parsed_root or {}
+    has_any_new_field = any(field in parsed_root or field in root for field in MODEL_STAGE_REVIEW_FIELDS)
+    raw_status = str(parsed_root.get("status") or status or "").strip()
+    if status == "skipped":
+        root.setdefault("logic_consistent", False)
+        root.setdefault("prototype_renderable", False)
+        root.setdefault("blocking_unknowns", [])
+        root.setdefault("non_blocking_unknowns", [])
+        root["blocking_unknowns"] = normalize_unknown_list(root.get("blocking_unknowns"))
+        root["non_blocking_unknowns"] = normalize_unknown_list(root.get("non_blocking_unknowns"))
+        root["blocking_review_required"] = bool(root.get("blocking_review_required", False))
+        root["non_blocking_review_note"] = root.get("non_blocking_review_note", "")
+        root["model_review_contract_version"] = "3.2.1"
+        root["status"] = "skipped"
+        return root
+    if "logic_consistent" not in root:
+        root["logic_consistent"] = True if status == "pass" and has_any_new_field else (status == "pass" and raw_status == "pass")
+    if "prototype_renderable" not in root:
+        root["prototype_renderable"] = True if status == "pass" and has_any_new_field else (status == "pass" and raw_status == "pass")
+    if "blocking_unknowns" not in root:
+        root["blocking_unknowns"] = []
+    if "non_blocking_unknowns" not in root:
+        root["non_blocking_unknowns"] = []
+    root["blocking_unknowns"] = normalize_unknown_list(root.get("blocking_unknowns"))
+    root["non_blocking_unknowns"] = normalize_unknown_list(root.get("non_blocking_unknowns"))
+    root["blocking_review_required"] = bool(root.get("blocking_review_required", False))
+    root["non_blocking_review_note"] = root.get("non_blocking_review_note", "")
+    root["model_review_contract_version"] = "3.2.1"
+    if raw_status == "review_required" and not has_any_new_field:
+        root["blocking_unknowns"].append({
+            "unknown_id": "LEGACY-REVIEW-REQUIRED",
+            "finding_zh": "模型输出仍使用旧 review_required，未拆分 blocking_review_required / non_blocking_review_note。",
+            "source_refs": root.get("source_refs", []),
+        })
+        root["logic_consistent"] = False
+        root["prototype_renderable"] = False
+    if raw_status == "blocking_review_required":
+        root["blocking_review_required"] = True
+    if raw_status == "non_blocking_review_note" and not root.get("non_blocking_review_note"):
+        root["non_blocking_review_note"] = "模型声明存在非阻断备注，但逻辑一致且可渲染。"
+    if root.get("blocking_review_required") or root.get("logic_consistent") is not True or root.get("prototype_renderable") is not True or root.get("blocking_unknowns"):
+        root["status"] = "blocked"
+    elif root.get("status") in {"review_required", "non_blocking_review_note"}:
+        root["status"] = "pass"
+    return root
+
+
+def model_stage_blocking_errors(root: dict, label: str = "model_stage") -> list[str]:
+    errors = []
+    if not isinstance(root, dict):
+        return [f"{label}: root must be an object"]
+    if root.get("status") == "skipped":
+        return []
+    missing = [field for field in MODEL_STAGE_REVIEW_FIELDS if field not in root]
+    if missing:
+        errors.append(f"{label}: missing v3.2.1 model review fields: {', '.join(missing)}")
+    if root.get("status") == "review_required":
+        errors.append(f"{label}: legacy review_required is not allowed; split into blocking_review_required or non_blocking_review_note")
+    if root.get("logic_consistent") is not True:
+        errors.append(f"{label}: logic_consistent must be true")
+    if root.get("prototype_renderable") is not True:
+        errors.append(f"{label}: prototype_renderable must be true")
+    blockers = normalize_unknown_list(root.get("blocking_unknowns"))
+    if blockers:
+        errors.append(f"{label}: blocking_unknowns must be empty")
+    if root.get("blocking_review_required") is True:
+        errors.append(f"{label}: blocking_review_required must be false")
+    return errors
+
+
 def model_stage_completion_results(
     stage: dict,
     mode: str,
@@ -5271,12 +5502,14 @@ def model_stage_completion_results(
     artifact_path: Path,
     contract_path: Path,
     command: list[str],
+    artifact_root: dict | None = None,
 ) -> list[dict]:
     read_only_ok = (not model_called) or ("--sandbox" in command and "read-only" in command)
     raw_ok = (not model_called) or raw_path.exists()
     artifact_ok = artifact_path.exists()
     required_exit_ok = mode != "required" or exit_code == 0
-    output_status_ok = status in {"pass", "review_required"} or (mode != "required" and status == "skipped")
+    review_errors = model_stage_blocking_errors(artifact_root or {}, stage["stage_id"]) if artifact_root else ["model artifact root missing"]
+    output_status_ok = (status == "pass" and not review_errors) or (mode != "required" and status == "skipped")
     return [
         completion_criterion(
             f"MODEL-CC-{stage['key'].upper().replace('_', '-')}-CONTRACT",
@@ -5315,6 +5548,15 @@ def model_stage_completion_results(
             rule_ids_for_artifact("model_invocation_trace"),
         ),
         completion_criterion(
+            f"MODEL-CC-{stage['key'].upper().replace('_', '-')}-RENDERABLE",
+            f"{stage['title_zh']}必须声明逻辑一致、可渲染且没有阻断未知项。",
+            f"validate-model-{stage['key'].replace('_', '-')}",
+            review_errors[:8] or [run_artifact_path(artifact_path)],
+            "pass" if not review_errors else "blocked",
+            mode == "required",
+            rule_ids_for_artifact("model_invocation_trace"),
+        ),
+        completion_criterion(
             f"MODEL-CC-{stage['key'].upper().replace('_', '-')}-EXIT-ZERO",
             f"required 模式下 {stage['title_zh']} 必须 exit 0。",
             "model_invocation_trace",
@@ -5324,6 +5566,114 @@ def model_stage_completion_results(
             rule_ids_for_artifact("model_invocation_trace"),
         ),
     ]
+
+
+def model_stage_validator_name(stage: dict) -> str:
+    return f"validate-model-{stage['key'].replace('_', '-')}"
+
+
+def model_stage_loop_failure_class(errors: list[str], artifact_root: dict, stage: dict) -> str:
+    joined = "\n".join(errors + [json.dumps(artifact_root, ensure_ascii=False, sort_keys=True)])
+    if any(term in joined for term in ["承载面", "carrier", "surface", "surface_ownership"]):
+        return "FC-MODEL-CARRIER-SURFACE-CONFLICT"
+    if any(term in joined for term in ["handoff", "系统交接", "system_picker", "overlay"]):
+        return "FC-MODEL-HANDOFF-CHAIN-CONFLICT"
+    if any(term in joined for term in ["operation_chain", "真实操作链", "操作链", "playback"]):
+        return "FC-MODEL-OPERATION-CHAIN-BLOCKED"
+    if any(term in joined for term in ["review_required", "blocking_unknowns", "logic_consistent", "prototype_renderable"]):
+        return "FC-MODEL-STAGE-BLOCKER"
+    return "FC-MODEL-STAGE-BLOCKER"
+
+
+def model_stage_loop_source_refs(artifact_root: dict, brief: dict | None = None) -> list[str]:
+    refs: list[str] = []
+    for ref in artifact_root.get("source_refs", []) or []:
+        if isinstance(ref, str) and ref:
+            refs.append(ref)
+    for field in ["blocking_unknowns", "non_blocking_unknowns", "generation_findings"]:
+        for item in artifact_root.get(field, []) or []:
+            if not isinstance(item, dict):
+                continue
+            for ref in item.get("source_refs", []) or []:
+                if isinstance(ref, str) and ref:
+                    refs.append(ref)
+    if not refs and brief:
+        refs.extend((brief.get("prototype_source_brief", {}) or {}).get("source_refs", []) or [])
+    return normalize_rule_ids(refs)[:40] or ["model_stage"]
+
+
+def model_stage_loop_errors(
+    stage: dict,
+    trace_root: dict,
+    artifact_root: dict,
+    blocked_criteria: list[str],
+) -> list[str]:
+    errors: list[str] = []
+    for criterion in trace_root.get("completion_criteria_results", []) or []:
+        if criterion.get("criterion_id") not in blocked_criteria:
+            continue
+        evidence = criterion.get("evidence_refs", []) or []
+        errors.append(
+            f"{stage['stage_id']} {criterion.get('criterion_id')}: "
+            f"{criterion.get('description_zh', '模型阶段完成条件未满足')}；evidence={'; '.join(map(str, evidence[:8]))}"
+        )
+    errors.extend(model_stage_blocking_errors(artifact_root, stage["stage_id"]))
+    for item in artifact_root.get("blocking_unknowns", []) or []:
+        if isinstance(item, dict):
+            summary = item.get("summary_zh") or item.get("finding_zh") or item.get("unknown_zh") or item.get("finding_id") or "blocking_unknown"
+            errors.append(f"{stage['stage_id']} blocking_unknown: {summary}")
+        elif item:
+            errors.append(f"{stage['stage_id']} blocking_unknown: {item}")
+    return normalize_rule_ids(errors)
+
+
+def write_model_stage_loop_gate(
+    stage: dict,
+    trace_root: dict,
+    artifact_root: dict,
+    blocked_criteria: list[str],
+    paths: dict,
+    brief: dict | None = None,
+) -> Path:
+    errors = model_stage_loop_errors(stage, trace_root, artifact_root, blocked_criteria)
+    affected_artifacts = [
+        run_artifact_path(paths[model_path_key(stage["key"], suffix)])
+        for suffix in ["_contract", "_raw", "", "_trace"]
+        if model_path_key(stage["key"], suffix) in paths
+    ]
+    gate_id = f"MODEL-GATE-{stage['stage_id']}-{RUN_ID}"
+    failure_class = model_stage_loop_failure_class(errors, artifact_root, stage)
+    return write_renderer_loop_gate(
+        gate_id,
+        errors,
+        affected_artifacts,
+        model_stage_loop_source_refs(artifact_root, brief),
+        artifact_key=stage["root_key"],
+        stage=f"{stage['stage_id']}-LOOP-GATE",
+        validator=model_stage_validator_name(stage),
+        failure_class_error=failure_class,
+        failure_class_pass="FC-MODEL-STAGE-PASS",
+        repair_hint_error_zh=(
+            "不要继续生成 runtime、writer brief 或写 Figma。先判断阻断是 PRD 真歧义还是 harness 推理投射错误。"
+            "如果源文本没有明确声明跳转独立页面，同一任务链路应继承入口承载面；系统选择器、授权、上传、OCR "
+            "等外部能力只作为 handoff/overlay，不应默认把后续结果提升为 app_page。修复后重新运行该模型 stage。"
+        ),
+        repair_hint_pass_zh=f"{stage['title_zh']}模型阶段通过，可继续后续生成。",
+        route_targets=[
+            stage["stage_id"],
+            "GEN-CARRIER-HANDOFF-DRAFT",
+            "GEN-CONTRACT-PROMOTION",
+            "GEN-MODEL-REVIEW",
+        ],
+        report_title="Model Stage Loop Gate",
+        report_intro="本文件是模型阶段 loop gate 的人工阅读入口；YAML 是机器源。",
+        final_exit_reason_error=f"{stage['stage_id']} model completion criteria failed",
+        final_exit_reason_pass=f"{stage['stage_id']} model completion criteria passed",
+        revalidate=[model_stage_validator_name(stage), "validate-model-stage-coverage"],
+        patch_type="model_stage_repair_recommendation",
+        required_repair_zh="修复模型 contract、承载面/交接面投射或源 PRD 歧义后，重新运行该模型 stage。",
+        loop_stage_tail="GEN-MODEL-LOOP",
+    )
 
 
 def model_stage_contract(
@@ -5353,7 +5703,11 @@ def model_stage_contract(
             "model_output_kind": stage["output_kind"],
             "contract_profile_id": contract_profile_id,
             "contract_promotion_status": promotion_root.get("status", "base_contract"),
-            "required_model_fields": (promotion_root.get("required_model_fields", {}) or {}).get(stage["key"], []),
+            "required_model_fields": normalize_rule_ids([]) or sorted(set(
+                ((promotion_root.get("required_model_fields", {}) or {}).get(stage["key"], []) or [])
+                + MODEL_STAGE_REVIEW_FIELDS
+                + ["blocking_review_required", "non_blocking_review_note"]
+            )),
             "command_policy": model_command_policy(),
             "input_refs": input_refs,
             "output_refs": output_refs,
@@ -5489,24 +5843,32 @@ def stage_context_for_prompt(
 
 def output_contract_for_stage(stage: dict, contract_promotion: dict | None = None) -> dict:
     promoted = (contract_promotion or {}).get("model_contract_promotion_report", {}).get("contract_profile_id") == "carrier_handoff_operation_chain_v2"
+    review_fields = ["status", "stage_role", "logic_consistent", "prototype_renderable", "blocking_unknowns", "non_blocking_unknowns"]
     contracts = {
         "surface_ownership": {
-            "required_root_fields": ["status", "stage_role", "surface_blueprint", "generation_findings"],
+            "required_root_fields": review_fields + ["surface_blueprint", "generation_findings"],
             "surface_blueprint_item": ["screen_id", "page_role_zh", "page_purpose_zh", "page_boundary_zh", "state_policy_zh", "source_refs"]
-            + (["carrier_type", "host_context_zh", "standalone_page_allowed", "system_surface_refs"] if promoted else []),
+            + ([
+                "carrier_type",
+                "host_context_zh",
+                "standalone_page_allowed",
+                "system_surface_refs",
+                "carrier_resolution_rule_id",
+                "carrier_resolution_zh",
+            ] if promoted else []),
         },
         "user_journey": {
-            "required_root_fields": ["status", "stage_role", "journey_edges", "page_flow_summary_zh", "generation_findings"],
+            "required_root_fields": review_fields + ["journey_edges", "page_flow_summary_zh", "generation_findings"],
             "journey_edge_item": ["source_screen_id", "target_screen_id", "trigger_zh", "path_type", "reason_zh", "source_refs"]
             + (["operation_chain_id", "carrier_transition_type", "handoff_ids"] if promoted else []),
         },
         "interaction_state_machine": {
-            "required_root_fields": ["status", "stage_role", "state_transitions", "interaction_adjustments", "generation_findings"],
+            "required_root_fields": review_fields + ["state_transitions", "interaction_adjustments", "generation_findings"],
             "state_transition_item": ["source_state_id", "target_state_id", "trigger_zh", "guard_zh", "reason_zh", "source_refs"]
             + (["edge_type", "stays_on_same_surface", "feedback_surface_zh"] if promoted else []),
         },
         "component_blueprint": {
-            "required_root_fields": ["status", "stage_role", "component_groups", "component_intents", "generation_findings"],
+            "required_root_fields": review_fields + ["component_groups", "component_intents", "generation_findings"],
             "component_group_item": ["screen_id", "group_name_zh", "element_type", "component_ids", "description_zh", "source_refs"]
             + (["carrier_type", "render_region_zh"] if promoted else []),
         },
@@ -5530,7 +5892,15 @@ def build_model_stage_prompt(
         "你只能返回 JSON，不能写文件，不能引用 sample/fixture，不能要求写 PRD、product-spec 或 Figma。"
         f"请把结果放在根 key `{stage['root_key']}` 下。"
         "所有推理都必须保留 source_refs；不确定的内容写入 generation_findings，不要硬编业务事实。"
+        "required 模式不能只返回 review_required；必须明确 logic_consistent、prototype_renderable、blocking_unknowns、non_blocking_unknowns。"
+        "如果逻辑不一致、不能渲染或存在阻断未知项，status 必须是 blocking_review_required；如果只是提醒但不阻断，status 使用 non_blocking_review_note 且 blocking_unknowns 为空。"
+        "只有逻辑一致、可渲染且无阻断未知项时才允许 status=pass。"
         "当上下文同时给出 complete_*_index 和 *_details 时，complete_*_index 是全量权威索引，*_details 只是详细样本；不得因为 details 截断而新编 ID 或链路。"
+        "承载面判断必须先应用通用演绎规则：同一任务链路默认继承入口承载面；媒体选择、授权、上传、OCR、分析、结果和失败恢复不是独立页面证据，"
+        "只能作为 system_handoff/overlay 或同一任务状态表达。只有 source_refs 明确写出跳转独立 App 页面、打开独立页面、进入 SDK/WebView 页面等互斥证据，"
+        "才允许把后续状态升格为 app_page 或输出 blocking_review_required。"
+        "如果 carrier_handoff_context 已给出 carrier_resolution_rule_id、carrier_resolution_zh 或 screen_carrier_index，模型必须优先消费这些消解结果；"
+        "可被 CARRIER_DED_003/CARRIER_DED_004/CARRIER_DED_005 演绎解决的 apparent conflict 不得作为 blocking_unknown。"
         "输出 JSON 必须符合下面的 contract，并使用中文通俗句式。\n\n"
         + json.dumps({"output_contract": contract, "context": context}, ensure_ascii=False, indent=2)
     )
@@ -5539,6 +5909,10 @@ def build_model_stage_prompt(
 def normalize_status(value: str, *, model_called: bool, exit_code: int | None, mode: str) -> str:
     if value in {"pass", "review_required", "blocked", "skipped"}:
         return value
+    if value == "non_blocking_review_note":
+        return "pass"
+    if value == "blocking_review_required":
+        return "blocked"
     if not model_called:
         return "blocked" if mode == "required" else "skipped"
     return "review_required" if exit_code == 0 else ("blocked" if mode == "required" else "skipped")
@@ -5570,6 +5944,8 @@ def deterministic_model_artifact_payload(stage: dict, brief: dict, runtime: dict
                     "host_context_zh": "按承载面映射确认是否为宿主嵌入区域、系统面或普通页面。",
                     "standalone_page_allowed": carrier_type_for_text(" ".join(item.get("component_rules", [])), "app_page") == "app_page",
                     "system_surface_refs": [],
+                    "carrier_resolution_rule_id": "CARRIER_DED_001",
+                    "carrier_resolution_zh": "deterministic fallback 仅保留候选承载面；required 模式应由模型结合 carrier_handoff_context 输出最终承载面消解决策。",
                     "source_refs": item.get("source_refs", []),
                 }
                 for item in brief_root.get("surface_ownership", []) or []
@@ -5695,6 +6071,7 @@ def normalize_model_stage_artifact(
         if isinstance(item, dict)
         for ref in item.get("source_refs", [])
     }) or payload["prototype_render_payload"].get("source_refs", [])
+    raw_status_value = parsed_root.get("status", status)
     root = {
         "version": "3.1.1",
         "mode": "DRD_MODE",
@@ -5705,6 +6082,7 @@ def normalize_model_stage_artifact(
         "contract_profile_id": promotion_root.get("contract_profile_id", "base_drd_v1"),
         "contract_promotion_status": promotion_root.get("status", "base_contract"),
         "status": status,
+        "raw_model_status": raw_status_value,
         "model_called": model_called,
         "rule_trace": rule_trace_for_artifact("model_invocation_trace"),
         "source_refs": source_refs,
@@ -5723,6 +6101,7 @@ def normalize_model_stage_artifact(
     if root.get("stage_role") != stage["key"]:
         root["stage_role_warning_zh"] = f"模型输出未声明 stage_role={stage['key']}，已按 {stage['key']} 归档。"
         root["stage_role"] = stage["key"]
+    ensure_model_review_fields(root, parsed_root=parsed_root, status=status)
     return {root_key: root}
 
 
@@ -5770,10 +6149,7 @@ def run_model_stage(
         codex_bin = shutil.which("codex")
         if not codex_bin:
             status = "blocked" if mode == "required" else "skipped"
-            if mode == "required":
-                artifact = normalize_model_stage_artifact(stage, {}, brief, runtime, payload, contract_promotion, status=status, model_called=False, raw_path=raw_path, trace_path=trace_path)
-                ywrite(artifact_path, artifact)
-                raise SystemExit(f"BLOCKED: --codex-inference required but codex CLI is unavailable for {stage['stage_id']}")
+            stderr_text = f"codex CLI unavailable for {stage['stage_id']}"
         else:
             raw_path.parent.mkdir(parents=True, exist_ok=True)
             cmd = [
@@ -5811,9 +6187,9 @@ def run_model_stage(
                 completed_at = datetime.now(timezone.utc)
                 status = "blocked" if mode == "required" else "skipped"
                 stderr_text = f"{stage['stage_id']} timed out"
-                if mode == "required":
-                    raise SystemExit(f"BLOCKED: Codex inference stage timed out: {stage['stage_id']}")
     artifact = normalize_model_stage_artifact(stage, parsed, brief, runtime, payload, contract_promotion, status=status, model_called=model_called, raw_path=raw_path, trace_path=trace_path)
+    artifact_root = artifact.get(stage["root_key"], {})
+    status = artifact_root.get("status", status)
     ywrite(artifact_path, artifact)
     duration_value = duration_ms(started, completed_at) if started and completed_at else None
     trace_root = {
@@ -5832,6 +6208,12 @@ def run_model_stage(
         "contract_profile_id": (contract_promotion or {}).get("model_contract_promotion_report", {}).get("contract_profile_id", "base_drd_v1"),
         "model_called": model_called,
         "status": status,
+        "logic_consistent": artifact_root.get("logic_consistent"),
+        "prototype_renderable": artifact_root.get("prototype_renderable"),
+        "blocking_unknowns": artifact_root.get("blocking_unknowns", []),
+        "non_blocking_unknowns": artifact_root.get("non_blocking_unknowns", []),
+        "blocking_review_required": artifact_root.get("blocking_review_required", False),
+        "non_blocking_review_note": artifact_root.get("non_blocking_review_note", ""),
         "exit_code": exit_code,
         "started_at": utc_text(started) if started else None,
         "completed_at": utc_text(completed_at) if completed_at else None,
@@ -5856,7 +6238,7 @@ def run_model_stage(
         "stdout_sha256": f"sha256:{sha256_text(stdout_text)}",
         "stderr_sha256": f"sha256:{sha256_text(stderr_text)}",
         "stderr_excerpt": stderr_text[-1000:],
-        "completion_criteria_results": model_stage_completion_results(stage, mode, status, model_called, exit_code, raw_path, artifact_path, contract_path, command),
+        "completion_criteria_results": model_stage_completion_results(stage, mode, status, model_called, exit_code, raw_path, artifact_path, contract_path, command, artifact_root),
     }
     trace = {"model_invocation_trace": trace_root}
     ywrite(trace_path, trace)
@@ -5867,7 +6249,11 @@ def run_model_stage(
             if item.get("required", True) and item.get("status") == "blocked"
         ]
         if blocked:
-            raise SystemExit(f"BLOCKED: {stage['stage_id']} failed model completion criteria: {', '.join(blocked)}")
+            gate_dir = write_model_stage_loop_gate(stage, trace_root, artifact_root, blocked, paths, brief)
+            raise SystemExit(
+                f"BLOCKED: {stage['stage_id']} failed model completion criteria; loop gate evidence was written to "
+                f"{gate_dir}: {', '.join(blocked)}"
+            )
     return artifact, contract, trace
 
 
@@ -5930,8 +6316,8 @@ def aggregate_model_status(stage_traces: list[dict], mode: str) -> str:
         return "blocked"
     if mode == "required" and any(status == "skipped" for status in statuses):
         return "blocked"
-    if any(status == "review_required" for status in statuses):
-        return "review_required"
+    if any(model_stage_blocking_errors(item, item.get("stage_id", "model_stage")) for item in stage_traces):
+        return "blocked"
     if all(status == "skipped" for status in statuses):
         return "skipped"
     return "pass"
@@ -6006,7 +6392,12 @@ def build_combined_model_review(model_artifacts: dict, model_traces: dict) -> di
         for key in MODEL_STAGE_KEYS
     }
     statuses = [root.get("status") for root in roots.values()]
-    status = "blocked" if "blocked" in statuses else ("review_required" if "review_required" in statuses else ("skipped" if all(item == "skipped" for item in statuses) else "pass"))
+    blocking = [
+        error
+        for key, root in roots.items()
+        for error in model_stage_blocking_errors(root, MODEL_STAGE_BY_KEY[key]["stage_id"])
+    ]
+    status = "blocked" if "blocked" in statuses or blocking else ("skipped" if all(item == "skipped" for item in statuses) else "pass")
     return {
         "codex_inference_review": {
             "version": "3.1.1",
@@ -6017,6 +6408,7 @@ def build_combined_model_review(model_artifacts: dict, model_traces: dict) -> di
             "model_output_kind": "prototype_multistage_reasoning",
             "model_called": all(root.get("model_called") is True for root in roots.values()),
             "status": status,
+            "blocking_findings": blocking,
             "rule_trace": rule_trace_for_artifact("codex_inference_review"),
             "source_refs": sorted({ref for root in roots.values() for ref in root.get("source_refs", [])}),
             "model_stage_artifacts": {
@@ -6160,7 +6552,7 @@ def apply_model_blueprint_guidance(runtime: dict, payload: dict, model_artifacts
 
     completed_model_stages = [
         key for key, root in roots.items()
-        if root.get("model_called") is True and root.get("status") in {"pass", "review_required"}
+        if root.get("model_called") is True and root.get("status") == "pass" and not model_stage_blocking_errors(root, MODEL_STAGE_BY_KEY[key]["stage_id"])
     ]
     all_required_called = len(completed_model_stages) == len(MODEL_STAGE_DEFINITIONS)
     guidance_summary = {
@@ -6566,9 +6958,7 @@ def build_generation_job_queue(paths: dict, source_refs: list[str], model_invoca
         ]
         stage_trace = stage_traces.get(model_stage["stage_id"], {})
         stage_status = stage_trace.get("status", "blocked")
-        if stage_status == "review_required":
-            job_status = "pass_with_review_required"
-        elif stage_status in {"pass", "skipped", "blocked"}:
+        if stage_status in {"pass", "skipped", "blocked"} and not model_stage_blocking_errors(stage_trace, model_stage["stage_id"]):
             job_status = stage_status
         else:
             job_status = "blocked"
@@ -6875,6 +7265,11 @@ ARTIFACT_ROOT_KEYS = {
     "figma_prototype_materialization": "figma_prototype_materialization",
     "figma_post_write_audit": "figma_post_write_audit",
     "semantic_prototype_payload": "semantic_prototype_payload",
+    "prototype_writer_brief": "prototype_writer_brief",
+    "prototype_playback_contract": "prototype_playback_contract",
+    "figma_visual_reverse_inference": "figma_visual_reverse_inference",
+    "figma_stage_alignment_audit": "figma_stage_alignment_audit",
+    "figma_source_alignment_audit": "figma_source_alignment_audit",
 }
 
 
@@ -6952,6 +7347,28 @@ def carrier_map_semantic_errors(doc: dict, payload: dict | None = None) -> list[
     errors = []
     root = doc.get("interaction_carrier_map", {})
     errors.extend(rule_trace_errors(root, "interaction_carrier_map.rule_trace"))
+    for screen in root.get("screen_carriers", []) or []:
+        sid = screen.get("screen_id", "<unknown>")
+        errors.extend(rule_trace_errors(screen, f"interaction_carrier_map.screen_carriers.{sid}.rule_ids"))
+        for field in ["carrier_type", "standalone_page_allowed", "carrier_resolution_rule_id", "carrier_resolution_zh"]:
+            if screen.get(field) in [None, ""]:
+                errors.append(rule_error("CARRIER_DED_001", f"{sid}: missing {field}"))
+        if (
+            screen.get("carrier_type") == "app_page"
+            and screen.get("inherited_from_screen_id")
+            and screen.get("explicit_independent_page_evidence") is not True
+        ):
+            errors.append(rule_error("CARRIER_DED_005", f"{sid}: app_page requires explicit independent page evidence"))
+        if screen.get("carrier_resolution_rule_id") in {"CARRIER_DED_003", "CARRIER_DED_004"} and screen.get("standalone_page_allowed") is True:
+            errors.append(rule_error("CARRIER_DED_003", f"{sid}: inherited task carrier cannot be standalone page"))
+    for state in root.get("state_carriers", []) or []:
+        state_id = state.get("state_id", "<unknown>")
+        errors.extend(rule_trace_errors(state, f"interaction_carrier_map.state_carriers.{state_id}.rule_ids"))
+        for field in ["carrier_type", "entry_carrier_type", "carrier_resolution_rule_id", "carrier_resolution_zh"]:
+            if state.get(field) in [None, ""]:
+                errors.append(rule_error("CARRIER_DED_001", f"{state_id}: missing {field}"))
+        if state.get("carrier_type") == "app_page" and state.get("entry_carrier_type") in {"embedded_host_panel", "overlay_or_modal"} and state.get("explicit_independent_page_evidence") is not True:
+            errors.append(rule_error("CARRIER_DED_005", f"{state_id}: app_page state requires explicit independent page evidence"))
     interaction_items = root.get("interaction_carriers", []) or []
     if not interaction_items:
         errors.append(rule_error("CARRIER_DED_001", "interaction_carrier_map.interaction_carriers must not be empty"))
@@ -6982,6 +7399,8 @@ def carrier_map_semantic_errors(doc: dict, payload: dict | None = None) -> list[
             errors.append(rule_error("HANDOFF_DED_001", f"{iid}: visible handoff carrier set without requires_system_handoff"))
         if item.get("target_carrier_type") != "app_page" and item.get("standalone_page_allowed") is True:
             errors.append(rule_error("CARRIER_DED_002", f"{iid}: non-app carrier must not be promoted to standalone page"))
+        if item.get("target_carrier_type") == "app_page" and item.get("target_entry_carrier_type") in {"embedded_host_panel", "overlay_or_modal"} and item.get("requires_system_handoff") is not True:
+            errors.append(rule_error("CARRIER_DED_005", f"{iid}: app_page transition from embedded entry carrier requires explicit navigation evidence"))
     return errors
 
 
@@ -7081,7 +7500,7 @@ def looks_like_machine_identifier_text(value: str | None) -> bool:
 
 
 VISIBLE_MACHINE_TOKEN_RE = re.compile(
-    r"\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|RELATION|TOPIC|TOOLBAR)-[A-Z0-9_-]+\b"
+    r"\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|TARGET|OVERLAY|SRC|ALIGN)-[A-Z0-9_-]+\b"
 )
 
 
@@ -7122,20 +7541,18 @@ def fallback_label_for_primitive(primitive_control: str | None, *, description: 
     primitive = str(primitive_control or "")
     source = strip_source_ids(description)
     if source and not contains_visible_machine_token(source) and not is_generic_visible_text(source):
-        if "亲密" in source or primitive == "level_option":
-            return "当前亲密度：2 级"
-        if "上传" in source and "3" in source and "5" in source:
-            return "上传 3 到 5 张"
-        if "图片" in source or "截图" in source:
-            return "选择图片"
+        if primitive == "level_option":
+            return "当前等级"
+        if "上传" in source or "选择" in source:
+            return "选择内容"
         if "失败" in source:
             return "失败后重试"
     if primitive == "level_option":
-        return "当前亲密度：2 级"
+        return "当前等级"
     if primitive == "image_tile":
-        return "选择图片"
+        return "选择项"
     if primitive == "selection_counter":
-        return "已选 0 张"
+        return "已选 0 项"
     if primitive == "confirm_action":
         return "确认选择"
     if primitive == "cancel_action":
@@ -7143,12 +7560,6 @@ def fallback_label_for_primitive(primitive_control: str | None, *, description: 
     if primitive == "disabled_action":
         return "暂不可继续"
     if primitive == "toolbar_action":
-        if "TOPIC" in component_id:
-            return "话题推荐"
-        if "INTIMACY" in component_id:
-            return "亲密度"
-        if "RELATION" in component_id:
-            return "关系分析"
         return "功能入口"
     if primitive == "toast_notice":
         return "当前提示"
@@ -8236,9 +8647,9 @@ def ui_primitive_for_component(
         return "result_card"
     if has_media_signal(text) and ("input" in semantic or "select" in semantic):
         return "image_grid"
-    if any(token in text for token in ["数量", "已选", "3 到 5", "3-5", "min", "max"]):
+    if any(token in text for token in ["数量", "已选", "至少", "最多", "少于", "多于", "超过", "min", "max"]):
         return "selection_counter"
-    if is_embedded_carrier(carrier.get("carrier_type"), carrier.get("carrier_zh"), frame_item.get("title_zh")) and any(token in text for token in ["入口", "工具栏", "话题", "关系", "设置"]):
+    if is_embedded_carrier(carrier.get("carrier_type"), carrier.get("carrier_zh"), frame_item.get("title_zh")) and any(token in text for token in ["入口", "工具栏", "设置", "功能", "操作"]):
         return "toolbar"
     if "button" in semantic or "submit" in semantic or bound_interactions:
         return "primary_button"
@@ -9338,6 +9749,14 @@ def renderer_loop_gate_dir(gate_id: str) -> Path:
 
 def renderer_failure_class_for_errors(errors: list[str], default_class: str) -> str:
     joined = "\n".join(errors)
+    if any(term in joined for term in ["GEN-MODEL-", "MODEL-CC-", "model completion criteria", "模型阶段"]):
+        if any(term in joined for term in ["承载面", "carrier", "surface", "surface_ownership"]):
+            return "FC-MODEL-CARRIER-SURFACE-CONFLICT"
+        if any(term in joined for term in ["handoff", "系统交接", "system_picker", "overlay"]):
+            return "FC-MODEL-HANDOFF-CHAIN-CONFLICT"
+        if any(term in joined for term in ["operation_chain", "真实操作链", "操作链", "playback"]):
+            return "FC-MODEL-OPERATION-CHAIN-BLOCKED"
+        return "FC-MODEL-STAGE-BLOCKER"
     if any(term in joined for term in [
         "REVIEW_DED_001",
         "machine_id",
@@ -9426,6 +9845,16 @@ def write_renderer_loop_gate(
     repair_hint_error_zh: str | None = None,
     repair_hint_pass_zh: str | None = None,
     route_targets: list[str] | None = None,
+    report_title: str = "Figma Renderer Loop Gate",
+    report_intro: str = "本文件是 renderer gate 的人工阅读入口；YAML 是机器源。",
+    final_exit_reason_error: str = "renderer plan validation failed",
+    final_exit_reason_pass: str = "renderer plan validation passed; final writer may proceed with this plan",
+    revalidate: list[str] | None = None,
+    patch_type: str = "renderer_plan_repair_recommendation",
+    required_repair_zh: str = "补齐 render plan 覆盖与 rule_id trace 后再写 Figma",
+    loop_stage_tail: str = "FIGMA-RENDER-LOOP",
+    upstream_generation_trace: dict | None = None,
+    bounded_projection_auto_repair_supported: bool = False,
 ) -> Path:
     out_dir = renderer_loop_gate_dir(gate_id)
     created_at = utc_now_text()
@@ -9444,8 +9873,9 @@ def write_renderer_loop_gate(
         "failure_class": renderer_failure_class_for_errors(errors, failure_class_error) if errors else failure_class_pass,
         "rule_trace": rule_trace,
         "rule_ids": rule_ids,
-        "affected_stage_candidate": route_targets + ["FIGMA-RENDER-LOOP"],
+        "affected_stage_candidate": route_targets + [loop_stage_tail],
         "affected_artifacts": affected_artifacts,
+        "upstream_generation_trace": upstream_generation_trace or {},
         "source_refs": source_refs or [artifact_key],
         "repair_hint_zh": (
             repair_hint_error_zh or
@@ -9468,12 +9898,25 @@ def write_renderer_loop_gate(
     }, ensure_ascii=False, sort_keys=True))
     patch_set = [{
         "patch_id": patch_id,
-        "patch_type": "renderer_plan_repair_recommendation",
+        "patch_type": patch_type,
         "source_finding_id": finding["finding_id"],
         "before_hash": input_lock_hash,
         "operations": [
             {"record_validator_errors": errors},
-            {"required_repair_zh": "补齐 render plan 覆盖与 rule_id trace 后再写 Figma"},
+            {"required_repair_zh": required_repair_zh},
+            {"trace_to_upstream_generation": upstream_generation_trace or {}},
+            {"primary_repair_entrypoint": (upstream_generation_trace or {}).get("primary_artifact", artifact_key)},
+            {"rebuild_sequence": [
+                "build-prototype-playback-contract",
+                "validate-prototype-playback-contract",
+                "build-figma-playback-writer-runtime",
+                "validate-figma-write-readiness",
+                "execute generated Figma playback writer steps",
+                "execute generated Figma live readback runtime",
+                "build-figma-source-alignment-audit",
+                "build-figma-stage-alignment-audit",
+                "gate-figma-live-visual-audit",
+            ]},
             {"gate_only_no_patch_apply": True},
         ],
         "after_hash": "sha256:not-applied-gate-only",
@@ -9486,6 +9929,14 @@ def write_renderer_loop_gate(
         "plan_id": f"{safe_slug(gate_id)}-REPAIR-PLAN",
         "loop_version": "3.1",
         "gate_only": True,
+        "loop_triggered": True,
+        "loop_execution_mode": "gate_only_evidence",
+        "bounded_projection_auto_repair_supported": bounded_projection_auto_repair_supported,
+        "bounded_projection_auto_repair_scope": (
+            "run_root_projection_artifacts_only"
+            if bounded_projection_auto_repair_supported else
+            "not_enabled_for_this_gate"
+        ),
         "rule_trace": rule_trace,
         "rule_ids": rule_ids,
         "findings": [{
@@ -9495,21 +9946,46 @@ def write_renderer_loop_gate(
         }],
         "selected_profile": "LOOP_PROFILE_STANDARD",
         "route_targets": route_targets,
+        "upstream_generation_trace": upstream_generation_trace or {},
         "patch_set": patch_set,
         "rerun_scope": {
-            "scope": "gate_only_no_auto_rerun",
-            "reason": "Renderer gate records evidence only; no automatic patch or rerun.",
+            "scope": (
+                "gate_only_with_bounded_projection_auto_repair"
+                if bounded_projection_auto_repair_supported else
+                "gate_only_no_auto_rerun"
+            ),
+            "reason": (
+                "Loop gate may rebuild run-root projection artifacts only: prototype_playback_contract, writer runtime, readback runtime, screenshot plan, and write handoff. "
+                "It still must not apply PRD patches, rerun PRD harness scopes, or write Figma."
+                if bounded_projection_auto_repair_supported else
+                "Loop gate records evidence after validation/readback. It does not automatically patch, rerun, or write Figma by harness policy."
+            ),
             "actual_rerun_executed": False,
             "would_rerun_after": [validator],
         },
-        "revalidate": [validator, "validate-render-readiness"],
+        "revalidate": revalidate or [validator, "validate-render-readiness"],
         "actual_patch_apply_executed": False,
         "apply_allowed_patches_executed": False,
+        "auto_patch_supported": False,
+        "auto_rerun_supported": False,
+        "bounded_projection_auto_repair_executed": False,
+        "manual_repair_entrypoint": (upstream_generation_trace or {}).get("primary_artifact", artifact_key),
+        "manual_next_commands": [
+            "repair-figma-projection-loop" if bounded_projection_auto_repair_supported else "",
+            "build-prototype-playback-contract",
+            "validate-prototype-playback-contract",
+            "build-figma-playback-writer-runtime",
+            "validate-figma-write-readiness",
+            validator,
+        ],
     }
+    repair_plan["manual_next_commands"] = [item for item in repair_plan["manual_next_commands"] if item]
     manifest = {
         "run_id": RUN_ID,
         "loop_version": "3.1",
         "loop_profile": "LOOP_PROFILE_STANDARD",
+        "loop_triggered": True,
+        "gate_only_evidence_written": True,
         "rule_trace": rule_trace,
         "rule_ids": rule_ids,
         "input_lock_hash": input_lock_hash,
@@ -9523,6 +9999,7 @@ def write_renderer_loop_gate(
                 "plan_id": repair_plan["plan_id"],
                 "selected_profile": repair_plan["selected_profile"],
                 "route_targets": repair_plan["route_targets"],
+                "upstream_generation_trace": repair_plan["upstream_generation_trace"],
             },
             "patch_set": patch_set if errors else [],
             "rerun_scope": repair_plan["rerun_scope"],
@@ -9535,24 +10012,32 @@ def write_renderer_loop_gate(
             "exit_decision": "blocked" if errors else "gate_recorded",
         }],
         "final_status": "blocked" if errors else "gate_recorded",
-        "final_exit_reason": "renderer plan validation failed" if errors else "renderer plan validation passed; final writer may proceed with this plan",
+        "final_exit_reason": final_exit_reason_error if errors else final_exit_reason_pass,
     }
     ywrite(out_dir / "loop_finding.yaml", finding)
     ywrite(out_dir / "repair_plan.yaml", repair_plan)
     ywrite(out_dir / "loop_manifest.yaml", manifest)
     report_lines = [
-        "# Figma Renderer Loop Gate",
+        f"# {report_title}",
         "",
-        "本文件是 renderer gate 的人工阅读入口；YAML 是机器源。",
+        report_intro,
         "",
         f"- gate_id：`{gate_id}`",
         f"- final_status：`{manifest['final_status']}`",
         f"- rule_ids：`{', '.join(rule_ids)}`",
         f"- affected_artifacts：`{', '.join(affected_artifacts)}`",
+    ]
+    if upstream_generation_trace:
+        report_lines.extend([
+            f"- upstream_primary_artifact：`{upstream_generation_trace.get('primary_artifact', '')}`",
+            f"- upstream_builder：`{upstream_generation_trace.get('builder_command', '')}`",
+            f"- upstream_validator：`{upstream_generation_trace.get('validator_command', '')}`",
+        ])
+    report_lines.extend([
         "",
         "## 校验结果",
         "",
-    ]
+    ])
     if errors:
         report_lines.extend([f"- {error}" for error in errors])
     else:
@@ -9561,13 +10046,286 @@ def write_renderer_loop_gate(
         "",
         "## 安全约束",
         "",
-        "- 没有执行自动 patch。",
-        "- 没有执行自动 rerun。",
+        "- loop 已触发并写入 evidence。",
+        "- 当前 loop 是 gate-only：没有执行自动 patch。",
+        "- 当前 loop 是 gate-only：没有执行 PRD harness rerun 或自动写 Figma。",
+        (
+            "- 当前 gate 允许 bounded projection auto repair：只重建 run root 内的 playback contract、writer runtime、readback runtime、screenshot plan 和 handoff。"
+            if bounded_projection_auto_repair_supported else
+            "- 当前 gate 没有启用 bounded projection auto repair。"
+        ),
         "- 没有写 product-spec。",
-        "- 没有写 Figma。",
+        "- loop gate 本身没有再次写 Figma；如前序 writer 已执行，写入结果由 readback/audit 文件记录。",
+        "",
+        "## 建议修复入口",
+        "",
+        f"- primary_repair_entrypoint：`{(upstream_generation_trace or {}).get('primary_artifact', artifact_key)}`",
+        "- 修复后按 repair_plan.yaml 中的 rebuild_sequence 重建 writer runtime、重新写入、重新执行 live gate。",
     ])
     (out_dir / "final_loop_report.md").write_text("\n".join(report_lines) + "\n", encoding="utf-8")
     return out_dir
+
+
+PROJECTION_AUTO_REPAIR_OUTPUTS = [
+    "io/output/prototype_playback_contract.yaml",
+    "io/output/figma-writer-runtime.js",
+    "io/output/figma-writer-runtime.manifest.yaml",
+    "io/output/figma-live-readback-runtime.js",
+    "io/output/figma-screenshot-plan.yaml",
+    "io/output/figma-write-handoff.yaml",
+]
+
+
+def artifact_hash_record(path: Path) -> dict:
+    exists = path.exists()
+    record = {
+        "path": run_artifact_path(path) if path_is_within(path, RUN_ROOT) else str(path),
+        "exists": exists,
+    }
+    if exists and path.is_file():
+        record.update({
+            "sha256": f"sha256:{sha256_file(path)}",
+            "size_bytes": path.stat().st_size,
+        })
+    else:
+        record.update({"sha256": "sha256:missing", "size_bytes": 0})
+    return record
+
+
+def latest_loop_gate_dir(prefix: str) -> Path | None:
+    root = RUN_ROOT / "prd_orchestrator" / "loop_gates"
+    if not root.exists():
+        return None
+    candidates = [path for path in root.iterdir() if path.is_dir() and path.name.startswith(prefix)]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: path.stat().st_mtime)
+
+
+def load_loop_gate_errors(gate_dir: Path | None) -> list[str]:
+    if not gate_dir:
+        return []
+    finding_path = gate_dir / "loop_finding.yaml"
+    if not finding_path.exists():
+        return []
+    finding = yload(finding_path)
+    root = finding.get("loop_finding", finding) if isinstance(finding, dict) else {}
+    return [str(item) for item in (root.get("validation_errors", []) or [])]
+
+
+def run_projection_repair_step(step_id: str, func, namespace: argparse.Namespace) -> dict:
+    started_at = datetime.now(timezone.utc)
+    record = {
+        "step_id": step_id,
+        "started_at": utc_text(started_at),
+        "status": "pass",
+        "message": "",
+    }
+    try:
+        func(namespace)
+    except SystemExit as exc:
+        record["status"] = "blocked"
+        record["message"] = str(exc)
+    except Exception as exc:
+        record["status"] = "error"
+        record["message"] = f"{type(exc).__name__}: {exc}"
+    completed_at = datetime.now(timezone.utc)
+    record["completed_at"] = utc_text(completed_at)
+    record["duration_ms"] = duration_ms(started_at, completed_at)
+    return record
+
+
+def run_figma_projection_auto_repair(
+    *,
+    gate_dir: Path | None = None,
+    errors: list[str] | None = None,
+    source_refs: list[str] | None = None,
+    upstream_generation_trace: dict | None = None,
+    figma_url: str | None = None,
+    raise_on_blocked: bool = True,
+) -> dict:
+    ensure_run_root_write_context("repair-figma-projection-loop")
+    output_path = RUN_ROOT / "io" / "output" / "figma_projection_auto_repair_report.yaml"
+    output_md_path = RUN_ROOT / "io" / "output" / "figma_projection_auto_repair_report.md"
+    target_paths = [(RUN_ROOT / rel).resolve() for rel in PROJECTION_AUTO_REPAIR_OUTPUTS]
+    before = {run_artifact_path(path): artifact_hash_record(path) for path in target_paths}
+    gate_errors = errors or load_loop_gate_errors(gate_dir)
+    started_at = datetime.now(timezone.utc)
+    steps: list[dict] = []
+
+    step_specs = [
+        (
+            "rebuild-prototype-playback-contract",
+            build_prototype_playback_contract,
+            argparse.Namespace(
+                runtime=None,
+                payload=None,
+                source_brief=None,
+                carrier_map=None,
+                system_handoff_map=None,
+                operation_chain=None,
+                model_surface_ownership=None,
+                model_user_journey=None,
+                model_interaction_state_machine=None,
+                model_component_blueprint=None,
+                output=None,
+            ),
+        ),
+        (
+            "validate-prototype-playback-contract",
+            validate_prototype_playback_contract,
+            argparse.Namespace(input=str(RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")),
+        ),
+        (
+            "rebuild-figma-playback-writer-runtime",
+            build_figma_playback_writer_runtime,
+            argparse.Namespace(
+                playback_contract=None,
+                writer_runtime=None,
+                readback_runtime=None,
+                screenshot_plan=None,
+            ),
+        ),
+        (
+            "validate-figma-write-readiness",
+            validate_figma_write_readiness,
+            argparse.Namespace(
+                runtime=None,
+                payload=None,
+                figma_render_plan=None,
+                ui_blueprint=None,
+                playable_model=None,
+                playback_contract=None,
+                writer_brief=None,
+                writer_input=None,
+                materialization=None,
+                surface_hierarchy=None,
+                scene_graph=None,
+                canvas_view_model=None,
+                semantic_payload=None,
+                writer_runtime=None,
+                readback_runtime=None,
+            ),
+        ),
+        (
+            "rebuild-figma-write-handoff",
+            build_figma_write_handoff,
+            argparse.Namespace(
+                writer_input=None,
+                writer_brief=None,
+                playback_contract=None,
+                writer_runtime=None,
+                readback_runtime=None,
+                materialization=None,
+                semantic_payload=None,
+                screenshot_plan=None,
+                output=None,
+                figma_url=figma_url or "",
+            ),
+        ),
+    ]
+
+    for step_id, func, namespace in step_specs:
+        step_record = run_projection_repair_step(step_id, func, namespace)
+        steps.append(step_record)
+        if step_record["status"] != "pass":
+            break
+
+    completed_at = datetime.now(timezone.utc)
+    after = {run_artifact_path(path): artifact_hash_record(path) for path in target_paths}
+    changed = [
+        {
+            "path": path,
+            "before_sha256": before[path]["sha256"],
+            "after_sha256": after[path]["sha256"],
+        }
+        for path in before
+        if before[path]["sha256"] != after[path]["sha256"]
+    ]
+    status = "pass" if steps and all(step["status"] == "pass" for step in steps) else "blocked"
+    report = {
+        "figma_projection_auto_repair_report": {
+            "version": "3.2.2",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "status": status,
+            "created_at": utc_text(started_at),
+            "completed_at": utc_text(completed_at),
+            "duration_ms": duration_ms(started_at, completed_at),
+            "triggered_by_gate": run_artifact_path(gate_dir) if gate_dir and path_is_within(gate_dir, RUN_ROOT) else str(gate_dir or ""),
+            "trigger_errors": gate_errors,
+            "source_refs": source_refs or ["figma_live_visual_audit"],
+            "upstream_generation_trace": upstream_generation_trace or {},
+            "scope": {
+                "allowed_writes": PROJECTION_AUTO_REPAIR_OUTPUTS + [
+                    "io/output/figma_projection_auto_repair_report.yaml",
+                    "io/output/figma_projection_auto_repair_report.md",
+                ],
+                "writes_prd": False,
+                "writes_product_spec": False,
+                "writes_figma": False,
+                "applies_prd_patch_set": False,
+                "reruns_prd_harness_scopes": False,
+            },
+            "steps": steps,
+            "artifact_hashes_before": list(before.values()),
+            "artifact_hashes_after": list(after.values()),
+            "changed_artifacts": changed,
+            "next_manual_commands_after_pass": [
+                "execute generated Figma playback writer steps",
+                "execute generated Figma live readback runtime",
+                "build-figma-live-audit-artifacts",
+                "build-figma-visual-reverse-inference",
+                "build-figma-source-alignment-audit",
+                "build-figma-stage-alignment-audit",
+                "gate-figma-live-visual-audit",
+            ],
+        }
+    }
+    ywrite(output_path, report)
+    md_lines = [
+        "# Figma Projection Auto Repair",
+        "",
+        "本报告记录 live visual gate 失败后，harness 自动回到投射层做了什么。",
+        "",
+        f"- 状态：`{status}`",
+        f"- 触发 gate：`{report['figma_projection_auto_repair_report']['triggered_by_gate']}`",
+        "- 范围：只重建 run root 内的 playback contract、writer runtime、readback runtime、screenshot plan 和 handoff。",
+        "- 未写 PRD、未写 product-spec、未写 Figma。",
+        "",
+        "## 执行步骤",
+        "",
+    ]
+    for step in steps:
+        md_lines.append(f"- `{step['step_id']}`：`{step['status']}`，{step.get('duration_ms', 0)}ms")
+        if step.get("message"):
+            md_lines.append(f"  - {step['message'].splitlines()[0][:220]}")
+    md_lines.extend([
+        "",
+        "## 改动文件",
+        "",
+    ])
+    if changed:
+        md_lines.extend([f"- `{item['path']}`" for item in changed])
+    else:
+        md_lines.append("- 无 hash 变化。")
+    output_md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    if raise_on_blocked and status != "pass":
+        raise SystemExit(f"BLOCKED: figma projection auto repair failed; report was written to {output_path}")
+    return report
+
+
+def repair_figma_projection_loop(args):
+    gate_dir = resolve_path(args.gate_dir) if getattr(args, "gate_dir", None) else latest_loop_gate_dir("FIGMA-LIVE-VISUAL-GATE-")
+    report = run_figma_projection_auto_repair(
+        gate_dir=gate_dir,
+        figma_url=getattr(args, "figma_url", None),
+        raise_on_blocked=not getattr(args, "allow_blocked_report", False),
+    )
+    root = report.get("figma_projection_auto_repair_report", {})
+    print("# repair-figma-projection-loop")
+    print("PASS" if root.get("status") == "pass" else "BLOCKED")
+    print(f"- WROTE {RUN_ROOT / 'io' / 'output' / 'figma_projection_auto_repair_report.yaml'}")
 
 
 def build_figma_render_plan(args):
@@ -11944,13 +12702,13 @@ const createdNodeIds=[],mutatedNodeIds=[],pageFrameById={},componentNodeById={},
 function solid(c,o=1){return[{type:"SOLID",color:c,opacity:o}]}
 function keep(n){createdNodeIds.push(n.id);return n}
 function mark(n,k,v){n.setSharedPluginData(NS,k,String(v||""))}
-function clean(t,f=""){return String(t||f||"").replace(/\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|RELATION|TOPIC|TOOLBAR)-[A-Z0-9_-]+\b/g,"").trim()||f||"继续"}
+function clean(t,f=""){return String(t||f||"").replace(/\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|TARGET|OVERLAY|SRC|ALIGN)-[A-Z0-9_-]+\b/g,"").trim()||f||"继续"}
 function fr(name,w,h,o={}){const n=keep(figma.createFrame());n.name=name;n.resize(w,h);n.fills=solid(o.fill||W);if(o.stroke!==false){n.strokes=solid(o.strokeColor||B);n.strokeWeight=o.strokeWeight||1}n.cornerRadius=o.radius||0;if(o.layout){n.layoutMode=o.layout;n.primaryAxisSizingMode=o.primaryAuto===false?"FIXED":"AUTO";n.counterAxisSizingMode="FIXED";n.itemSpacing=o.gap??8;n.paddingLeft=n.paddingRight=n.paddingTop=n.paddingBottom=o.padding??10}return n}
 function tx(t,s=12,c=B,name="text"){const n=keep(figma.createText());n.name=name;n.fontName={family:"Inter",style:"Regular"};n.characters=clean(t);n.fontSize=s;n.lineHeight={unit:"AUTO"};n.fills=solid(c);n.textAutoResize="WIDTH_AND_HEIGHT";return n}
 function at(p,t,s=12,c=B,name="text"){const n=tx(t,s,c,name);p.appendChild(n);n.layoutSizingHorizontal="FILL";return n}
 function chip(parent,label,dark=false){const b=fr(`control:${clean(label)}`,Math.max(70,Math.min(156,clean(label).length*13+24)),32,{fill:dark?D:W,radius:8,layout:"VERTICAL",padding:7});parent.appendChild(b);at(b,label,10,dark?W:B);return b}
-function drawImageGrid(parent,page){const wrap=fr("system_picker_overlay",336,184,{fill:L,radius:12,layout:"VERTICAL",gap:8,padding:10});parent.appendChild(wrap);wrap.layoutSizingHorizontal="FILL";at(wrap,"选择图片",13,B);const grid=fr("picker_grid_region",316,96,{fill:W,radius:8,layout:"HORIZONTAL",gap:6,padding:8});wrap.appendChild(grid);grid.layoutSizingHorizontal="FILL";for(let i=1;i<=6;i++){const tile=fr(`image_tile_${i}`,44,76,{fill:W,radius:6,layout:"VERTICAL",gap:4,padding:5});grid.appendChild(tile);at(tile,String(i),14,D);at(tile,i===1?"少于 3 张提示":i===6?"超过 5 张提示":"可选",7,M)}const bar=fr("picker_action_bar",316,34,{fill:L,stroke:false,layout:"HORIZONTAL",gap:8,padding:0});wrap.appendChild(bar);chip(bar,"取消",false);chip(bar,"确认选择",true);at(wrap,"已选数量会在选择时即时提示。",9,D)}
-function drawLevelSelector(parent){const wrap=fr("level_selector",336,94,{fill:W,radius:12,layout:"VERTICAL",gap:8,padding:10});parent.appendChild(wrap);wrap.layoutSizingHorizontal="FILL";at(wrap,"亲密度等级",13,B);const row=fr("level_options",316,34,{fill:W,stroke:false,layout:"HORIZONTAL",gap:5,padding:0});wrap.appendChild(row);for(let i=1;i<=7;i++){const opt=fr(`level_${i}`,38,30,{fill:i===2?D:W,radius:7,layout:"VERTICAL",padding:6});row.appendChild(opt);at(opt,String(i),10,i===2?W:B)}at(wrap,"默认使用当前通用设置，调整后影响后续分析结果。",9,D)}
+function drawImageGrid(parent,page){const wrap=fr("system_picker_overlay",336,184,{fill:L,radius:12,layout:"VERTICAL",gap:8,padding:10});parent.appendChild(wrap);wrap.layoutSizingHorizontal="FILL";at(wrap,clean(page.region_name_zh||page.page_name_zh,"系统选择器"),13,B);const grid=fr("picker_grid_region",316,96,{fill:W,radius:8,layout:"HORIZONTAL",gap:6,padding:8});wrap.appendChild(grid);grid.layoutSizingHorizontal="FILL";const hints=(page.elements||[]).map(e=>clean(e.visible_text_zh||e.element_name_zh,"")).filter(Boolean).slice(0,6);for(let i=0;i<Math.max(4,hints.length);i++){const tile=fr(`picker_choice_${i+1}`,44,76,{fill:W,radius:6,layout:"VERTICAL",gap:4,padding:5});grid.appendChild(tile);at(tile,String(i+1),14,D);at(tile,hints[i]||"可选",7,M)}const bar=fr("picker_action_bar",316,34,{fill:L,stroke:false,layout:"HORIZONTAL",gap:8,padding:0});wrap.appendChild(bar);chip(bar,"取消",false);chip(bar,"确认",true);at(wrap,"选择过程中在当前选择器内反馈边界和状态。",9,D)}
+function drawLevelSelector(parent){const wrap=fr("level_selector",336,94,{fill:W,radius:12,layout:"VERTICAL",gap:8,padding:10});parent.appendChild(wrap);wrap.layoutSizingHorizontal="FILL";at(wrap,"等级设置",13,B);const row=fr("level_options",316,34,{fill:W,stroke:false,layout:"HORIZONTAL",gap:5,padding:0});wrap.appendChild(row);for(let i=1;i<=7;i++){const opt=fr(`level_${i}`,38,30,{fill:i===2?D:W,radius:7,layout:"VERTICAL",padding:6});row.appendChild(opt);at(opt,String(i),10,i===2?W:B)}at(wrap,"默认使用当前通用设置，调整后影响后续结果。",9,D)}
 function drawResult(parent,page){const wrap=fr("result_surface",336,126,{fill:W,radius:12,layout:"VERTICAL",gap:8,padding:10});parent.appendChild(wrap);wrap.layoutSizingHorizontal="FILL";at(wrap,clean(page.page_name_zh,"分析结果"),13,B);at(wrap,clean(page.user_task_zh,page.page_purpose_zh).slice(0,90),10,D);const row=fr("result_actions",316,34,{fill:W,stroke:false,layout:"HORIZONTAL",gap:8,padding:0});wrap.appendChild(row);chip(row,"复制",false);chip(row,"换一批",false);chip(row,"会员查看",true)}
 function controlFromElement(e){const text=clean(e.visible_text_zh||e.element_name_zh||"继续");const prim=String(e.primitive_type||"");let dark=/action|button|confirm|toolbar|level_option/.test(prim);const n=chip(currentRow,text,dark);mark(n,"component_id",e.element_id||"");mark(n,"primitive_control",prim);if(e.element_id)componentNodeById[e.element_id]=n;return n}
 let currentRow=null;
@@ -11960,7 +12718,7 @@ const phone=fr("phone_shell",382,560,{fill:W,radius:28,layout:"VERTICAL",gap:10,
 const panel=fr("keyboard_ai_panel",354,330,{fill:L,radius:18,layout:"VERTICAL",gap:9,padding:10});phone.appendChild(panel);panel.layoutSizingHorizontal="FILL";at(panel,"AI 助手",13,B);const regions=page.regions||[];let drewResult=false;for(const r of regions){if(/result|结果|会员|分析/.test(String(r.primitive_type||"")+String(r.region_name_zh||""))&&!drewResult){drawResult(panel,page);drewResult=true}else drawRegion(panel,r)}const nexts=(P.interactions||[]).filter(i=>i.source_page_id===page.page_id).slice(0,3);if(nexts.length){const n=fr("next_steps",336,82,{fill:W,radius:12,layout:"VERTICAL",gap:5,padding:10});panel.appendChild(n);n.layoutSizingHorizontal="FILL";at(n,"下一步",12,B);for(const it of nexts)at(n,`${clean(it.user_visible_trigger_zh,"点击")} → ${clean(it.next_step_zh,"进入下一步")}`,9,D)}return group}
 await figma.loadFontAsync({family:"Inter",style:"Regular"});
 const finalPageName=`PROTOTYPE-FINAL-${P.r||"manual"}`,old=figma.root.children.filter(p=>p.name===finalPageName),page=figma.createPage();page.name=finalPageName;await figma.setCurrentPageAsync(page);for(const p of old)p.remove();
-const entry=fr("PROTOTYPE-FINAL-ENTRY",390,300,{fill:W,radius:0,layout:"VERTICAL",gap:10,padding:16});entry.x=0;entry.y=0;page.appendChild(entry);mark(entry,"harnessRole","prototype_entry");mark(entry,"writerFormat",P.f||"");at(entry,"输入法 AI 社交增强",20,B);at(entry,"从聊天输入区打开 AI 能力，完成截图选择、亲密度设置和关系分析。",12,D);
+const entry=fr("PROTOTYPE-FINAL-ENTRY",390,300,{fill:W,radius:0,layout:"VERTICAL",gap:10,padding:16});entry.x=0;entry.y=0;page.appendChild(entry);mark(entry,"harnessRole","prototype_entry");mark(entry,"writerFormat",P.f||"");at(entry,"可播放原型",20,B);at(entry,"从宿主输入区打开扩展能力，完成选择、设置、处理和反馈。",12,D);
 let i=0;for(const pg of P.pages||[])drawPage(page,pg,i++);
 let reactionCount=0;for(const it of P.interactions||[]){const src=componentNodeById[it.source_element_id],dest=pageFrameById[it.target_page_id]||pageFrameById[it.source_page_id];if(!src||!dest||!("setReactionsAsync"in src)){reactionErrors.push({interaction_id:it.interaction_id,source:it.source_element_id,target:it.target_page_id,error:"missing source/destination"});continue}const action={type:"NODE",destinationId:dest.id,navigation:"NAVIGATE",transition:{type:"DISSOLVE",easing:{type:"EASE_OUT"},duration:.2},preserveScrollPosition:false};try{await src.setReactionsAsync([{trigger:{type:"ON_CLICK"},action,actions:[action]}]);mark(src,"interactionId",it.interaction_id||"");reactionCount++;mutatedNodeIds.push(src.id)}catch(err){reactionErrors.push({interaction_id:it.interaction_id,error:String(err&&err.message||err)});mark(src,"reactionError",String(err&&err.message||err))}}
 const audit=fr("LIVE-AUDIT-MARKERS:semantic-writer-runtime",280,104,{fill:L,radius:6,layout:"VERTICAL",gap:4,padding:8});audit.x=0;audit.y=330;page.appendChild(audit);mark(audit,"createdByHarnessRuntime","figma-semantic-writer-runtime.js");mark(audit,"expectedReactionCount",(P.interactions||[]).length);mark(audit,"reactionErrorCount",reactionErrors.length);mark(audit,"reactionErrorsJson",JSON.stringify(reactionErrors.slice(0,20)));at(audit,`pages: ${(P.pages||[]).length}\ncreated reactions: ${reactionCount}\nreaction errors: ${reactionErrors.length}`,10,B);
@@ -12012,6 +12770,322 @@ def build_figma_semantic_writer_runtime(args):
     print(f"- WROTE {writer_runtime_path}")
     print(f"- WROTE {readback_runtime_path}")
     print(f"- WROTE {screenshot_plan_path}")
+
+
+def build_figma_direct_writer_runtime_js(writer_brief_doc: dict) -> str:
+    root = writer_brief_doc.get("prototype_writer_brief", {}) or {}
+    source_refs = root.get("source_refs", []) or []
+
+    def text(value: object, fallback: str = "", limit: int = 180) -> str:
+        cleaned = " ".join(str(value or fallback or "").split())
+        return cleaned[:limit]
+
+    def slim_control(control: dict) -> dict:
+        return {
+            "control_id": control.get("control_id", ""),
+            "visible_text_zh": text(control.get("visible_text_zh"), "继续", 36),
+            "control_kind": control.get("control_kind", ""),
+            "primitive_type": control.get("primitive_type", ""),
+            "interaction_id": control.get("interaction_id", ""),
+            "purpose_zh": text(control.get("purpose_zh"), "", 64),
+        }
+
+    def slim_scene(scene: dict) -> dict:
+        controls = scene.get("required_controls", []) or []
+        return {
+            "scene_id": scene.get("scene_id", ""),
+            "page_id": scene.get("page_id", ""),
+            "page_name_zh": text(scene.get("page_name_zh"), "原型页面", 48),
+            "page_purpose_zh": text(scene.get("page_purpose_zh"), "展示当前页面的核心任务。", 160),
+            "carrier_type": scene.get("carrier_type", "embedded_keyboard_panel"),
+            "carrier_zh": text(scene.get("carrier_zh"), "", 80),
+            "user_task_zh": text(scene.get("user_task_zh"), "", 160),
+            "required_controls": [slim_control(control) for control in controls[:10]],
+        }
+
+    def slim_interaction(interaction: dict) -> dict:
+        return {
+            "interaction_id": interaction.get("interaction_id", ""),
+            "source_page_id": interaction.get("source_page_id", ""),
+            "target_page_id": interaction.get("target_page_id", ""),
+            "source_control_id": interaction.get("source_control_id", ""),
+            "trigger_zh": text(interaction.get("trigger_zh"), "", 64),
+            "result_zh": text(interaction.get("result_zh"), "", 96),
+        }
+
+    def slim_handoff(handoff: dict) -> dict:
+        return {
+            "handoff_id": handoff.get("handoff_id", ""),
+            "interaction_id": handoff.get("interaction_id", ""),
+            "capability_id": handoff.get("capability_id", ""),
+            "handoff_surface_type": handoff.get("handoff_surface_type", ""),
+            "return_carrier_type": handoff.get("return_carrier_type", ""),
+        }
+
+    payload = {
+        "run_id": root.get("run_id") or RUN_ID,
+        "version": root.get("version", "3.2.1"),
+        "source_refs": source_refs[:12],
+        "source_ref_count": len(source_refs),
+        "scenes": [slim_scene(scene) for scene in root.get("scenes", []) or []],
+        "interactions": [slim_interaction(interaction) for interaction in root.get("interaction_playback_contracts", []) or []],
+        "handoffs": [slim_handoff(handoff) for handoff in root.get("handoff_visual_contracts", []) or []],
+        "required_visual_containers": root.get("required_visual_containers", []),
+    }
+    payload_json = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    template = r"""// Generated by prototype harness v3.2.1. Do not hand-edit inside the run.
+// Direct writer consumes prototype_writer_brief.yaml only.
+const PROTOTYPE_DIRECT_WRITER_BRIEF=__BRIEF__;
+const NS="prototype_harness",B={r:0,g:0,b:0},D={r:.16,g:.16,b:.16},G={r:.52,g:.52,b:.52},L={r:.94,g:.94,b:.94},W={r:1,g:1,b:1};
+const createdNodeIds=[],mutatedNodeIds=[],pageFrameById={},controlNodeById={},reactionErrors=[];
+function solid(c,o=1){return[{type:"SOLID",color:c,opacity:o}]}
+function keep(n){createdNodeIds.push(n.id);return n}
+function mark(n,k,v){if(n.setSharedPluginData)n.setSharedPluginData(NS,k,String(v??""))}
+function clean(t,f=""){return String(t||f||"").replace(/\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|TARGET|OVERLAY|SRC|ALIGN)-[A-Z0-9_-]+\b/g,"").replace(/\s+/g," ").trim()||f||"继续"}
+function fr(name,w,h,o={}){const n=keep(figma.createFrame());n.name=name;n.resize(w,h);n.fills=solid(o.fill||W);if(o.stroke!==false){n.strokes=solid(o.strokeColor||B);n.strokeWeight=o.strokeWeight||1}n.cornerRadius=o.radius||0;if(o.layout){n.layoutMode=o.layout;n.primaryAxisSizingMode=o.primaryAuto===false?"FIXED":"AUTO";n.counterAxisSizingMode="FIXED";n.itemSpacing=o.gap??8;n.paddingLeft=n.paddingRight=n.paddingTop=n.paddingBottom=o.padding??8}return n}
+function tx(t,s=12,c=B,name="text"){const n=keep(figma.createText());n.name=name;n.fontName={family:"Inter",style:"Regular"};n.characters=clean(t);n.fontSize=s;n.lineHeight={unit:"AUTO"};n.fills=solid(c);n.textAutoResize="WIDTH_AND_HEIGHT";return n}
+function at(p,t,s=12,c=B,name="text"){const n=tx(t,s,c,name);p.appendChild(n);n.layoutSizingHorizontal="FILL";return n}
+function pill(parent,label,dark=false,role="control"){const n=fr(`${role}:${clean(label)}`,Math.max(70,Math.min(168,clean(label).length*12+28)),34,{fill:dark?D:W,radius:9,layout:"VERTICAL",padding:8});parent.appendChild(n);at(n,label,10,dark?W:B);return n}
+function row(parent,name,h=36){const n=fr(name,344,h,{fill:W,stroke:false,layout:"HORIZONTAL",gap:7,padding:0});parent.appendChild(n);n.layoutSizingHorizontal="FILL";return n}
+function drawHostSurface(phone,scene){const host=fr("host_chat_surface",360,154,{fill:L,radius:18,layout:"VERTICAL",gap:8,padding:12});phone.appendChild(host);host.layoutSizingHorizontal="FILL";at(host,clean(scene.page_name_zh,"聊天输入"),17,B,"product_title");at(host,"对话消息区域",11,D,"host_surface_label");const bubble=fr("message_context",236,46,{fill:W,radius:14,layout:"VERTICAL",gap:3,padding:9});host.appendChild(bubble);at(bubble,clean(scene.user_task_zh||scene.page_purpose_zh,"在聊天里使用输入法 AI 能力。").slice(0,48),10,D);const input=fr("input_bar",336,42,{fill:W,radius:18,layout:"HORIZONTAL",gap:8,padding:8});host.appendChild(input);mark(input,"harnessRole","input_bar");at(input,"输入栏",11,B,"input_bar_text");return host}
+function drawKeyboardBase(phone,scene){const kb=fr("keyboard_area",360,306,{fill:L,radius:22,layout:"VERTICAL",gap:8,padding:10});phone.appendChild(kb);kb.layoutSizingHorizontal="FILL";const candidate=row(kb,"candidate_bar",30);mark(candidate,"harnessRole","candidate_bar");["候选词","联想","符号"].forEach(x=>pill(candidate,x,false,"candidate"));const keys=fr("keyboard_key_grid",340,112,{fill:W,radius:12,layout:"VERTICAL",gap:6,padding:8});kb.appendChild(keys);mark(keys,"harnessRole","keyboard_key_grid");["Q W E R T Y U I O P","A S D F G H J K L","Z X C V B N M"].forEach(line=>{const r=row(keys,"key_row",26);line.split(" ").forEach(k=>pill(r,k,false,"key"))});const toolbar=row(kb,"keyboard_ai_toolbar",40);mark(toolbar,"harnessRole","keyboard_ai_toolbar");const labels=(scene.required_controls||[]).map(c=>clean(c.visible_text_zh||c.description_zh,"")).filter(Boolean).slice(0,3);(labels.length?labels:["功能入口"]).forEach((x,i)=>pill(toolbar,x,i===0,"toolbar_action"));const panel=fr("keyboard_ai_panel",340,92,{fill:W,radius:14,layout:"VERTICAL",gap:6,padding:10});kb.appendChild(panel);mark(panel,"harnessRole","keyboard_ai_panel");at(panel,"功能面板",13,B,"ai_panel_title");return {kb,panel,toolbar}}
+function drawResultCard(panel,scene){const card=fr("result_card",320,80,{fill:L,radius:12,layout:"VERTICAL",gap:5,padding:10});panel.appendChild(card);card.layoutSizingHorizontal="FILL";at(card,"结果卡",13,B,"result_card_title");at(card,clean(scene.page_purpose_zh,"展示分析结果、会员差异和下一步操作。").slice(0,78),9,D,"result_card_copy");const r=row(card,"result_actions",28);["复制","换一批","会员查看"].forEach((x,i)=>pill(r,x,i===2,"result_action"))}
+function drawSystemPicker(phone,scene){const overlay=fr("system_picker_overlay",336,214,{fill:W,radius:16,layout:"VERTICAL",gap:8,padding:10});overlay.x=28;overlay.y=218;phone.appendChild(overlay);mark(overlay,"harnessRole","system_picker_overlay");at(overlay,"系统选择器",14,B,"picker_header");const grid=fr("picker_grid_region",316,100,{fill:L,radius:10,layout:"HORIZONTAL",gap:7,padding:8});overlay.appendChild(grid);const labels=(scene.required_controls||[]).map(c=>clean(c.visible_text_zh||c.description_zh,"")).filter(Boolean).slice(0,6);for(let i=0;i<Math.max(4,labels.length);i++){const tile=fr(`picker_choice_${i+1}`,44,82,{fill:W,radius:8,layout:"VERTICAL",gap:4,padding:5});grid.appendChild(tile);at(tile,String(i+1),14,B,"tile_index");at(tile,labels[i]||"可选",7,D,"tile_hint")}const actions=row(overlay,"picker_action_bar",34);pill(actions,"取消",false,"cancel_action");pill(actions,"确认",true,"confirm_action");const fb=fr("picker_feedback_region",316,30,{fill:L,radius:8,layout:"VERTICAL",padding:6});overlay.appendChild(fb);at(fb,"选择时在当前系统交接面内反馈。",9,D,"picker_feedback")}
+function drawScene(page,scene,index){const group=fr(`PLAYABLE-PAGE-GROUP:${scene.page_id||index}`,430,760,{fill:W,radius:0,layout:"VERTICAL",gap:10,padding:16});group.x=430+(index%3)*470;group.y=Math.floor(index/3)*820;page.appendChild(group);mark(group,"sceneId",scene.scene_id||scene.page_id);mark(group,"frameId",scene.page_id||scene.scene_id);mark(group,"carrier",scene.carrier_type||"embedded_keyboard_panel");pageFrameById[scene.page_id]=group;const phone=fr("phone_shell",392,704,{fill:W,radius:30,layout:"VERTICAL",gap:10,padding:14});group.appendChild(phone);mark(phone,"harnessRole","phone_shell");const status=row(phone,"status_bar",24);at(status,"9:41",10,B,"status_time");drawHostSurface(phone,scene);const {panel}=drawKeyboardBase(phone,scene);const controls=(scene.required_controls||[]).slice(0,8);const cr=row(panel,"primary_controls",34);controls.slice(0,3).forEach((c,i)=>{const node=pill(cr,c.visible_text_zh||"继续",i===0,"primary_action");mark(node,"component_id",c.control_id||"");mark(node,"interactionId",c.interaction_id||"");controlNodeById[c.control_id]=node});drawResultCard(panel,scene);const feedback=fr("inline_feedback",320,30,{fill:L,radius:8,layout:"VERTICAL",padding:6});panel.appendChild(feedback);at(feedback,"反馈会出现在最早可反馈的位置。",9,D,"inline_feedback_text");if((PROTOTYPE_DIRECT_WRITER_BRIEF.handoffs||[]).length||/选择|上传|文件|授权|支付|分享/.test(JSON.stringify(scene)))drawSystemPicker(phone,scene);const help=fr("interaction_explanation_region",392,42,{fill:W,stroke:false,layout:"VERTICAL",gap:3,padding:0});group.appendChild(help);at(help,`点击控件后按当前链路进入下一步或显示反馈。`,9,D,"interaction_hint");return group}
+await figma.loadFontAsync({family:"Inter",style:"Regular"});
+const finalPageName=`PROTOTYPE-FINAL-${PROTOTYPE_DIRECT_WRITER_BRIEF.run_id||"manual"}`;
+for(const p of figma.root.children.filter(p=>p.name===finalPageName))p.remove();
+const page=figma.createPage();page.name=finalPageName;await figma.setCurrentPageAsync(page);
+const entry=fr("PROTOTYPE-FINAL-ENTRY",390,230,{fill:W,radius:0,layout:"VERTICAL",gap:8,padding:16});entry.x=0;entry.y=0;page.appendChild(entry);mark(entry,"harnessRole","prototype_entry");mark(entry,"writerFormat","prototype_direct_writer_brief_v3_2_1");at(entry,"可播放原型",20,B,"entry_title");at(entry,"从宿主输入区打开扩展工具，完成选择、设置、处理和反馈。",12,D,"entry_copy");
+(PROTOTYPE_DIRECT_WRITER_BRIEF.scenes||[]).slice(0,8).forEach((scene,i)=>drawScene(page,scene,i));
+let reactionCount=0;for(const it of PROTOTYPE_DIRECT_WRITER_BRIEF.interactions||[]){const src=controlNodeById[it.source_control_id]||Object.values(controlNodeById)[0];const dest=pageFrameById[it.target_page_id]||pageFrameById[it.source_page_id]||Object.values(pageFrameById)[0];if(!src||!dest||!("setReactionsAsync"in src)){reactionErrors.push({interaction_id:it.interaction_id,error:"missing clickable source or destination"});continue}const action={type:"NODE",destinationId:dest.id,navigation:"NAVIGATE",transition:{type:"DISSOLVE",easing:{type:"EASE_OUT"},duration:.2},preserveScrollPosition:false};try{await src.setReactionsAsync([{trigger:{type:"ON_CLICK"},action,actions:[action]}]);mark(src,"interactionId",it.interaction_id||"");reactionCount++;mutatedNodeIds.push(src.id)}catch(err){reactionErrors.push({interaction_id:it.interaction_id,error:String(err&&err.message||err)});mark(src,"reactionError",String(err&&err.message||err))}}
+const audit=fr("LIVE-AUDIT-MARKERS:direct-writer-runtime",278,92,{fill:L,radius:6,layout:"VERTICAL",gap:4,padding:8});audit.x=0;audit.y=250;page.appendChild(audit);mark(audit,"createdByHarnessRuntime","figma-direct-writer-runtime.js");mark(audit,"expectedReactionCount",(PROTOTYPE_DIRECT_WRITER_BRIEF.interactions||[]).length);mark(audit,"reactionErrorCount",reactionErrors.length);mark(audit,"reactionErrorsJson",JSON.stringify(reactionErrors.slice(0,20)));at(audit,`可见场景 ${(PROTOTYPE_DIRECT_WRITER_BRIEF.scenes||[]).length}\n反应 ${reactionCount}\n错误 ${reactionErrors.length}`,10,B,"audit_text");
+figma.viewport.scrollAndZoomIntoView([entry]);
+return {status:"pass",pageId:page.id,pageName:finalPageName,createdNodeIds,mutatedNodeIds,visibleSceneCount:(PROTOTYPE_DIRECT_WRITER_BRIEF.scenes||[]).length,componentNodeCount:Object.keys(controlNodeById).length,reactionCount,reactionErrors,topLevelNodeNames:page.children.map(n=>n.name)};
+"""
+    return template.replace("__BRIEF__", payload_json)
+
+
+def figma_direct_writer_runtime_errors(path: Path) -> list[str]:
+    errors = []
+    if not path.exists():
+        return [rule_error("DIRECT_WRITE_DED_001", f"missing direct writer runtime {path}")]
+    text = path.read_text(encoding="utf-8")
+    if "PROTOTYPE_DIRECT_WRITER_BRIEF" not in text:
+        errors.append(rule_error("DIRECT_WRITE_DED_001", "direct writer runtime must embed PROTOTYPE_DIRECT_WRITER_BRIEF"))
+    for forbidden in ["SEMANTIC_WRITER_PAYLOAD", "semantic_prototype_payload", "figma_prototype_materialization", "prototype_blueprint_review", "HARNESS_WRITER_PAYLOAD", "PLAYABLE_WRITER_PAYLOAD"]:
+        if forbidden in text:
+            errors.append(rule_error("DIRECT_WRITE_DED_002", f"direct writer runtime must not consume {forbidden}"))
+    for required in ["phone_shell", "host_chat_surface", "input_bar", "candidate_bar", "keyboard_key_grid", "keyboard_ai_toolbar", "keyboard_ai_panel", "system_picker_overlay", "result_card", "inline_feedback"]:
+        if required not in text:
+            errors.append(rule_error("DIRECT_WRITE_DED_003", f"direct writer runtime missing required UI container {required}"))
+    if "setReactionsAsync" not in text:
+        errors.append(rule_error("DIRECT_WRITE_DED_004", "direct writer runtime must attach real reactions"))
+    return errors
+
+
+def build_figma_direct_writer_runtime(args):
+    ensure_run_root_write_context("build-figma-direct-writer-runtime")
+    writer_brief_path = resolve_path(args.writer_brief, RUN_ROOT / "io" / "output" / "prototype_writer_brief.yaml")
+    screenshot_plan_path = resolve_run_output_path(args.screenshot_plan, RUN_ROOT / "io" / "output" / "figma-screenshot-plan.yaml")
+    writer_runtime_path = resolve_run_output_path(args.writer_runtime, RUN_ROOT / "io" / "output" / "figma-writer-runtime.js")
+    readback_runtime_path = resolve_run_output_path(args.readback_runtime, RUN_ROOT / "io" / "output" / "figma-live-readback-runtime.js")
+    if not writer_brief_path.exists():
+        raise SystemExit(f"BLOCKED: missing prototype_writer_brief {writer_brief_path}")
+    writer_brief_doc = yload(writer_brief_path)
+    errors = validate_schema(writer_brief_path, DRD_ROOT / "schemas" / "prototype_writer_brief.schema.json")
+    errors.extend(prototype_writer_brief_semantic_errors(writer_brief_doc))
+    if errors:
+        raise SystemExit("BLOCKED: prototype_writer_brief is not ready for direct writer:\n- " + "\n- ".join(errors))
+    writer_runtime_path.parent.mkdir(parents=True, exist_ok=True)
+    writer_runtime_path.write_text(build_figma_direct_writer_runtime_js(writer_brief_doc), encoding="utf-8")
+    readback_runtime_path.write_text(build_figma_live_readback_runtime_js(), encoding="utf-8")
+    screenshot_plan = {
+        "figma_screenshot_manifest": {
+            "version": "3.1.3",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "source_refs": writer_brief_doc["prototype_writer_brief"].get("source_refs", ["inputs/PRD.md#L1"]),
+            "rule_trace": rule_trace_for_artifact("figma_screenshot_manifest", ["DIRECT_WRITE_DED_001", "VISUAL_ALIGN_DED_001"]),
+            "screenshots": [
+                {"target": "PROTOTYPE-FINAL-ENTRY", "purpose_zh": "确认入口和真实手机容器。"},
+                {"target": "PLAYABLE-PAGE-GROUP:*", "purpose_zh": "确认主画布是输入法产品原型，不是模块堆叠。"},
+                {"target": "system_picker_overlay", "purpose_zh": "确认系统选择器以 overlay/handoff 表达。"},
+            ],
+        }
+    }
+    ywrite(screenshot_plan_path, screenshot_plan)
+    errors = figma_direct_writer_runtime_errors(writer_runtime_path)
+    if "figma.currentPage" not in readback_runtime_path.read_text(encoding="utf-8"):
+        errors.append(rule_error("VISUAL_DED_001", "readback runtime missing Figma page readback logic"))
+    errors.extend(validate_schema(screenshot_plan_path, DRD_ROOT / "schemas" / "figma_screenshot_manifest.schema.json"))
+    if errors:
+        raise SystemExit("BLOCKED: build-figma-direct-writer-runtime failed:\n- " + "\n- ".join(errors))
+    print("# build-figma-direct-writer-runtime")
+    print("PASS")
+    print(f"- WROTE {writer_runtime_path}")
+    print(f"- WROTE {readback_runtime_path}")
+    print(f"- WROTE {screenshot_plan_path}")
+
+
+def validate_figma_direct_writer_runtime(args):
+    path = resolve_path(args.input, RUN_ROOT / "io" / "output" / "figma-writer-runtime.js")
+    errors = figma_direct_writer_runtime_errors(path)
+    print_result("validate-figma-direct-writer-runtime", errors, [])
+
+
+def build_figma_write_handoff(args):
+    ensure_run_root_write_context("build-figma-write-handoff")
+    playback_contract_path = resolve_path(getattr(args, "playback_contract", None), RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
+    surface_mode_contract_path = resolve_path(getattr(args, "surface_mode_contract", None), RUN_ROOT / "io" / "output" / "surface_mode_contract.yaml")
+    layout_invariant_contract_path = resolve_path(getattr(args, "layout_invariant_contract", None), RUN_ROOT / "io" / "output" / "layout_invariant_contract.yaml")
+    runtime_rule_trace_path = resolve_path(getattr(args, "runtime_rule_execution_trace", None), RUN_ROOT / "io" / "state" / "runtime_rule_execution_trace.yaml")
+    writer_brief_path = resolve_path(args.writer_brief, RUN_ROOT / "io" / "output" / "prototype_writer_brief.yaml")
+    contract_path = playback_contract_path if playback_contract_path.exists() else writer_brief_path
+    writer_runtime_path = resolve_path(args.writer_runtime, RUN_ROOT / "io" / "output" / "figma-writer-runtime.js")
+    writer_step_manifest_path = RUN_ROOT / "io" / "output" / "figma-writer-runtime.manifest.yaml"
+    readback_runtime_path = resolve_path(args.readback_runtime, RUN_ROOT / "io" / "output" / "figma-live-readback-runtime.js")
+    screenshot_plan_path = resolve_path(args.screenshot_plan, RUN_ROOT / "io" / "output" / "figma-screenshot-plan.yaml")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "figma-write-handoff.yaml")
+    required_paths = {
+        "prototype_playback_contract": contract_path,
+        "figma_writer_runtime": writer_runtime_path,
+        "figma_live_readback_runtime": readback_runtime_path,
+        "figma_screenshot_plan": screenshot_plan_path,
+    }
+    missing = [f"{label}: {path}" for label, path in required_paths.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-figma-write-handoff:\n- " + "\n- ".join(missing))
+
+    contract_doc = yload(contract_path)
+    errors = []
+    if contract_path == playback_contract_path:
+        errors.extend(validate_schema(contract_path, DRD_ROOT / "schemas" / "prototype_playback_contract.schema.json"))
+        errors.extend(prototype_playback_contract_semantic_errors(contract_doc))
+    else:
+        errors.extend(validate_schema(contract_path, DRD_ROOT / "schemas" / "prototype_writer_brief.schema.json"))
+        errors.extend(prototype_writer_brief_semantic_errors(contract_doc))
+    runtime_text = writer_runtime_path.read_text(encoding="utf-8")
+    readback_text = readback_runtime_path.read_text(encoding="utf-8")
+    if contract_path == playback_contract_path:
+        errors.extend(figma_playback_writer_runtime_errors(writer_runtime_path))
+    else:
+        errors.extend(figma_direct_writer_runtime_errors(writer_runtime_path))
+    writer_step_manifest_doc = None
+    if writer_step_manifest_path.exists():
+        writer_step_manifest_doc = yload(writer_step_manifest_path)
+        step_root = writer_step_manifest_doc.get("figma_writer_step_manifest", {}) or {}
+        if step_root.get("writer_execution_mode") != "split_runtime_steps":
+            errors.append(rule_error("PLAYBACK_DED_001", "figma writer step manifest must use split_runtime_steps"))
+        if not step_root.get("steps"):
+            errors.append(rule_error("PLAYBACK_DED_001", "figma writer step manifest must include steps[]"))
+        for step in step_root.get("steps", []) or []:
+            step_path_text = step.get("path", "")
+            step_path = (RUN_ROOT / step_path_text).resolve() if step_path_text and not Path(step_path_text).is_absolute() else Path(step_path_text).resolve()
+            if not step_path.exists():
+                errors.append(rule_error("PLAYBACK_DED_001", f"missing figma writer step runtime: {step_path_text}"))
+    if "figma_live_readback" not in readback_text:
+        errors.append(rule_error("VISUAL_DED_001", "figma live readback runtime is missing live readback marker"))
+    if errors:
+        raise SystemExit("BLOCKED: figma write handoff failed validation:\n- " + "\n- ".join(errors))
+
+    page_name = f"PROTOTYPE-FINAL-{RUN_ID}"
+    handoff = {
+        "figma_write_handoff": {
+            "version": "3.2.2",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "status": "ready_for_external_figma_write",
+            "profile": "PLAYABLE_PROTOTYPE_WRITE",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "target": {
+                "figma_url": getattr(args, "figma_url", None) or "",
+                "page_name": page_name,
+                "page_write_policy": "create_or_replace_page_with_same_run_name_only",
+            },
+            "source_refs": ((contract_doc.get("prototype_playback_contract", {}) or contract_doc.get("prototype_writer_brief", {}) or {}).get("source_refs", [])),
+            "rule_trace": rule_trace_for_artifact("prototype_playback_contract" if contract_path == playback_contract_path else "prototype_writer_brief", [
+                "PLAYBACK_DED_001",
+                "PLAYBACK_DED_002",
+                "PLAYBACK_DED_003",
+                "PLAYBACK_DED_004",
+                "PLAYBACK_DED_005",
+                "VISUAL_DED_008",
+            ]),
+            "inputs": {
+                "prototype_playback_contract": {
+                    "path": run_artifact_path(contract_path),
+                    "sha256": f"sha256:{sha256_file(contract_path)}",
+                },
+                "writer_runtime": {
+                    "path": run_artifact_path(writer_runtime_path),
+                    "sha256": f"sha256:{sha256_file(writer_runtime_path)}",
+                },
+                "writer_step_manifest": (
+                    {
+                        "path": run_artifact_path(writer_step_manifest_path),
+                        "sha256": f"sha256:{sha256_file(writer_step_manifest_path)}",
+                        "step_count": len(((writer_step_manifest_doc or {}).get("figma_writer_step_manifest", {}) or {}).get("steps", []) or []),
+                    }
+                    if writer_step_manifest_path.exists() else {}
+                ),
+                "readback_runtime": {
+                    "path": run_artifact_path(readback_runtime_path),
+                    "sha256": f"sha256:{sha256_file(readback_runtime_path)}",
+                },
+                "screenshot_plan": {
+                    "path": run_artifact_path(screenshot_plan_path),
+                    "sha256": f"sha256:{sha256_file(screenshot_plan_path)}",
+                },
+            },
+            "write_contract": {
+                "writer_execution_mode": "split_runtime_steps" if writer_step_manifest_path.exists() else "single_runtime",
+                "writer_must_execute_runtime": run_artifact_path(writer_runtime_path),
+                "writer_must_execute_runtime_manifest": run_artifact_path(writer_step_manifest_path) if writer_step_manifest_path.exists() else "",
+                "writer_must_execute_runtime_steps": [
+                    step.get("path")
+                    for step in (((writer_step_manifest_doc or {}).get("figma_writer_step_manifest", {}) or {}).get("steps", []) or [])
+                ],
+                "writer_must_consume": run_artifact_path(contract_path),
+                "writer_must_not_read_prd": True,
+                "writer_must_not_read_product_spec": True,
+                "writer_must_not_read_sample_or_example": True,
+                "writer_must_not_use_compact_payload": True,
+                "writer_must_not_use_writer_brief": contract_path == playback_contract_path,
+                "writer_must_not_use_semantic_payload": True,
+                "writer_must_not_use_materialization": True,
+                "allowed_external_side_effects": [
+                    f"create_or_replace_figma_page:{page_name}",
+                    "create_figma_nodes_under_target_page",
+                    "attach_reactions_to_real_controls",
+                    "write_shared_plugin_data_for_live_readback",
+                ],
+                "forbidden_workspace_writes": [
+                    "product-spec",
+                    "prd_subharness_v3_1",
+                    "inputs",
+                    "source PRD",
+                ],
+            },
+            "post_write_required": {
+                "execute_readback_runtime": run_artifact_path(readback_runtime_path),
+                "build_live_audit_artifacts_command": "build-figma-live-audit-artifacts",
+                "build_visual_reverse_inference_command": "build-figma-visual-reverse-inference",
+                "build_source_alignment_audit_command": "build-figma-source-alignment-audit",
+                "build_stage_alignment_audit_command": "build-figma-stage-alignment-audit",
+                "final_gate_command": "gate-figma-live-visual-audit",
+                "must_write_loop_evidence_on_blocker": True,
+            },
+            "operator_note_zh": (
+                "此文件表示隔离 run 已允许进入最终 Figma 写入。Figma 写入阶段只能执行 writer runtime，"
+                "不能重新读取 PRD、product-spec、sample 或 compact payload。写入后必须执行 live readback 与视觉门禁。"
+            ),
+        }
+    }
+    ywrite(output_path, handoff)
+    print("# build-figma-write-handoff")
+    print("PASS")
+    print(f"- WROTE {output_path}")
 
 
 def build_figma_writer_runtime_js(writer_input: dict, materialization_doc: dict, canvas_vm: dict) -> str:
@@ -12298,7 +13372,7 @@ function mark(n,k,v){n.setSharedPluginData(NS,k,String(v||""))}
 function fr(name,w,h,o={}){const n=keep(figma.createFrame());n.name=name;n.resize(w,h);n.fills=solid(o.fill||W);if(o.stroke!==false){n.strokes=solid(o.strokeColor||B);n.strokeWeight=o.strokeWeight||1}n.cornerRadius=o.radius||0;if(o.layout){n.layoutMode=o.layout;n.primaryAxisSizingMode=o.primaryAuto===false?"FIXED":"AUTO";n.counterAxisSizingMode="FIXED";n.itemSpacing=o.gap??8;n.paddingLeft=n.paddingRight=n.paddingTop=n.paddingBottom=o.padding??10}return n}
 function tx(t,s=12,c=B,name="text"){const n=keep(figma.createText());n.name=name;n.fontName={family:"Inter",style:"Regular"};n.characters=String(t||"");n.fontSize=s;n.lineHeight={unit:"AUTO"};n.fills=solid(c);n.textAutoResize="WIDTH_AND_HEIGHT";return n}
 function at(p,t,s=12,c=B,name="text"){const n=tx(t,s,c,name);p.appendChild(n);n.layoutSizingHorizontal="FILL";return n}
-function button(e){const [id,text,desc,inter,prim]=e;const click=String(inter||"").includes("可点击");const label=String(text||desc||"继续").replace(/\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|RELATION|TOPIC|TOOLBAR)-[A-Z0-9_-]+\b/g,"").trim()||"继续";let n;if(prim==="image_tile"){n=fr(`COMPONENT:${id||label}`,76,62,{fill:W,radius:6,layout:"VERTICAL",gap:2,padding:5});at(n,"图片",10,D);at(n,label,9,D)}else if(prim==="selection_counter"){n=fr(`COMPONENT:${id||label}`,126,32,{fill:W,radius:6,layout:"VERTICAL",padding:6});at(n,label,10,B)}else{const w=Math.max(78,Math.min(190,label.length*14+28));n=fr(`COMPONENT:${id||label}`,w,34,{fill:click?D:W,radius:6,layout:"VERTICAL",padding:7});at(n,label,10,click?W:B)}mark(n,"component_id",id||"");mark(n,"primitive_control",prim||"display_text");if(id)componentNodeById[id]=n;return n}
+function button(e){const [id,text,desc,inter,prim]=e;const click=String(inter||"").includes("可点击");const label=String(text||desc||"继续").replace(/\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|TARGET|OVERLAY|SRC|ALIGN)-[A-Z0-9_-]+\b/g,"").trim()||"继续";let n;if(prim==="image_tile"){n=fr(`COMPONENT:${id||label}`,76,62,{fill:W,radius:6,layout:"VERTICAL",gap:2,padding:5});at(n,"图片",10,D);at(n,label,9,D)}else if(prim==="selection_counter"){n=fr(`COMPONENT:${id||label}`,126,32,{fill:W,radius:6,layout:"VERTICAL",padding:6});at(n,label,10,B)}else{const w=Math.max(78,Math.min(190,label.length*14+28));n=fr(`COMPONENT:${id||label}`,w,34,{fill:click?D:W,radius:6,layout:"VERTICAL",padding:7});at(n,label,10,click?W:B)}mark(n,"component_id",id||"");mark(n,"primitive_control",prim||"display_text");if(id)componentNodeById[id]=n;return n}
 function levelSelector(p,items){const r=fr("level_selector / 亲密度等级",330,92,{fill:W,radius:8,layout:"VERTICAL",gap:7,padding:8});p.appendChild(r);r.layoutSizingHorizontal="FILL";at(r,"亲密度等级",11,D);const row=fr("level_options_1_to_7",310,36,{fill:W,stroke:false,layout:"HORIZONTAL",gap:5,padding:0});r.appendChild(row);row.layoutSizingHorizontal="FILL";const explicit=(items||[]).filter(e=>e&&e[0]);if(explicit.length>1){for(const e of explicit.slice(0,7)){const label=String(e[1]||"等级").replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g,"").slice(0,3)||"等级";const disabled=String(e[3]||"").includes("不可")||String(e[4]||"").includes("disabled");const opt=fr(`COMPONENT:${e[0]}`,42,30,{fill:disabled?W:D,radius:6,layout:"VERTICAL",padding:6});row.appendChild(opt);at(opt,label,9,disabled?B:W);mark(opt,"component_id",e[0]);mark(opt,"primitive_control","level_option");componentNodeById[e[0]]=opt}}else{const src=explicit[0]||items[0]||[];for(let i=1;i<=7;i++){const opt=fr(i===2?`COMPONENT:${src[0]||"level-2"}`:`level_option_${i}`,36,30,{fill:i===2?D:W,radius:6,layout:"VERTICAL",padding:6});row.appendChild(opt);at(opt,String(i),10,i===2?W:B);if(i===2&&src[0]){mark(opt,"component_id",src[0]);mark(opt,"primitive_control","level_option");componentNodeById[src[0]]=opt}}}at(r,"默认 2 级；调整后影响后续话题和关系分析结果。",9,D)}
 function group(p,label,items,ctx={}){if(!items.length)return;const levelItems=items.filter(e=>e[4]==="level_option"),otherItems=items.filter(e=>e[4]!=="level_option");if(levelItems.length&&!ctx.levelSelectorDrawn){levelSelector(p,levelItems);ctx.levelSelectorDrawn=true}if(!otherItems.length)return;const r=fr(`REGION:${label}`,330,76,{fill:W,radius:6,layout:"VERTICAL",gap:6,padding:7});p.appendChild(r);r.layoutSizingHorizontal="FILL";at(r,label,11,D);let row=null,rowUsed=0;function newRow(){const next=fr(`REGION-CONTENT:${label}`,310,38,{fill:W,stroke:false,layout:"HORIZONTAL",gap:6,padding:0});r.appendChild(next);next.layoutSizingHorizontal="FILL";return next}function addControl(e){const b=button(e),bw=b.width||90;if(!row||rowUsed>0&&rowUsed+bw+6>310){row=newRow();rowUsed=0}row.appendChild(b);rowUsed+=bw+6}for(const e of otherItems.slice(0,8))addControl(e)}
 function handoff(p,h){if(!h.length)return;const s=fr("system_handoff_map / 系统交接面",330,178,{fill:W,radius:8,layout:"VERTICAL",gap:6,padding:8});p.appendChild(s);s.layoutSizingHorizontal="FILL";at(s,"系统交接链路",12,B);const picker=fr("system_picker_overlay",310,132,{fill:L,radius:8,layout:"VERTICAL",gap:6,padding:7});s.appendChild(picker);picker.layoutSizingHorizontal="FILL";at(picker,h[0]||"进入系统选择器或宿主能力面",10,D);const grid=fr("picker_grid_region",292,54,{fill:W,radius:6,layout:"HORIZONTAL",gap:5,padding:5});picker.appendChild(grid);grid.layoutSizingHorizontal="FILL";for(let i=1;i<=6;i++){const tile=fr(`image_tile_${i}`,35,34,{fill:W,radius:4,layout:"VERTICAL",padding:3});grid.appendChild(tile);at(tile,String(i),9,D)}const bar=fr("picker_action_bar",292,28,{fill:W,stroke:false,layout:"HORIZONTAL",gap:8,padding:0});picker.appendChild(bar);for(const label of["取消","确认选择"]){const b=fr(`picker_action:${label}`,92,26,{fill:label==="取消"?W:D,radius:6,layout:"VERTICAL",padding:5});bar.appendChild(b);at(b,label,10,label==="取消"?B:W)}at(picker,h[1]||"边界会在最早可反馈的位置提示",9,B)}
@@ -12326,10 +13400,20 @@ if (!page) throw new Error(`Missing final prototype page: ${{finalPageName}}`);
 await figma.setCurrentPageAsync(page);
 const activePage = figma.currentPage;
   const nodes = [];
+  const nodeRecords = [];
   const textParts = [];
   const semanticNodes = [];
   const reactionErrorNodes = [];
   let totalReactionCount = 0;
+  function ancestry(node) {
+    const names = [];
+    let cursor = node;
+    while (cursor && cursor.type !== "PAGE") {
+      names.unshift(String(cursor.name || ""));
+      cursor = cursor.parent;
+    }
+    return names.filter(Boolean);
+  }
   function compactReactions(node) {
     return (("reactions" in node ? node.reactions : []) || []).map(r => ({
       trigger: r.trigger ? r.trigger.type : "",
@@ -12356,8 +13440,7 @@ const activePage = figma.currentPage;
     totalReactionCount += reactions.length;
     const text = "characters" in node ? (node.characters || "") : "";
     const hasPluginData = Object.values(pluginData).some(Boolean);
-    if (text) textParts.push(text);
-    if (pluginData.sceneId && semanticNodes.length < 4) semanticNodes.push({
+    const record = {
       id: node.id,
       name: node.name,
       type: node.type,
@@ -12365,6 +13448,26 @@ const activePage = figma.currentPage;
       y: "y" in node ? (node.y || 0) : 0,
       width: "width" in node ? (node.width || 0) : 0,
       height: "height" in node ? (node.height || 0) : 0,
+      text,
+      parent_path: ancestry(node).join(" / "),
+      reaction_count: reactions.length,
+      reactions,
+      pluginData
+    };
+    if (nodeRecords.length < 2000) nodeRecords.push(record);
+    if (text) textParts.push(text);
+    if ((pluginData.sceneId || pluginData.harnessRole || pluginData.component_id || pluginData.targetNodeRole) && semanticNodes.length < 600) semanticNodes.push({
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      x: "x" in node ? (node.x || 0) : 0,
+      y: "y" in node ? (node.y || 0) : 0,
+      width: "width" in node ? (node.width || 0) : 0,
+      height: "height" in node ? (node.height || 0) : 0,
+      text,
+      parent_path: ancestry(node).join(" / "),
+      reaction_count: reactions.length,
+      reactions,
       pluginData
     });
     if (pluginData.reactionError || Number(pluginData.reactionErrorCount || 0) > 0) reactionErrorNodes.push({
@@ -12402,7 +13505,7 @@ const activePage = figma.currentPage;
     const text = "characters" in node ? (node.characters || "") : "";
     const nodeBox = bbox(node);
     if (text) {
-      const item = { id: node.id, name: node.name, text, x: nodeBox.x, y: nodeBox.y, width: nodeBox.width, height: nodeBox.height, parent: node.parent ? node.parent.name : "" };
+      const item = { id: node.id, name: node.name, text, x: nodeBox.x, y: nodeBox.y, width: nodeBox.width, height: nodeBox.height, parent: ancestry(node).join(" / ") };
       visibleTexts.push(item);
       if (/^(功能入口|当前操作|可见元素|选择或输入内容|应用页面内容区|结果内容|展示可点击入口)$/.test(String(text).trim())) genericTexts.push(item);
     }
@@ -12436,6 +13539,7 @@ const activePage = figma.currentPage;
   const textBlob = textParts
     .join("\n")
     .slice(0, 4800);
+  nodes.push(...nodeRecords);
   nodes.push({
     id: activePage.id,
     name: activePage.name,
@@ -12449,7 +13553,9 @@ const activePage = figma.currentPage;
     reactions: [],
     pluginData: {}
   });
-  for (const node of semanticNodes) nodes.push({ ...node, text: "", reaction_count: 0, reactions: [] });
+  for (const node of semanticNodes) {
+    if (!nodes.some(existing => existing.id === node.id)) nodes.push(node);
+  }
   for (const node of reactionErrorNodes) nodes.push({ ...node, text: "" });
   return {
     version: "3.1.4",
@@ -12771,26 +13877,175 @@ def figma_live_audit_checks(readback_doc: dict, playable_doc: dict | None = None
     return checks | {"status": status}, blocker_findings, semantic
 
 
+def build_figma_visual_model_prompt(readback_doc: dict, checks: dict, semantic_sections: dict, writer_root: dict) -> str:
+    readback_root = readback_doc.get("figma_live_readback_snapshot", {}) or {}
+    visible_texts = [
+        {
+            "text": item.get("text", "") if isinstance(item, dict) else str(item),
+            "parent": item.get("parent", "") if isinstance(item, dict) else "",
+        }
+        for item in (readback_root.get("visible_texts", []) or [])[:160]
+    ]
+    nodes = [
+        {
+            "name": node.get("name", ""),
+            "type": node.get("type", ""),
+            "text": str(node.get("text", ""))[:600],
+            "pluginData": node.get("pluginData", {}) or {},
+            "reaction_count": len(node.get("reactions", []) or []),
+        }
+        for node in (readback_root.get("nodes", []) or [])[:180]
+    ]
+    contract_summary = {
+        "pages": [
+            {
+                "page_id": page.get("page_id", ""),
+                "page_name_zh": page.get("page_name_zh", ""),
+                "carrier_type": page.get("carrier_type", ""),
+            }
+            for page in (writer_root.get("pages") or writer_root.get("scenes") or [])[:40]
+        ],
+        "required_visual_containers": writer_root.get("required_visual_containers", []) or [],
+        "control_count": len(writer_root.get("controls", []) or []),
+        "interaction_flow_count": len(writer_root.get("interaction_flows") or writer_root.get("interaction_playback_contracts") or []),
+        "system_handoff_count": len(writer_root.get("system_handoffs") or writer_root.get("handoff_visual_contracts") or []),
+        "source_alignment_requirements": writer_root.get("source_alignment_requirements", []) or [],
+    }
+    output_contract = {
+        "model_figma_visual_comprehension": {
+            "status": "pass | blocked",
+            "human_understandable": "boolean",
+            "page_composition_ok": "boolean",
+            "interaction_explanations_ok": "boolean",
+            "carrier_alignment_ok": "boolean",
+            "state_matrix_detected": "boolean",
+            "source_alignment_ok": "boolean",
+            "normal_prototype_ok": "boolean",
+            "semantic_interaction_alignment_ok": "boolean",
+            "prd_alignment_ok": "boolean",
+            "blocker_findings": ["中文 blocker，必须具体说明缺少哪个页面/控件/交互/PRD 证据"],
+            "review_notes_zh": ["中文说明"],
+        }
+    }
+    context = {
+        "figma_live_readback_summary": {
+            "final_page": readback_root.get("final_page", {}),
+            "visible_texts": visible_texts,
+            "nodes": nodes,
+            "reaction_count": len(readback_root.get("reactions", []) or []),
+        },
+        "deterministic_geometry_checks": checks,
+        "deterministic_semantic_sections": semantic_sections,
+        "playback_contract_summary": contract_summary,
+    }
+    return (
+        "你是 prototype harness 的只读视觉理解 gate。你只能根据 Figma live readback 节点树、可见文本、"
+        "reaction、pluginData、几何审计和 playback contract 摘要判断，不得写文件，不得修改 Figma。"
+        "任务：判断已生成 Figma 是否是人能理解、可体验的真实原型，并且是否与 PRD/source atoms、"
+        "四段模型推理产物经 playback contract 投射出的页面、控件、交互、系统交接一致。"
+        "如果只是节点名或模块存在但交互不可播放、说明不可读、PRD 关键状态不可见，必须 blocked。"
+        "请只返回 JSON，根 key 必须是 model_figma_visual_comprehension。\n\n"
+        + json.dumps({"output_contract": output_contract, "context": context}, ensure_ascii=False, indent=2)
+    )
+
+
+def run_figma_visual_comprehension_model(readback_doc: dict, checks: dict, semantic_sections: dict, writer_root: dict) -> tuple[dict, dict]:
+    raw_path = RUN_ROOT / "io" / "state" / "model_figma_visual_comprehension.raw.md"
+    trace_path = RUN_ROOT / "io" / "state" / "model_figma_visual_comprehension.trace.yaml"
+    prompt = build_figma_visual_model_prompt(readback_doc, checks, semantic_sections, writer_root)
+    prompt_hash = f"sha256:{sha256_text(prompt)}"
+    codex_bin = shutil.which("codex")
+    started = None
+    completed_at = None
+    command: list[str] = []
+    parsed: dict = {}
+    stdout_text = ""
+    stderr_text = ""
+    exit_code = None
+    model_called = False
+    if codex_bin:
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        cmd = [
+            codex_bin,
+            "exec",
+            "--ephemeral",
+            "--skip-git-repo-check",
+            "--sandbox",
+            "read-only",
+            "-C",
+            str(INSTANCE_ROOT),
+            "--output-last-message",
+            str(raw_path),
+            prompt,
+        ]
+        command = cmd[:-1] + ["<prompt-redacted>"]
+        model_called = True
+        started = datetime.now(timezone.utc)
+        try:
+            completed = subprocess.run(cmd, text=True, capture_output=True, timeout=model_stage_timeout_seconds())
+            completed_at = datetime.now(timezone.utc)
+            exit_code = completed.returncode
+            stdout_text = completed.stdout
+            stderr_text = completed.stderr
+            raw_text = raw_path.read_text(encoding="utf-8") if raw_path.exists() else stdout_text
+            match = re.search(r"\{.*\}", raw_text, flags=re.S)
+            if match:
+                try:
+                    parsed = json.loads(match.group(0))
+                except Exception:
+                    parsed = {}
+        except subprocess.TimeoutExpired:
+            completed_at = datetime.now(timezone.utc)
+            stderr_text = "model_figma_visual_comprehension timed out"
+    else:
+        stderr_text = "codex CLI unavailable for model_figma_visual_comprehension"
+    trace = {
+        "model_figma_visual_comprehension_trace": {
+            "version": "3.2.2",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "provider": "codex_cli",
+            "model_called": model_called,
+            "command": command,
+            "prompt_hash": prompt_hash,
+            "raw_output_path": run_artifact_path(raw_path) if raw_path.exists() and path_is_within(raw_path, RUN_ROOT) else "",
+            "exit_code": exit_code,
+            "duration_ms": duration_ms(started, completed_at) if started and completed_at else None,
+            "stdout_tail": stdout_text[-2000:],
+            "stderr_tail": stderr_text[-2000:],
+        }
+    }
+    ywrite(trace_path, trace)
+    return parsed, trace["model_figma_visual_comprehension_trace"]
+
+
 def build_figma_live_audit_artifacts(args):
     ensure_run_root_write_context("build-figma-live-audit-artifacts")
     raw_path = resolve_path(args.readback_raw, RUN_ROOT / "io" / "output" / "figma_live_readback_raw.json")
     playable_path = resolve_path(args.playable_model, RUN_ROOT / "io" / "output" / "playable_prototype_model.yaml")
     semantic_payload_path = resolve_path(getattr(args, "semantic_payload", None), RUN_ROOT / "io" / "output" / "semantic_prototype_payload.yaml")
+    playback_contract_path = resolve_path(getattr(args, "playback_contract", None), RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
+    writer_brief_path = resolve_path(getattr(args, "writer_brief", None), RUN_ROOT / "io" / "output" / "prototype_writer_brief.yaml")
+    writer_contract_path = playback_contract_path if playback_contract_path.exists() else writer_brief_path
     readback_path = resolve_run_output_path(args.readback, RUN_ROOT / "io" / "output" / "figma_live_readback_snapshot.yaml")
     geometry_path = resolve_run_output_path(args.geometry, RUN_ROOT / "io" / "output" / "figma_geometry_audit.yaml")
     semantic_path = resolve_run_output_path(args.semantic, RUN_ROOT / "io" / "output" / "figma_visual_semantic_audit.yaml")
     model_path = resolve_run_output_path(args.model, RUN_ROOT / "io" / "output" / "model_figma_visual_comprehension.yaml")
     missing = [f"{label}: {path}" for label, path in {
         "readback_raw": raw_path,
-        "playable_model": playable_path,
-        "semantic_prototype_payload": semantic_payload_path,
+        "prototype_playback_contract": writer_contract_path,
     }.items() if not path.exists()]
     if missing:
         raise SystemExit("BLOCKED: missing inputs for build-figma-live-audit-artifacts:\n- " + "\n- ".join(missing))
     raw_doc = load_any(raw_path)
-    playable_doc = yload(playable_path)
-    semantic_doc = yload(semantic_payload_path)
+    playable_doc = yload(playable_path) if playable_path.exists() else {}
+    semantic_payload_doc = yload(semantic_payload_path) if semantic_payload_path.exists() else {}
+    writer_brief_doc = yload(writer_contract_path)
     readback_doc = normalize_figma_readback(raw_doc, playable_doc)
+    writer_root = writer_brief_doc.get("prototype_playback_contract", {}) or writer_brief_doc.get("prototype_writer_brief", {}) or {}
+    writer_refs = writer_root.get("source_refs", [])
+    if writer_refs:
+        readback_doc["figma_live_readback_snapshot"]["source_refs"] = writer_refs
     ywrite(readback_path, readback_doc)
     checks, blocker_findings, semantic_sections = figma_live_audit_checks(readback_doc, playable_doc)
     source_refs = readback_doc["figma_live_readback_snapshot"].get("source_refs", ["figma_live_readback"])
@@ -12802,7 +14057,7 @@ def build_figma_live_audit_artifacts(args):
             "audit_source": "figma_live_readback_geometry",
             "source_refs": source_refs,
             "rule_trace": rule_trace_for_artifact("figma_geometry_audit"),
-            "semantic_payload_ref": {"path": source_relpath(semantic_payload_path), "sha256": f"sha256:{sha256_file(semantic_payload_path)}"},
+            "writer_brief_ref": {"path": source_relpath(writer_contract_path), "sha256": f"sha256:{sha256_file(writer_contract_path)}"},
             "checks": {key: value for key, value in checks.items() if key != "status"},
             "status": checks["status"],
             "blocker_findings": blocker_findings,
@@ -12817,36 +14072,62 @@ def build_figma_live_audit_artifacts(args):
             "status": semantic_status,
             "source_refs": source_refs,
             "rule_trace": rule_trace_for_artifact("figma_visual_semantic_audit"),
-            "semantic_payload_ref": {"path": source_relpath(semantic_payload_path), "sha256": f"sha256:{sha256_file(semantic_payload_path)}"},
-            "semantic_payload_page_count": len((semantic_doc.get("semantic_prototype_payload", {}) or {}).get("pages", []) or []),
+            "writer_brief_ref": {"path": source_relpath(writer_contract_path), "sha256": f"sha256:{sha256_file(writer_contract_path)}"},
+            "semantic_payload_page_count": len((semantic_payload_doc.get("semantic_prototype_payload", {}) or {}).get("pages", []) or []),
+            "writer_brief_scene_count": len(writer_root.get("pages") or writer_root.get("scenes") or []),
             **semantic_sections,
             "blocker_findings": blocker_findings,
         }
     }
-    model_pass = checks["status"] == "pass" and semantic_status == "pass"
+    parsed_model, model_trace = run_figma_visual_comprehension_model(readback_doc, checks, semantic_sections, writer_root)
+    parsed_root = parsed_model.get("model_figma_visual_comprehension", parsed_model) if isinstance(parsed_model, dict) else {}
+    deterministic_pass = checks["status"] == "pass" and semantic_status == "pass"
+    parsed_blockers = list(parsed_root.get("blocker_findings", []) or []) if isinstance(parsed_root, dict) else []
+    model_blockers = list(blocker_findings)
+    if not model_trace.get("model_called"):
+        model_blockers.append("Codex visual comprehension model was not called.")
+    if model_trace.get("model_called") and not parsed_root:
+        model_blockers.append("Codex visual comprehension model did not return parseable JSON.")
+    model_blockers.extend(str(item) for item in parsed_blockers)
+    model_pass = (
+        deterministic_pass
+        and model_trace.get("model_called") is True
+        and parsed_root.get("human_understandable") is True
+        and parsed_root.get("page_composition_ok") is True
+        and parsed_root.get("interaction_explanations_ok") is True
+        and parsed_root.get("carrier_alignment_ok") is True
+        and parsed_root.get("state_matrix_detected") is False
+        and parsed_root.get("source_alignment_ok") is True
+        and parsed_root.get("normal_prototype_ok", True) is True
+        and not parsed_blockers
+    )
     model_doc = {
         "model_figma_visual_comprehension": {
-            "version": "3.1.4",
+            "version": "3.2.2",
             "mode": "DRD_MODE",
             "run_id": RUN_ID,
-            "model_called": True,
-            "model_execution_mode": "codex_harness_visual_gate",
+            "model_called": model_trace.get("model_called") is True,
+            "model_execution_mode": "codex_cli_readonly_visual_comprehension",
+            "model_trace": model_trace,
             "source_refs": source_refs,
             "rule_trace": rule_trace_for_artifact("model_figma_visual_comprehension"),
-            "semantic_payload_ref": {"path": source_relpath(semantic_payload_path), "sha256": f"sha256:{sha256_file(semantic_payload_path)}"},
+            "writer_brief_ref": {"path": source_relpath(writer_contract_path), "sha256": f"sha256:{sha256_file(writer_contract_path)}"},
             "human_understandable": model_pass,
             "page_composition_ok": model_pass,
-            "interaction_explanations_ok": semantic_sections["interaction_explanation_alignment"]["status"] == "pass",
-            "carrier_alignment_ok": True,
+            "interaction_explanations_ok": model_pass and semantic_sections["interaction_explanation_alignment"]["status"] == "pass",
+            "carrier_alignment_ok": model_pass,
             "state_matrix_detected": bool(checks.get("state_matrix_detected")),
-            "source_alignment_ok": semantic_sections["source_alignment"]["status"] == "pass",
-            "normal_prototype_ok": semantic_sections["normal_prototype_alignment"]["status"] == "pass",
+            "source_alignment_ok": model_pass and semantic_sections["source_alignment"]["status"] == "pass",
+            "normal_prototype_ok": model_pass and semantic_sections["normal_prototype_alignment"]["status"] == "pass",
+            "semantic_interaction_alignment_ok": bool(parsed_root.get("semantic_interaction_alignment_ok")) if parsed_root else False,
+            "prd_alignment_ok": bool(parsed_root.get("prd_alignment_ok")) if parsed_root else False,
             "machine_id_leak_count": checks.get("machine_id_text_count", 0),
             "generic_placeholder_count": checks.get("generic_text_count", 0),
             "documentation_surface_text_count": checks.get("documentation_surface_text_count", 0),
             "visible_page_group_heading_count": checks.get("visible_page_group_heading_count", 0),
             "hidden_targets_in_main_canvas_count": checks.get("hidden_targets_in_main_canvas_count", 0),
-            "blocker_findings": blocker_findings,
+            "model_review_notes_zh": parsed_root.get("review_notes_zh", []) if isinstance(parsed_root, dict) else [],
+            "blocker_findings": model_blockers,
         }
     }
     ywrite(geometry_path, geometry_doc)
@@ -12868,9 +14149,752 @@ def build_figma_live_audit_artifacts(args):
     print(f"- WROTE {geometry_path}")
     print(f"- WROTE {semantic_path}")
     print(f"- WROTE {model_path}")
-    if blocker_findings:
-        for finding in blocker_findings:
+    if model_blockers:
+        for finding in model_blockers:
             print(f"- FINDING: {finding}")
+
+
+def readback_text_name_blob(readback_doc: dict) -> str:
+    root = readback_doc.get("figma_live_readback_snapshot", {}) if isinstance(readback_doc, dict) else {}
+    parts = []
+    final_page = root.get("final_page", {}) or {}
+    parts.extend(str(name) for name in final_page.get("top_level_node_names", []) or [])
+    for node in root.get("nodes", []) or []:
+        parts.append(str(node.get("name", "")))
+        parts.append(str(node.get("text", "")))
+        plugin = node.get("pluginData", {}) or {}
+        parts.extend(str(value) for value in plugin.values() if value)
+    for item in root.get("visible_texts", []) or []:
+        if isinstance(item, dict):
+            parts.extend([str(item.get("name", "")), str(item.get("parent", "")), str(item.get("text", ""))])
+        else:
+            parts.append(str(item))
+    return "\n".join(parts)
+
+
+def readback_visible_text_entries(readback_doc: dict) -> list[dict]:
+    root = readback_doc.get("figma_live_readback_snapshot", {}) if isinstance(readback_doc, dict) else {}
+    entries = []
+    for item in root.get("visible_texts", []) or []:
+        if isinstance(item, dict):
+            entries.append({
+                "text": str(item.get("text", "")),
+                "parent": str(item.get("parent", "") or item.get("parent_path", "")),
+                "name": str(item.get("name", "")),
+                "id": str(item.get("id", "")),
+            })
+        else:
+            entries.append({"text": str(item), "parent": "", "name": "", "id": ""})
+    for node in root.get("nodes", []) or []:
+        text = str(node.get("text", "") or "")
+        if text:
+            entries.append({
+                "text": text,
+                "parent": str(node.get("parent_path", "") or node.get("name", "")),
+                "name": str(node.get("name", "")),
+                "id": str(node.get("id", "")),
+            })
+    return entries
+
+
+def readback_region_text_index(readback_doc: dict) -> dict[str, list[str]]:
+    index: dict[str, list[str]] = {}
+    for entry in readback_visible_text_entries(readback_doc):
+        parent = entry.get("parent", "") or "unknown"
+        index.setdefault(parent, []).append(entry.get("text", ""))
+    return index
+
+
+def readback_node_index(readback_doc: dict) -> tuple[dict[str, dict], dict[str, list[dict]]]:
+    root = readback_doc.get("figma_live_readback_snapshot", {}) if isinstance(readback_doc, dict) else {}
+    by_component: dict[str, dict] = {}
+    by_name: dict[str, list[dict]] = {}
+    for node in root.get("nodes", []) or []:
+        name = str(node.get("name", ""))
+        by_name.setdefault(name, []).append(node)
+        plugin = node.get("pluginData", {}) or {}
+        component_id = plugin.get("component_id") or plugin.get("componentId")
+        if component_id:
+            by_component[str(component_id)] = node
+    return by_component, by_name
+
+
+def readback_node_bbox(node: dict) -> dict:
+    x = float(node.get("x", 0) or 0)
+    y = float(node.get("y", 0) or 0)
+    width = float(node.get("width", 0) or 0)
+    height = float(node.get("height", 0) or 0)
+    bbox = node.get("bbox") or node.get("absoluteBoundingBox") or {}
+    if isinstance(bbox, dict):
+        x = float(bbox.get("x", x) or 0)
+        y = float(bbox.get("y", y) or 0)
+        width = float(bbox.get("width", width) or 0)
+        height = float(bbox.get("height", height) or 0)
+    return {
+        "x": x,
+        "y": y,
+        "width": width,
+        "height": height,
+        "right": x + width,
+        "bottom": y + height,
+    }
+
+
+def readback_node_role(node: dict) -> str:
+    plugin = node.get("pluginData", {}) or {}
+    return str(
+        plugin.get("harnessRole")
+        or plugin.get("targetNodeRole")
+        or plugin.get("controlRole")
+        or node.get("name", "")
+    )
+
+
+def readback_nodes_by_harness_role(readback_doc: dict) -> dict[str, list[dict]]:
+    root = readback_doc.get("figma_live_readback_snapshot", {}) if isinstance(readback_doc, dict) else {}
+    by_role: dict[str, list[dict]] = defaultdict(list)
+    for node in root.get("nodes", []) or []:
+        name = str(node.get("name", ""))
+        role = readback_node_role(node)
+        candidates = {role}
+        for token in [
+            "phone_shell",
+            "host_chat_surface",
+            "input_bar",
+            "candidate_bar",
+            "keyboard_area",
+            "keyboard_key_grid",
+            "keyboard_ai_toolbar",
+            "keyboard_ai_panel",
+            "system_picker_overlay",
+            "picker_header",
+            "picker_grid_region",
+            "picker_action_bar",
+            "picker_feedback_region",
+            "result_card",
+            "inline_feedback",
+            "interaction_explanation_region",
+        ]:
+            if token in name or token == role:
+                candidates.add(token)
+        for candidate in candidates:
+            if candidate:
+                by_role[candidate].append(node)
+    return by_role
+
+
+def readback_nodes_by_page_group(readback_doc: dict) -> dict[str, list[dict]]:
+    root = readback_doc.get("figma_live_readback_snapshot", {}) if isinstance(readback_doc, dict) else {}
+    grouped: dict[str, list[dict]] = defaultdict(list)
+    for node in root.get("nodes", []) or []:
+        parent = str(node.get("parent", "") or node.get("parent_path", ""))
+        name = str(node.get("name", ""))
+        group_id = ""
+        for text in [parent, name]:
+            match = re.search(r"PLAYABLE-PAGE-GROUP:[^/\n]+", text)
+            if match:
+                group_id = match.group(0).strip()
+                break
+        if group_id:
+            grouped[group_id].append(node)
+    return grouped
+
+
+def text_present_in_readback(text: str, readback_doc: dict) -> bool:
+    if not str(text or "").strip():
+        return False
+    return str(text) in readback_text_name_blob(readback_doc)
+
+
+def text_present_in_expected_surface(text: str, expected_surface: str, readback_doc: dict) -> bool:
+    if not str(text or "").strip():
+        return False
+    if not str(expected_surface or "").strip():
+        return text_present_in_readback(text, readback_doc)
+    target = str(expected_surface)
+    for entry in readback_visible_text_entries(readback_doc):
+        haystack = "\n".join([entry.get("parent", ""), entry.get("name", ""), entry.get("id", "")])
+        if target in haystack and str(text) in entry.get("text", ""):
+            return True
+    return False
+
+
+def build_figma_visual_reverse_inference_doc(readback_path: Path, writer_brief_path: Path) -> dict:
+    readback_doc = yload(readback_path)
+    contract_doc = yload(writer_brief_path)
+    writer_root = contract_doc.get("prototype_playback_contract", {}) or contract_doc.get("prototype_writer_brief", {}) or {}
+    readback_root = readback_doc.get("figma_live_readback_snapshot", {}) or {}
+    blob = readback_text_name_blob(readback_doc)
+    lowered = blob.lower()
+    region_text_index = readback_region_text_index(readback_doc)
+    node_by_component, node_by_name = readback_node_index(readback_doc)
+    top_level_names = (readback_root.get("final_page", {}) or {}).get("top_level_node_names", []) or []
+    def has_any(*tokens: str) -> bool:
+        return any(token.lower() in lowered for token in tokens)
+    inferred_pages = [
+        {
+            "page_name": str(name),
+            "source": "figma_top_level_node",
+        }
+        for name in (readback_root.get("final_page", {}) or {}).get("top_level_node_names", []) or []
+        if str(name).startswith("PLAYABLE-PAGE-GROUP:")
+    ]
+    prototype_shape = {
+        "phone_shell_present": has_any("phone_shell"),
+        "host_chat_surface_present": has_any("host_chat_surface", "对话消息区域", "宿主聊天区"),
+        "input_bar_present": has_any("input_bar", "输入栏"),
+        "candidate_bar_present": has_any("candidate_bar", "候选词"),
+        "keyboard_key_grid_present": has_any("keyboard_key_grid", "key_row", "键盘区域"),
+        "keyboard_ai_toolbar_present": has_any("keyboard_ai_toolbar", "工具栏", "功能入口"),
+        "keyboard_ai_panel_present": has_any("keyboard_ai_panel", "AI 工具面板", "AI 输入法面板"),
+        "system_picker_overlay_present": has_any("system_picker_overlay", "picker_grid_region", "系统选择器"),
+        "result_card_present": has_any("result_card", "结果卡"),
+        "inline_feedback_present": has_any("inline_feedback", "反馈"),
+        "module_stack_detected": has_any("模块", "页面组", "PROTOTYPE-SCENE:", "SCENE-CLUSTER:", "SCREEN:", "PROTOTYPE-RUNTIME:"),
+        "documentation_dominance_detected": has_any("功能：", "承载面：", "操作元素", "输入选择元素"),
+        "interaction_playback_present": bool(readback_root.get("reactions")) or has_any("下一步", "点击后", "点击控件后", "反应"),
+    }
+    inferred_controls = []
+    for control in writer_root.get("controls", []) or []:
+        control_id = control.get("control_id", "")
+        visible_text = str(control.get("visible_text_zh", "") or "")
+        region_id = str(control.get("region_id", "") or "")
+        node = node_by_component.get(control_id, {})
+        node_name_text = "\n".join([str(node.get("name", "")), str(node.get("text", ""))]) if node else ""
+        text_visible_anywhere = text_present_in_readback(visible_text, readback_doc)
+        text_visible_in_region = text_present_in_expected_surface(visible_text, region_id, readback_doc)
+        inferred_controls.append({
+            "control_id": control_id,
+            "page_id": control.get("page_id", ""),
+            "region_id": region_id,
+            "expected_visible_text_zh": visible_text,
+            "node_present": bool(node),
+            "node_name": node.get("name", "") if node else "",
+            "visible_text_present": text_visible_anywhere or (visible_text and visible_text in node_name_text),
+            "visible_text_in_expected_region": text_visible_in_region,
+            "region_present": bool(region_id and (region_id in blob or region_id in region_text_index)),
+            "reaction_present": bool((node.get("reactions") if node else []) or (node.get("pluginData", {}) or {}).get("reactionError")),
+            "reaction_error": str((node.get("pluginData", {}) or {}).get("reactionError", "")) if node else "",
+        })
+    controls_by_id = {item.get("control_id"): item for item in inferred_controls}
+    inferred_interaction_flows = []
+    target_names = set(str(name) for name in top_level_names)
+    target_names.update(str(name) for name in node_by_name)
+    for flow in writer_root.get("interaction_flows", []) or writer_root.get("interaction_playback_contracts", []) or []:
+        source_control = controls_by_id.get(flow.get("source_control_id"), {})
+        target = flow.get("reaction_target", {}) or {}
+        target_id = str(target.get("target_id", "") or flow.get("target_state_id", "") or flow.get("target_page_id", ""))
+        explanation = next(
+            (
+                item for item in writer_root.get("interaction_explanations", []) or []
+                if item.get("interaction_id") == flow.get("interaction_id")
+            ),
+            {},
+        )
+        explanation_text = str(explanation.get("text_zh", "") or flow.get("result_zh", "") or "")
+        inferred_interaction_flows.append({
+            "interaction_id": flow.get("interaction_id", ""),
+            "source_control_id": flow.get("source_control_id", ""),
+            "source_control_present": source_control.get("node_present") is True or source_control.get("visible_text_present") is True,
+            "source_control_visible_text_present": source_control.get("visible_text_present") is True,
+            "source_control_region_match": source_control.get("visible_text_in_expected_region") is True or source_control.get("region_present") is True,
+            "reaction_present": source_control.get("reaction_present") is True,
+            "reaction_error": source_control.get("reaction_error", ""),
+            "target_id": target_id,
+            "target_present": bool(target_id and any(target_id in name for name in target_names)),
+            "explanation_present": text_present_in_readback(explanation_text, readback_doc),
+            "expected_explanation_zh": explanation_text,
+        })
+    inferred_handoffs = []
+    for handoff in writer_root.get("system_handoffs", []) or writer_root.get("handoff_visual_contracts", []) or []:
+        regions = handoff.get("regions", []) or ["picker_header", "picker_grid_region", "picker_action_bar", "picker_feedback_region"]
+        inferred_handoffs.append({
+            "handoff_id": handoff.get("overlay_id") or handoff.get("handoff_id") or handoff.get("interaction_id", ""),
+            "interaction_id": handoff.get("interaction_id", ""),
+            "parent_page_id": handoff.get("parent_page_id", ""),
+            "overlay_present": prototype_shape.get("system_picker_overlay_present") is True,
+            "region_results": [
+                {"region_id": region, "present": bool(region in blob or region in region_text_index)}
+                for region in regions
+            ],
+            "enter_text_present": text_present_in_readback(handoff.get("enter_zh", ""), readback_doc),
+            "operate_text_present": text_present_in_readback(handoff.get("operate_zh", ""), readback_doc),
+            "cancel_text_present": text_present_in_readback(handoff.get("cancel_zh", ""), readback_doc),
+            "failure_text_present": text_present_in_readback(handoff.get("failure_zh", ""), readback_doc),
+        })
+    blockers = []
+    required_shape_fields = [
+        "phone_shell_present",
+        "host_chat_surface_present",
+        "input_bar_present",
+        "candidate_bar_present",
+        "keyboard_key_grid_present",
+        "keyboard_ai_toolbar_present",
+        "keyboard_ai_panel_present",
+        "result_card_present",
+        "inline_feedback_present",
+        "interaction_playback_present",
+    ]
+    for field in required_shape_fields:
+        if prototype_shape.get(field) is not True:
+            blockers.append(f"{field} is missing from Figma live readback")
+    expected_handoffs = writer_root.get("system_handoffs") or writer_root.get("handoff_visual_contracts") or []
+    if expected_handoffs and prototype_shape.get("system_picker_overlay_present") is not True:
+        blockers.append("system handoff exists but system_picker_overlay is missing")
+    if prototype_shape.get("module_stack_detected") is True:
+        blockers.append("module stack or old scene/matrix structure detected")
+    if prototype_shape.get("documentation_dominance_detected") is True:
+        blockers.append("documentation text dominates visible prototype")
+    return {
+        "figma_visual_reverse_inference": {
+            "version": "3.2.1",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "status": "blocked" if blockers else "pass",
+            "inference_source": "figma_live_readback_snapshot",
+            "model_called": False,
+            "source_refs": writer_root.get("source_refs", []) or readback_root.get("source_refs", []) or ["figma_live_readback"],
+            "rule_trace": rule_trace_for_artifact("figma_visual_reverse_inference"),
+            "writer_brief_ref": {"path": run_artifact_path(writer_brief_path), "sha256": f"sha256:{sha256_file(writer_brief_path)}"},
+            "readback_ref": {"path": run_artifact_path(readback_path), "sha256": f"sha256:{sha256_file(readback_path)}"},
+            "inferred_pages": inferred_pages,
+            "inferred_carriers": [
+                {"carrier_type": "host_chat_surface", "present": prototype_shape["host_chat_surface_present"]},
+                {"carrier_type": "embedded_keyboard_panel", "present": prototype_shape["keyboard_ai_panel_present"]},
+                {"carrier_type": "system_picker_overlay", "present": prototype_shape["system_picker_overlay_present"]},
+            ],
+            "inferred_interactions": [
+                {"interaction_kind": "click_or_tap_reaction", "present": bool(readback_root.get("reactions")), "count": len(readback_root.get("reactions", []) or [])},
+                {"interaction_kind": "visible_playback_text", "present": prototype_shape["interaction_playback_present"]},
+            ],
+            "region_text_index": region_text_index,
+            "inferred_controls": inferred_controls,
+            "inferred_interaction_flows": inferred_interaction_flows,
+            "inferred_handoffs": inferred_handoffs,
+            "prototype_shape": prototype_shape,
+            "blocker_findings": blockers,
+        }
+    }
+
+
+def figma_visual_reverse_inference_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("figma_visual_reverse_inference", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "figma_visual_reverse_inference.rule_trace"))
+    if root.get("status") != "pass":
+        errors.append(rule_error("VISUAL_ALIGN_DED_001", "figma_visual_reverse_inference.status must be pass"))
+    shape = root.get("prototype_shape", {}) or {}
+    for field, rule_id in [
+        ("phone_shell_present", "DIRECT_WRITE_DED_003"),
+        ("host_chat_surface_present", "DIRECT_WRITE_DED_003"),
+        ("input_bar_present", "DIRECT_WRITE_DED_003"),
+        ("candidate_bar_present", "DIRECT_WRITE_DED_003"),
+        ("keyboard_key_grid_present", "DIRECT_WRITE_DED_003"),
+        ("keyboard_ai_toolbar_present", "DIRECT_WRITE_DED_003"),
+        ("keyboard_ai_panel_present", "DIRECT_WRITE_DED_003"),
+        ("result_card_present", "DIRECT_WRITE_DED_003"),
+        ("inline_feedback_present", "DIRECT_WRITE_DED_003"),
+        ("interaction_playback_present", "DIRECT_WRITE_DED_004"),
+    ]:
+        if shape.get(field) is not True:
+            errors.append(rule_error(rule_id, f"{field} must be true"))
+    if shape.get("module_stack_detected") is True:
+        errors.append(rule_error("DIRECT_WRITE_DED_002", "reverse inference detected module stack"))
+    for finding in root.get("blocker_findings", []) or []:
+        errors.append(rule_error("VISUAL_ALIGN_DED_001", f"reverse inference blocker: {finding}"))
+    return errors
+
+
+def build_figma_visual_reverse_inference(args):
+    ensure_run_root_write_context("build-figma-visual-reverse-inference")
+    readback_path = resolve_path(args.readback, RUN_ROOT / "io" / "output" / "figma_live_readback_snapshot.yaml")
+    playback_contract_path = resolve_path(getattr(args, "playback_contract", None), RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
+    writer_brief_path = playback_contract_path if playback_contract_path.exists() else resolve_path(args.writer_brief, RUN_ROOT / "io" / "output" / "prototype_writer_brief.yaml")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "figma_visual_reverse_inference.yaml")
+    missing = [f"{label}: {path}" for label, path in {"readback": readback_path, "prototype_writer_brief": writer_brief_path}.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-figma-visual-reverse-inference:\n- " + "\n- ".join(missing))
+    doc = build_figma_visual_reverse_inference_doc(readback_path, writer_brief_path)
+    ywrite(output_path, doc)
+    errors = validate_schema(output_path, DRD_ROOT / "schemas" / "figma_visual_reverse_inference.schema.json")
+    errors.extend(figma_visual_reverse_inference_errors(doc))
+    if errors:
+        raise SystemExit("BLOCKED: figma visual reverse inference failed:\n- " + "\n- ".join(errors))
+    print("# build-figma-visual-reverse-inference")
+    print("PASS")
+    print(f"- WROTE {output_path}")
+
+
+def validate_figma_visual_reverse_inference(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "figma_visual_reverse_inference.schema.json")
+    if not errors:
+        errors.extend(figma_visual_reverse_inference_errors(yload(path)))
+    print_result("validate-figma-visual-reverse-inference", errors, [])
+
+
+def build_figma_stage_alignment_audit_doc(reverse_path: Path, writer_brief_path: Path, model_journey_path: Path, model_state_machine_path: Path, model_component_path: Path, operation_chain_path: Path) -> dict:
+    reverse_doc = yload(reverse_path)
+    writer_brief_doc = yload(writer_brief_path)
+    journey_doc = yload(model_journey_path)
+    state_machine_doc = yload(model_state_machine_path)
+    component_doc = yload(model_component_path)
+    operation_doc = yload(operation_chain_path)
+    reverse_root = reverse_doc.get("figma_visual_reverse_inference", {}) or {}
+    writer_root = writer_brief_doc.get("prototype_playback_contract", {}) or writer_brief_doc.get("prototype_writer_brief", {}) or {}
+    shape = reverse_root.get("prototype_shape", {}) or {}
+    blockers = []
+    inferred_control_by_id = {
+        item.get("control_id"): item
+        for item in reverse_root.get("inferred_controls", []) or []
+        if item.get("control_id")
+    }
+    inferred_flow_by_id = {
+        item.get("interaction_id"): item
+        for item in reverse_root.get("inferred_interaction_flows", []) or []
+        if item.get("interaction_id")
+    }
+    inferred_handoff_by_interaction = {
+        item.get("interaction_id"): item
+        for item in reverse_root.get("inferred_handoffs", []) or []
+        if item.get("interaction_id")
+    }
+    required = set(writer_root.get("required_visual_containers", []) or [])
+    field_by_container = {
+        "phone_shell": "phone_shell_present",
+        "host_chat_surface": "host_chat_surface_present",
+        "input_bar": "input_bar_present",
+        "candidate_bar": "candidate_bar_present",
+        "keyboard_key_grid": "keyboard_key_grid_present",
+        "keyboard_ai_toolbar": "keyboard_ai_toolbar_present",
+        "keyboard_ai_panel": "keyboard_ai_panel_present",
+        "system_picker_overlay": "system_picker_overlay_present",
+        "result_card": "result_card_present",
+        "inline_feedback": "inline_feedback_present",
+    }
+    missing_containers = [container for container in sorted(required) if shape.get(field_by_container.get(container, "")) is not True]
+    if missing_containers:
+        blockers.append(f"Figma readback missing writer brief containers: {', '.join(missing_containers)}")
+    expected_interactions = len(writer_root.get("interaction_flows") or writer_root.get("interaction_playback_contracts") or [])
+    if expected_interactions and shape.get("interaction_playback_present") is not True:
+        blockers.append("writer brief requires interactions but Figma reverse inference cannot find playable interaction cues")
+    expected_handoffs = len(writer_root.get("system_handoffs") or writer_root.get("handoff_visual_contracts") or [])
+    if expected_handoffs and shape.get("system_picker_overlay_present") is not True:
+        blockers.append("writer brief requires system handoff but Figma reverse inference cannot find system picker overlay")
+    if reverse_root.get("status") != "pass":
+        blockers.extend(reverse_root.get("blocker_findings", []) or ["reverse inference is not pass"])
+    model_counts = {
+        "journey_edges": len((model_journey_doc := (journey_doc.get("model_user_journey", {}) or {})).get("journey_edges", []) or []),
+        "state_transitions": len((state_machine_doc.get("model_interaction_state_machine", {}) or {}).get("state_transitions", []) or []),
+        "component_groups": len((component_doc.get("model_component_blueprint", {}) or {}).get("component_groups", []) or []),
+        "operation_chains": len(operation_root_items(operation_doc)),
+    }
+    if model_counts["journey_edges"] and not (writer_root.get("interaction_flows") or writer_root.get("interaction_playback_contracts")):
+        blockers.append("model_user_journey has edges but writer brief has no interaction playback contracts")
+    if model_counts["component_groups"] and not (writer_root.get("pages") or writer_root.get("scenes")):
+        blockers.append("model_component_blueprint exists but writer brief has no scenes")
+    expected_controls = writer_root.get("controls", []) or []
+    expected_flows = writer_root.get("interaction_flows") or writer_root.get("interaction_playback_contracts") or []
+    expected_handoffs = writer_root.get("system_handoffs") or writer_root.get("handoff_visual_contracts") or []
+    source_control_ids = {flow.get("source_control_id") for flow in expected_flows if flow.get("source_control_id")}
+    control_alignment_details = []
+    for control in expected_controls:
+        control_id = control.get("control_id", "")
+        inferred = inferred_control_by_id.get(control_id, {})
+        is_source_control = control_id in source_control_ids
+        status = "pass"
+        missing = []
+        if is_source_control and inferred.get("source_control_present") is not True and inferred.get("node_present") is not True and inferred.get("visible_text_present") is not True:
+            status = "blocked"
+            missing.append("visible control")
+        if is_source_control and inferred.get("visible_text_present") is not True:
+            status = "blocked"
+            missing.append("visible text")
+        if is_source_control and inferred.get("region_present") is not True:
+            status = "blocked"
+            missing.append("expected region")
+        if missing:
+            blockers.append(f"control {control_id} missing {', '.join(missing)}")
+        control_alignment_details.append({
+            "control_id": control_id,
+            "required_as_source_control": is_source_control,
+            "status": status,
+            "expected_page_id": control.get("page_id", ""),
+            "expected_region_id": control.get("region_id", ""),
+            "expected_visible_text_zh": control.get("visible_text_zh", ""),
+            "inferred": inferred,
+            "missing": missing,
+        })
+    interaction_alignment_details = []
+    for flow in expected_flows:
+        interaction_id = flow.get("interaction_id", "")
+        inferred = inferred_flow_by_id.get(interaction_id, {})
+        missing = []
+        if inferred.get("source_control_present") is not True:
+            missing.append("source control")
+        if inferred.get("source_control_visible_text_present") is not True:
+            missing.append("source control visible text")
+        if inferred.get("source_control_region_match") is not True:
+            missing.append("source control region")
+        if inferred.get("reaction_present") is not True:
+            missing.append("reaction")
+        if inferred.get("reaction_error"):
+            missing.append("reaction without error")
+        if inferred.get("target_present") is not True:
+            missing.append("reaction target")
+        if inferred.get("explanation_present") is not True:
+            missing.append("interaction explanation")
+        status = "blocked" if missing else "pass"
+        if missing:
+            blockers.append(f"interaction {interaction_id} missing {', '.join(missing)}")
+        interaction_alignment_details.append({
+            "interaction_id": interaction_id,
+            "status": status,
+            "source_control_id": flow.get("source_control_id", ""),
+            "target_id": (flow.get("reaction_target", {}) or {}).get("target_id", ""),
+            "transition_kind": flow.get("transition_kind", ""),
+            "inferred": inferred,
+            "missing": missing,
+        })
+    handoff_alignment_details = []
+    for handoff in expected_handoffs:
+        handoff_id = handoff.get("overlay_id") or handoff.get("handoff_id") or handoff.get("interaction_id", "")
+        inferred = inferred_handoff_by_interaction.get(handoff.get("interaction_id", ""), {})
+        missing = []
+        if inferred.get("overlay_present") is not True:
+            missing.append("overlay")
+        missing_regions = [
+            item.get("region_id", "")
+            for item in inferred.get("region_results", []) or []
+            if item.get("present") is not True
+        ]
+        if missing_regions:
+            missing.append("regions:" + ",".join(missing_regions))
+        status = "blocked" if missing else "pass"
+        if missing:
+            blockers.append(f"handoff {handoff_id} missing {', '.join(missing)}")
+        handoff_alignment_details.append({
+            "handoff_id": handoff_id,
+            "interaction_id": handoff.get("interaction_id", ""),
+            "status": status,
+            "expected_regions": handoff.get("regions", []) or [],
+            "inferred": inferred,
+            "missing": missing,
+        })
+    control_blocked_count = sum(1 for item in control_alignment_details if item.get("status") != "pass")
+    interaction_blocked_count = sum(1 for item in interaction_alignment_details if item.get("status") != "pass")
+    handoff_blocked_count = sum(1 for item in handoff_alignment_details if item.get("status") != "pass")
+    return {
+        "figma_stage_alignment_audit": {
+            "version": "3.2.2",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "status": "blocked" if blockers else "pass",
+            "source_refs": writer_root.get("source_refs", []) or reverse_root.get("source_refs", []) or ["figma_stage_alignment"],
+            "rule_trace": rule_trace_for_artifact("figma_stage_alignment_audit"),
+            "reverse_inference_ref": {"path": run_artifact_path(reverse_path), "sha256": f"sha256:{sha256_file(reverse_path)}"},
+            "writer_brief_ref": {"path": run_artifact_path(writer_brief_path), "sha256": f"sha256:{sha256_file(writer_brief_path)}"},
+            "checks": {
+                "required_visual_containers": {
+                    "status": "pass" if not missing_containers else "blocked",
+                    "expected": sorted(required),
+                    "missing": missing_containers,
+                },
+                "interaction_playback_alignment": {
+                    "status": "pass" if not expected_interactions or shape.get("interaction_playback_present") is True else "blocked",
+                    "expected_interaction_count": expected_interactions,
+                    "reverse_inference_present": shape.get("interaction_playback_present") is True,
+                },
+                "handoff_alignment": {
+                    "status": "pass" if not expected_handoffs or shape.get("system_picker_overlay_present") is True else "blocked",
+                    "expected_handoff_count": expected_handoffs,
+                    "reverse_inference_overlay_present": shape.get("system_picker_overlay_present") is True,
+                },
+                "stage_artifact_counts": model_counts,
+                "control_alignment": {
+                    "status": "pass" if control_blocked_count == 0 else "blocked",
+                    "expected_source_control_count": len(source_control_ids),
+                    "blocked_count": control_blocked_count,
+                    "details": control_alignment_details,
+                },
+                "interaction_flow_alignment": {
+                    "status": "pass" if interaction_blocked_count == 0 else "blocked",
+                    "expected_interaction_count": len(expected_flows),
+                    "blocked_count": interaction_blocked_count,
+                    "details": interaction_alignment_details,
+                },
+                "system_handoff_detail_alignment": {
+                    "status": "pass" if handoff_blocked_count == 0 else "blocked",
+                    "expected_handoff_count": len(expected_handoffs),
+                    "blocked_count": handoff_blocked_count,
+                    "details": handoff_alignment_details,
+                },
+            },
+            "blocker_findings": blockers,
+        }
+    }
+
+
+def figma_stage_alignment_audit_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("figma_stage_alignment_audit", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "figma_stage_alignment_audit.rule_trace"))
+    if root.get("status") != "pass":
+        errors.append(rule_error("VISUAL_ALIGN_DED_002", "figma_stage_alignment_audit.status must be pass"))
+    for key, check in (root.get("checks", {}) or {}).items():
+        if isinstance(check, dict) and "status" in check and check.get("status") != "pass":
+            errors.append(rule_error("VISUAL_ALIGN_DED_002", f"{key}.status must be pass"))
+    for finding in root.get("blocker_findings", []) or []:
+        errors.append(rule_error("VISUAL_ALIGN_DED_002", f"stage alignment blocker: {finding}"))
+    return errors
+
+
+def build_figma_stage_alignment_audit(args):
+    ensure_run_root_write_context("build-figma-stage-alignment-audit")
+    reverse_path = resolve_path(args.reverse_inference, RUN_ROOT / "io" / "output" / "figma_visual_reverse_inference.yaml")
+    playback_contract_path = resolve_path(getattr(args, "playback_contract", None), RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
+    writer_brief_path = playback_contract_path if playback_contract_path.exists() else resolve_path(args.writer_brief, RUN_ROOT / "io" / "output" / "prototype_writer_brief.yaml")
+    model_journey_path = resolve_path(args.model_user_journey, RUN_ROOT / "io" / "state" / "model_user_journey.yaml")
+    model_state_machine_path = resolve_path(args.model_interaction_state_machine, RUN_ROOT / "io" / "state" / "model_interaction_state_machine.yaml")
+    model_component_path = resolve_path(args.model_component_blueprint, RUN_ROOT / "io" / "state" / "model_component_blueprint.yaml")
+    operation_chain_path = resolve_path(args.operation_chain, RUN_ROOT / "io" / "output" / "user_operation_chain.yaml")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "figma_stage_alignment_audit.yaml")
+    required = {
+        "figma_visual_reverse_inference": reverse_path,
+        "prototype_writer_brief": writer_brief_path,
+        "model_user_journey": model_journey_path,
+        "model_interaction_state_machine": model_state_machine_path,
+        "model_component_blueprint": model_component_path,
+        "user_operation_chain": operation_chain_path,
+    }
+    missing = [f"{label}: {path}" for label, path in required.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-figma-stage-alignment-audit:\n- " + "\n- ".join(missing))
+    doc = build_figma_stage_alignment_audit_doc(reverse_path, writer_brief_path, model_journey_path, model_state_machine_path, model_component_path, operation_chain_path)
+    ywrite(output_path, doc)
+    errors = validate_schema(output_path, DRD_ROOT / "schemas" / "figma_stage_alignment_audit.schema.json")
+    errors.extend(figma_stage_alignment_audit_errors(doc))
+    if errors:
+        raise SystemExit("BLOCKED: figma stage alignment audit failed:\n- " + "\n- ".join(errors))
+    print("# build-figma-stage-alignment-audit")
+    print("PASS")
+    print(f"- WROTE {output_path}")
+
+
+def validate_figma_stage_alignment_audit(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "figma_stage_alignment_audit.schema.json")
+    if not errors:
+        errors.extend(figma_stage_alignment_audit_errors(yload(path)))
+    print_result("validate-figma-stage-alignment-audit", errors, [])
+
+
+def build_figma_source_alignment_audit_doc(readback_path: Path, playback_contract_path: Path) -> dict:
+    readback_doc = yload(readback_path)
+    contract_doc = yload(playback_contract_path)
+    readback_root = readback_doc.get("figma_live_readback_snapshot", {}) or {}
+    contract_root = contract_doc.get("prototype_playback_contract", {}) or {}
+    visible_text = "\n".join(
+        str(item.get("text", "") if isinstance(item, dict) else item)
+        for item in (readback_root.get("visible_texts", []) or [])
+    )
+    visible_text += "\n" + "\n".join(str(node.get("text", "")) for node in readback_root.get("nodes", []) or [])
+    checks = []
+    blockers = []
+    source_refs = []
+    for requirement in contract_root.get("source_alignment_requirements", []) or []:
+        expected = [str(item) for item in requirement.get("expected_visible_texts", []) or [] if str(item).strip()]
+        matched = [item for item in expected if item in visible_text]
+        missing = [item for item in expected if item not in matched]
+        expected_surface = requirement.get("expected_surface", "")
+        surface_matched = [
+            item for item in expected
+            if text_present_in_expected_surface(item, expected_surface, readback_doc)
+        ]
+        surface_missing = [item for item in expected if item not in surface_matched]
+        surface_status = "pass" if not surface_missing else "blocked"
+        status = "pass" if not missing and surface_status == "pass" else "blocked"
+        refs = requirement.get("source_refs", []) or contract_root.get("source_refs", []) or ["figma_source_alignment"]
+        source_refs.extend(refs)
+        checks.append({
+            "requirement_id": requirement.get("requirement_id", ""),
+            "source_state_id": requirement.get("source_state_id", ""),
+            "status": status,
+            "expected_surface": expected_surface,
+            "expected_visible_texts": expected,
+            "matched_visible_texts": matched,
+            "missing_visible_texts": missing,
+            "surface_status": surface_status,
+            "matched_surface_texts": surface_matched,
+            "missing_surface_texts": surface_missing,
+            "source_refs": refs,
+        })
+        if missing:
+            blockers.append(f"{requirement.get('source_state_id')}: missing visible evidence {', '.join(missing)}")
+        if surface_missing:
+            blockers.append(f"{requirement.get('source_state_id')}: missing expected-surface evidence in {expected_surface}: {', '.join(surface_missing)}")
+    return {
+        "figma_source_alignment_audit": {
+            "version": "3.2.2",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "status": "blocked" if blockers else "pass",
+            "source_refs": normalize_rule_ids(source_refs) or contract_root.get("source_refs", []) or ["figma_source_alignment"],
+            "rule_trace": rule_trace_for_artifact("figma_source_alignment_audit"),
+            "readback_ref": {"path": run_artifact_path(readback_path), "sha256": f"sha256:{sha256_file(readback_path)}"},
+            "playback_contract_ref": {"path": run_artifact_path(playback_contract_path), "sha256": f"sha256:{sha256_file(playback_contract_path)}"},
+            "checks": checks,
+            "blocker_findings": blockers,
+        }
+    }
+
+
+def figma_source_alignment_audit_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("figma_source_alignment_audit", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "figma_source_alignment_audit.rule_trace"))
+    if root.get("status") != "pass":
+        errors.append(rule_error("SOURCE_ALIGN_DED_001", "figma_source_alignment_audit.status must be pass"))
+    for check in root.get("checks", []) or []:
+        if check.get("status") != "pass":
+            missing = list(check.get("missing_visible_texts", []) or [])
+            surface_missing = list(check.get("missing_surface_texts", []) or [])
+            details = []
+            if missing:
+                details.append("visible=" + ", ".join(missing))
+            if surface_missing:
+                details.append(f"surface({check.get('expected_surface', '')})=" + ", ".join(surface_missing))
+            errors.append(rule_error("SOURCE_ALIGN_DED_001", f"{check.get('source_state_id', '<unknown>')}: missing {'; '.join(details)}"))
+    for finding in root.get("blocker_findings", []) or []:
+        errors.append(rule_error("SOURCE_ALIGN_DED_001", f"source alignment blocker: {finding}"))
+    return errors
+
+
+def build_figma_source_alignment_audit(args):
+    ensure_run_root_write_context("build-figma-source-alignment-audit")
+    readback_path = resolve_path(args.readback, RUN_ROOT / "io" / "output" / "figma_live_readback_snapshot.yaml")
+    playback_contract_path = resolve_path(args.playback_contract, RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "figma_source_alignment_audit.yaml")
+    missing = [f"{label}: {path}" for label, path in {"readback": readback_path, "prototype_playback_contract": playback_contract_path}.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-figma-source-alignment-audit:\n- " + "\n- ".join(missing))
+    doc = build_figma_source_alignment_audit_doc(readback_path, playback_contract_path)
+    ywrite(output_path, doc)
+    errors = validate_schema(output_path, DRD_ROOT / "schemas" / "figma_source_alignment_audit.schema.json")
+    errors.extend(figma_source_alignment_audit_errors(doc))
+    if errors:
+        raise SystemExit("BLOCKED: figma source alignment audit failed:\n- " + "\n- ".join(errors))
+    print("# build-figma-source-alignment-audit")
+    print("PASS")
+    print(f"- WROTE {output_path}")
+
+
+def validate_figma_source_alignment_audit(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "figma_source_alignment_audit.schema.json")
+    if not errors:
+        errors.extend(figma_source_alignment_audit_errors(yload(path)))
+    print_result("validate-figma-source-alignment-audit", errors, [])
 
 
 def validate_figma_live_readback(args):
@@ -12989,6 +15013,8 @@ def validate_model_figma_visual_comprehension(args):
             ("state_matrix_detected", False),
             ("source_alignment_ok", True),
             ("normal_prototype_ok", True),
+            ("semantic_interaction_alignment_ok", True),
+            ("prd_alignment_ok", True),
         ]:
             if root.get(field) is not expected:
                 errors.append(rule_error("VISUAL_DED_004", f"model visual comprehension {field} must be {expected}"))
@@ -13006,7 +15032,248 @@ def validate_model_figma_visual_comprehension(args):
     print_result("validate-model-figma-visual-comprehension", errors)
 
 
-def figma_live_visual_gate_errors(readback_path: Path, geometry_path: Path, semantic_path: Path, model_path: Path) -> tuple[list[str], list[str]]:
+def layout_check_status(blockers: list[str]) -> str:
+    return "blocked" if blockers else "pass"
+
+
+def build_figma_layout_invariant_audit_doc(
+    readback_path: Path,
+    surface_mode_path: Path,
+    layout_invariant_path: Path,
+    playback_contract_path: Path,
+) -> dict:
+    readback_doc = yload(readback_path)
+    surface_doc = yload(surface_mode_path)
+    layout_doc = yload(layout_invariant_path)
+    contract_doc = yload(playback_contract_path)
+    readback_root = readback_doc.get("figma_live_readback_snapshot", {}) or {}
+    surface_root = surface_doc.get("surface_mode_contract", {}) or {}
+    layout_root = layout_doc.get("layout_invariant_contract", {}) or {}
+    contract_root = contract_doc.get("prototype_playback_contract", {}) or {}
+    by_role = readback_nodes_by_harness_role(readback_doc)
+    by_group = readback_nodes_by_page_group(readback_doc)
+    source_refs = (
+        contract_root.get("source_refs")
+        or surface_root.get("source_refs")
+        or layout_root.get("source_refs")
+        or readback_root.get("source_refs")
+        or ["figma_layout_invariant_audit"]
+    )
+    blockers: list[str] = []
+    layout_checks = []
+    relative_checks = []
+    mode_checks = []
+    overlay_checks = []
+
+    for invariant in layout_root.get("layout_invariants", []) or []:
+        target_region = str(invariant.get("target_region", ""))
+        target_container = str(invariant.get("target_container", ""))
+        target_nodes = by_role.get(target_region, [])
+        container_nodes = by_role.get(target_container, [])
+        check_blockers = []
+        if not target_nodes:
+            check_blockers.append(f"missing target region {target_region}")
+        if not container_nodes:
+            check_blockers.append(f"missing target container {target_container}")
+        if target_nodes and container_nodes and invariant.get("anchor") == "bottom":
+            target = readback_node_bbox(target_nodes[0])
+            container = readback_node_bbox(container_nodes[0])
+            if container["height"] <= 0 or target["height"] <= 0:
+                check_blockers.append(f"{target_region}/{target_container} bbox is empty")
+            else:
+                min_y = container["y"] + container["height"] * float(invariant.get("min_y_ratio", 0.52) or 0.52)
+                max_bottom_gap = container["height"] * float(invariant.get("max_bottom_gap_ratio", 0.10) or 0.10)
+                bottom_gap = container["bottom"] - target["bottom"]
+                if target["y"] < min_y:
+                    check_blockers.append(f"{target_region} is not in lower half of {target_container}")
+                if bottom_gap < -2 or bottom_gap > max_bottom_gap:
+                    check_blockers.append(f"{target_region} is not bottom anchored in {target_container}; bottom_gap={round(bottom_gap, 2)}")
+        if check_blockers:
+            blockers.extend(f"{invariant.get('invariant_id', target_region)}: {item}" for item in check_blockers)
+        layout_checks.append({
+            "invariant_id": invariant.get("invariant_id", ""),
+            "target_region": target_region,
+            "target_container": target_container,
+            "status": layout_check_status(check_blockers),
+            "target_count": len(target_nodes),
+            "container_count": len(container_nodes),
+            "target_bbox": readback_node_bbox(target_nodes[0]) if target_nodes else {},
+            "container_bbox": readback_node_bbox(container_nodes[0]) if container_nodes else {},
+            "findings": check_blockers,
+            "rule_ids": invariant.get("rule_ids", []),
+        })
+
+    for rule in layout_root.get("relative_position_rules", []) or []:
+        upper = str(rule.get("upper_region", ""))
+        lower = str(rule.get("lower_region", ""))
+        upper_nodes = by_role.get(upper, [])
+        lower_nodes = by_role.get(lower, [])
+        check_blockers = []
+        if not upper_nodes:
+            check_blockers.append(f"missing upper region {upper}")
+        if not lower_nodes:
+            check_blockers.append(f"missing lower region {lower}")
+        if upper_nodes and lower_nodes:
+            upper_box = readback_node_bbox(upper_nodes[0])
+            lower_box = readback_node_bbox(lower_nodes[0])
+            if upper_box["y"] >= lower_box["y"]:
+                check_blockers.append(f"{upper} must be visually above {lower}")
+        if check_blockers:
+            blockers.extend(f"{rule.get('rule_id_local', upper + '-' + lower)}: {item}" for item in check_blockers)
+        relative_checks.append({
+            "rule_id_local": rule.get("rule_id_local", ""),
+            "upper_region": upper,
+            "lower_region": lower,
+            "status": layout_check_status(check_blockers),
+            "upper_count": len(upper_nodes),
+            "lower_count": len(lower_nodes),
+            "upper_bbox": readback_node_bbox(upper_nodes[0]) if upper_nodes else {},
+            "lower_bbox": readback_node_bbox(lower_nodes[0]) if lower_nodes else {},
+            "findings": check_blockers,
+            "rule_ids": rule.get("rule_ids", []),
+        })
+
+    mutual_groups = surface_root.get("mutual_exclusion_groups", []) or []
+    for group in mutual_groups:
+        regions = [str(item) for item in group.get("regions", []) or []]
+        allow_override = bool(group.get("allow_override"))
+        for group_id, nodes in by_group.items():
+            roles = {readback_node_role(node) for node in nodes}
+            names = "\n".join(str(node.get("name", "")) for node in nodes)
+            active_regions = [region for region in regions if region in roles or region in names]
+            check_blockers = []
+            if len(active_regions) > 1 and not allow_override:
+                check_blockers.append(f"mutually exclusive regions active in same page group: {', '.join(active_regions)}")
+            if check_blockers:
+                blockers.extend(f"{group.get('group_id', 'mode_exclusion')}:{group_id}: {item}" for item in check_blockers)
+            mode_checks.append({
+                "group_id": group.get("group_id", ""),
+                "page_group": group_id,
+                "physical_slot": group.get("physical_slot", ""),
+                "regions": regions,
+                "active_regions": active_regions,
+                "allow_override": allow_override,
+                "status": layout_check_status(check_blockers),
+                "findings": check_blockers,
+                "rule_ids": group.get("rule_ids", []),
+            })
+
+    for overlay in layout_root.get("overlay_invariants", []) or []:
+        overlay_type = str(overlay.get("overlay_type", ""))
+        required_regions = [str(item) for item in overlay.get("required_regions", []) or []]
+        overlay_present = bool(by_role.get(overlay_type))
+        contract_requires_overlay = bool(contract_root.get("system_handoffs") or contract_root.get("overlays"))
+        present_regions = [region for region in required_regions if by_role.get(region)]
+        missing_regions = [region for region in required_regions if region not in present_regions]
+        check_blockers = []
+        if contract_requires_overlay and not overlay_present:
+            check_blockers.append(f"contract requires {overlay_type}, but readback cannot find it")
+        if overlay_present and missing_regions:
+            check_blockers.append(f"{overlay_type} missing regions: {', '.join(missing_regions)}")
+        if check_blockers:
+            blockers.extend(f"{overlay_type}: {item}" for item in check_blockers)
+        overlay_checks.append({
+            "overlay_type": overlay_type,
+            "contract_requires_overlay": contract_requires_overlay,
+            "overlay_present": overlay_present,
+            "required_regions": required_regions,
+            "present_regions": present_regions,
+            "missing_regions": missing_regions,
+            "status": layout_check_status(check_blockers),
+            "findings": check_blockers,
+            "rule_ids": overlay.get("rule_ids", []),
+        })
+
+    return {
+        "figma_layout_invariant_audit": {
+            "version": "3.2.3",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "status": "blocked" if blockers else "pass",
+            "audit_source": "figma_live_readback_bbox",
+            "source_refs": safe_source_refs(source_refs, contract_root),
+            "rule_trace": rule_trace_for_artifact("figma_layout_invariant_audit"),
+            "readback_ref": artifact_ref(readback_path),
+            "surface_mode_contract_ref": artifact_ref(surface_mode_path),
+            "layout_invariant_contract_ref": artifact_ref(layout_invariant_path),
+            "playback_contract_ref": artifact_ref(playback_contract_path),
+            "layout_checks": layout_checks,
+            "relative_position_checks": relative_checks,
+            "mode_exclusion_checks": mode_checks,
+            "overlay_checks": overlay_checks,
+            "blocker_findings": blockers,
+        }
+    }
+
+
+def figma_layout_invariant_audit_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("figma_layout_invariant_audit", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "figma_layout_invariant_audit.rule_trace"))
+    if root.get("status") != "pass":
+        errors.append(rule_error("VISUAL_GATE_DED_001", "figma_layout_invariant_audit.status must be pass"))
+    for check in root.get("layout_checks", []) or []:
+        if check.get("status") != "pass":
+            errors.append(rule_error("LAYOUT_DED_004", f"{check.get('invariant_id', '<layout>')}: {check.get('findings', [])}"))
+    for check in root.get("relative_position_checks", []) or []:
+        if check.get("status") != "pass":
+            errors.append(rule_error("LAYOUT_DED_002", f"{check.get('rule_id_local', '<relative>')}: {check.get('findings', [])}"))
+    for check in root.get("mode_exclusion_checks", []) or []:
+        if check.get("status") != "pass":
+            errors.append(rule_error("MODE_DED_001", f"{check.get('group_id', '<mode>')}: {check.get('findings', [])}"))
+    for check in root.get("overlay_checks", []) or []:
+        if check.get("status") != "pass":
+            errors.append(rule_error("LAYOUT_DED_003", f"{check.get('overlay_type', '<overlay>')}: {check.get('findings', [])}"))
+    for finding in root.get("blocker_findings", []) or []:
+        errors.append(rule_error("VISUAL_GATE_DED_001", f"layout invariant blocker: {finding}"))
+    return errors
+
+
+def build_figma_layout_invariant_audit(args):
+    ensure_run_root_write_context("build-figma-layout-invariant-audit")
+    readback_path = resolve_path(args.readback, RUN_ROOT / "io" / "output" / "figma_live_readback_snapshot.yaml")
+    surface_mode_path = resolve_path(args.surface_mode_contract, RUN_ROOT / "io" / "output" / "surface_mode_contract.yaml")
+    layout_invariant_path = resolve_path(args.layout_invariant_contract, RUN_ROOT / "io" / "output" / "layout_invariant_contract.yaml")
+    playback_contract_path = resolve_path(args.playback_contract, RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "figma_layout_invariant_audit.yaml")
+    required = {
+        "figma_live_readback_snapshot": readback_path,
+        "surface_mode_contract": surface_mode_path,
+        "layout_invariant_contract": layout_invariant_path,
+        "prototype_playback_contract": playback_contract_path,
+    }
+    missing = [f"{label}: {path}" for label, path in required.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-figma-layout-invariant-audit:\n- " + "\n- ".join(missing))
+    doc = build_figma_layout_invariant_audit_doc(readback_path, surface_mode_path, layout_invariant_path, playback_contract_path)
+    ywrite(output_path, doc)
+    errors = validate_schema(output_path, DRD_ROOT / "schemas" / "figma_layout_invariant_audit.schema.json")
+    errors.extend(figma_layout_invariant_audit_errors(doc))
+    if errors:
+        raise SystemExit("BLOCKED: figma layout invariant audit failed:\n- " + "\n- ".join(errors))
+    print("# build-figma-layout-invariant-audit")
+    print("PASS")
+    print(f"- WROTE {output_path}")
+
+
+def validate_figma_layout_invariant_audit(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "figma_layout_invariant_audit.schema.json")
+    if not errors:
+        errors.extend(figma_layout_invariant_audit_errors(yload(path)))
+    print_result("validate-figma-layout-invariant-audit", errors, [])
+
+
+def figma_live_visual_gate_errors(
+    readback_path: Path,
+    geometry_path: Path,
+    semantic_path: Path,
+    model_path: Path,
+    reverse_path: Path | None = None,
+    stage_alignment_path: Path | None = None,
+    source_alignment_path: Path | None = None,
+    layout_invariant_path: Path | None = None,
+) -> tuple[list[str], list[str]]:
     errors = []
     source_refs = []
     for label, path, schema_name in [
@@ -13020,6 +15287,28 @@ def figma_live_visual_gate_errors(readback_path: Path, geometry_path: Path, sema
         else:
             errors.extend(validate_schema(path, DRD_ROOT / "schemas" / schema_name))
             root = yload(path).get(label, {}) or {}
+            source_refs.extend(root.get("source_refs", []) or [])
+    if reverse_path is None:
+        reverse_path = RUN_ROOT / "io" / "output" / "figma_visual_reverse_inference.yaml"
+    if stage_alignment_path is None:
+        stage_alignment_path = RUN_ROOT / "io" / "output" / "figma_stage_alignment_audit.yaml"
+    if source_alignment_path is None:
+        source_alignment_path = RUN_ROOT / "io" / "output" / "figma_source_alignment_audit.yaml"
+    if layout_invariant_path is None:
+        layout_invariant_path = RUN_ROOT / "io" / "output" / "figma_layout_invariant_audit.yaml"
+    for label, path, schema_name, validator in [
+        ("figma_visual_reverse_inference", reverse_path, "figma_visual_reverse_inference.schema.json", figma_visual_reverse_inference_errors),
+        ("figma_stage_alignment_audit", stage_alignment_path, "figma_stage_alignment_audit.schema.json", figma_stage_alignment_audit_errors),
+        ("figma_source_alignment_audit", source_alignment_path, "figma_source_alignment_audit.schema.json", figma_source_alignment_audit_errors),
+        ("figma_layout_invariant_audit", layout_invariant_path, "figma_layout_invariant_audit.schema.json", figma_layout_invariant_audit_errors),
+    ]:
+        if not path.exists():
+            errors.append(rule_error("VISUAL_ALIGN_DED_001", f"missing {label}: {path}"))
+        else:
+            errors.extend(validate_schema(path, DRD_ROOT / "schemas" / schema_name))
+            doc = yload(path)
+            errors.extend(validator(doc))
+            root = doc.get(label, {}) or {}
             source_refs.extend(root.get("source_refs", []) or [])
     if readback_path.exists():
         root = yload(readback_path).get("figma_live_readback_snapshot", {})
@@ -13087,6 +15376,10 @@ def figma_live_visual_gate_errors(readback_path: Path, geometry_path: Path, sema
         ]:
             if int(root.get(field, 0) or 0) > 0:
                 errors.append(rule_error(rule_id, f"model visual comprehension found {field}: {root.get(field)}"))
+    if layout_invariant_path.exists():
+        root = yload(layout_invariant_path).get("figma_layout_invariant_audit", {})
+        if root.get("status") != "pass" or root.get("blocker_findings"):
+            errors.append(rule_error("VISUAL_GATE_DED_001", "layout invariant audit is not pass"))
     return errors, source_refs or ["figma_live_visual_audit"]
 
 
@@ -13096,18 +15389,71 @@ def gate_figma_live_visual_audit(args):
     geometry_path = resolve_path(args.geometry, RUN_ROOT / "io" / "output" / "figma_geometry_audit.yaml")
     semantic_path = resolve_path(args.semantic, RUN_ROOT / "io" / "output" / "figma_visual_semantic_audit.yaml")
     model_path = resolve_path(args.model, RUN_ROOT / "io" / "output" / "model_figma_visual_comprehension.yaml")
-    errors, source_refs = figma_live_visual_gate_errors(readback_path, geometry_path, semantic_path, model_path)
+    reverse_path = resolve_path(args.reverse_inference, RUN_ROOT / "io" / "output" / "figma_visual_reverse_inference.yaml")
+    stage_alignment_path = resolve_path(args.stage_alignment, RUN_ROOT / "io" / "output" / "figma_stage_alignment_audit.yaml")
+    source_alignment_path = resolve_path(getattr(args, "source_alignment", None), RUN_ROOT / "io" / "output" / "figma_source_alignment_audit.yaml")
+    layout_invariant_audit_path = resolve_path(getattr(args, "layout_invariant_audit", None), RUN_ROOT / "io" / "output" / "figma_layout_invariant_audit.yaml")
+    playback_contract_path = RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml"
+    playback_upstream_paths = [
+        playback_contract_path,
+        RUN_ROOT / "io" / "output" / "prototype.runtime.candidate.json",
+        RUN_ROOT / "io" / "output" / "prototype-render-payload.yaml",
+        RUN_ROOT / "io" / "output" / "prototype_source_brief.yaml",
+        RUN_ROOT / "io" / "output" / "interaction_carrier_map.yaml",
+        RUN_ROOT / "io" / "output" / "system_handoff_map.yaml",
+        RUN_ROOT / "io" / "output" / "user_operation_chain.yaml",
+        RUN_ROOT / "io" / "state" / "model_surface_ownership.yaml",
+        RUN_ROOT / "io" / "state" / "model_user_journey.yaml",
+        RUN_ROOT / "io" / "state" / "model_interaction_state_machine.yaml",
+        RUN_ROOT / "io" / "state" / "model_component_blueprint.yaml",
+    ]
+    upstream_generation_trace = {
+        "primary_artifact": run_artifact_path(playback_contract_path),
+        "builder_command": "build-prototype-playback-contract",
+        "validator_command": "validate-prototype-playback-contract",
+        "writer_runtime_builder_command": "build-figma-playback-writer-runtime",
+        "write_readiness_validator": "validate-figma-write-readiness",
+        "reason_zh": (
+            "Figma live gate 失败时，先反查 prototype_playback_contract.yaml 是否把 PRD/source atoms、"
+            "四段模型推理、carrier/handoff 和 operation chain 正确合成到页面、控件、状态、交互和说明；"
+            "不要只在 Figma writer 或 readback 层修补。"
+        ),
+        "input_artifacts": [
+            run_artifact_path(path) if path.exists() and path_is_within(path, RUN_ROOT) else source_relpath(path)
+            for path in playback_upstream_paths
+        ],
+    }
+    errors, source_refs = figma_live_visual_gate_errors(
+        readback_path,
+        geometry_path,
+        semantic_path,
+        model_path,
+        reverse_path,
+        stage_alignment_path,
+        source_alignment_path,
+        layout_invariant_audit_path,
+    )
     failure_class_error = (
-        "FC-FIGMA-VISUAL-PROTOTYPE-INSUFFICIENT"
-        if any("[VISUAL_DED_008]" in str(error) for error in errors)
-        else "FC-FIGMA-GEOMETRY-READABILITY-FAILED"
+        "FC-FIGMA-LAYOUT-INVARIANT-FAILED"
+        if any("LAYOUT_DED" in str(error) or "MODE_DED" in str(error) or "layout invariant" in str(error).lower() for error in errors)
+        else
+        "FC-FIGMA-KEYBOARD-CARRIER-MISSING"
+        if any("keyboard" in str(error).lower() or "input_bar" in str(error) or "candidate_bar" in str(error) for error in errors)
+        else "FC-FIGMA-MODULE-STACK-COLLAPSE"
+        if any("module stack" in str(error).lower() or "状态矩阵" in str(error) or "state matrix" in str(error).lower() for error in errors)
+        else "FC-FIGMA-INTERACTION-PLAYBACK-MISSING"
+        if any("interaction" in str(error).lower() or "交互" in str(error) for error in errors)
+        else "FC-FIGMA-STAGE-ALIGNMENT-MISMATCH"
+        if any("alignment" in str(error).lower() or "对照" in str(error) for error in errors)
+        else "FC-FIGMA-VISUAL-PROTOTYPE-INSUFFICIENT"
     )
     gate_dir = write_renderer_loop_gate(
         f"FIGMA-LIVE-VISUAL-GATE-{RUN_ID}",
         errors,
         [
             run_artifact_path(path) if path.exists() and path_is_within(path, RUN_ROOT) else source_relpath(path)
-            for path in [readback_path, geometry_path, semantic_path, model_path]
+            for path in [readback_path, geometry_path, semantic_path, model_path, reverse_path, stage_alignment_path, source_alignment_path, layout_invariant_audit_path]
+            + playback_upstream_paths
         ],
         source_refs,
         artifact_key="figma_live_visual_audit",
@@ -13115,12 +15461,47 @@ def gate_figma_live_visual_audit(args):
         validator="gate-figma-live-visual-audit",
         failure_class_error=failure_class_error,
         failure_class_pass="FC-FIGMA-LIVE-VISUAL-PASS",
-        route_targets=["FIGMA-WRITER", "FIGMA-LIVE-READBACK", "FIGMA-RENDER-LOOP"],
-        repair_hint_error_zh="不要接受当前 Figma 画布。必须基于 live readback 修复页面构成、交互说明、承载面和几何可读性。",
+        route_targets=[
+            "FIGMA-PLAYBACK-CONTRACT",
+            "FIGMA-PLAYBACK-WRITER-RUNTIME",
+            "FIGMA-WRITER",
+            "FIGMA-LIVE-READBACK",
+            "FIGMA-SOURCE-ALIGNMENT-AUDIT",
+            "FIGMA-LIVE-VISUAL-GATE",
+        ],
+        repair_hint_error_zh=(
+            "不要接受当前 Figma 画布。先反推 prototype_playback_contract.yaml 的页面、控件、状态、"
+            "交互、系统交接和 source_alignment_requirements，再重建 playback writer runtime 并重新写入。"
+        ),
         repair_hint_pass_zh="Figma live visual gate 已通过，画布可作为最终原型候选。",
+        required_repair_zh="从 prototype_playback_contract.yaml 生成链开始修复，再重建 playback writer runtime、重新写 Figma、重新执行 live visual gate。",
+        revalidate=[
+            "validate-prototype-playback-contract",
+            "validate-figma-write-readiness",
+            "validate-figma-layout-invariant-audit",
+            "validate-figma-source-alignment-audit",
+            "gate-figma-live-visual-audit",
+        ],
+        upstream_generation_trace=upstream_generation_trace,
+        bounded_projection_auto_repair_supported=True,
     )
     if errors:
-        raise SystemExit("BLOCKED: figma live visual audit failed; loop gate evidence was written to " f"{gate_dir}\n- " + "\n- ".join(errors))
+        repair_status = "not_run"
+        repair_report_path = RUN_ROOT / "io" / "output" / "figma_projection_auto_repair_report.yaml"
+        if not getattr(args, "no_auto_repair_projection", False):
+            repair_report = run_figma_projection_auto_repair(
+                gate_dir=gate_dir,
+                errors=errors,
+                source_refs=source_refs,
+                upstream_generation_trace=upstream_generation_trace,
+                raise_on_blocked=False,
+            )
+            repair_status = (repair_report.get("figma_projection_auto_repair_report", {}) or {}).get("status", "unknown")
+        raise SystemExit(
+            "BLOCKED: figma live visual audit failed; loop gate evidence was written to "
+            f"{gate_dir}; projection auto repair status={repair_status}; report={repair_report_path}\n- "
+            + "\n- ".join(errors)
+        )
     print("# gate-figma-live-visual-audit")
     print("PASS")
     print(f"- WROTE {gate_dir / 'loop_manifest.yaml'}")
@@ -13180,6 +15561,2260 @@ def validate_contract_promotion(args):
     print_result("validate-contract-promotion", errors, warnings)
 
 
+WRITER_BRIEF_REQUIRED_CONTAINERS = [
+    "phone_shell",
+    "host_chat_surface",
+    "input_bar",
+    "candidate_bar",
+    "keyboard_key_grid",
+    "keyboard_ai_toolbar",
+    "keyboard_ai_panel",
+    "system_picker_overlay",
+    "result_card",
+    "inline_feedback",
+]
+
+
+def model_root_from_doc(doc: dict, stage_key: str) -> dict:
+    stage = MODEL_STAGE_BY_KEY[stage_key]
+    return doc.get(stage["root_key"], {}) if isinstance(doc, dict) else {}
+
+
+def safe_source_refs(*items) -> list[str]:
+    refs = []
+    for item in items:
+        if isinstance(item, dict):
+            refs.extend(item.get("source_refs", []) or [])
+        elif isinstance(item, list):
+            refs.extend(ref for ref in item if isinstance(ref, str))
+        elif isinstance(item, str):
+            refs.append(item)
+    return sorted({ref for ref in refs if str(ref).strip()}) or ["inputs/PRD.md#L1"]
+
+
+def screen_name_index(payload_root: dict, runtime_doc: dict | None = None) -> dict:
+    names = {}
+    for screen in (runtime_doc or {}).get("screens", []) or []:
+        names[screen.get("screen_id")] = screen.get("screen_zh") or screen.get("screen_id")
+    for frame in payload_root.get("frames", []) or []:
+        names.setdefault(frame.get("screen_id"), frame.get("screen_zh") or frame.get("screen_id"))
+    return {key: value for key, value in names.items() if key}
+
+
+def component_index_by_screen(payload_root: dict) -> dict:
+    frame_screen = {
+        frame.get("frame_id"): frame.get("screen_id")
+        for frame in payload_root.get("frames", []) or []
+    }
+    grouped = defaultdict(list)
+    for component in payload_root.get("components", []) or []:
+        screen_id = component.get("screen_id") or frame_screen.get(component.get("frame_id"))
+        if screen_id:
+            grouped[screen_id].append(component)
+    return grouped
+
+
+def carrier_root_items(carrier_doc: dict) -> list[dict]:
+    root = carrier_doc.get("interaction_carrier_map", {}) if isinstance(carrier_doc, dict) else {}
+    return root.get("interaction_carriers") or root.get("carrier_assignments") or []
+
+
+def operation_root_items(operation_doc: dict) -> list[dict]:
+    root = operation_doc.get("user_operation_chain", {}) if isinstance(operation_doc, dict) else {}
+    return root.get("chains") or root.get("operation_chains") or []
+
+
+def handoff_root_items(handoff_doc: dict) -> list[dict]:
+    root = handoff_doc.get("system_handoff_map", {}) if isinstance(handoff_doc, dict) else {}
+    return root.get("handoffs") or []
+
+
+def build_prototype_writer_brief_doc(
+    *,
+    runtime_path: Path,
+    payload_path: Path,
+    source_brief_path: Path,
+    carrier_path: Path,
+    handoff_path: Path,
+    operation_chain_path: Path,
+    capability_path: Path,
+    model_surface_path: Path,
+    model_journey_path: Path,
+    model_state_machine_path: Path,
+    model_component_path: Path,
+) -> dict:
+    runtime_doc = jload(runtime_path) if runtime_path.exists() else {}
+    payload_doc = load_any(payload_path)
+    payload_root = payload_doc.get("prototype_render_payload", {}) if isinstance(payload_doc, dict) else {}
+    source_brief = yload(source_brief_path)
+    carrier_doc = yload(carrier_path)
+    handoff_doc = yload(handoff_path)
+    operation_doc = yload(operation_chain_path)
+    capability_doc = yload(capability_path)
+    model_docs = {
+        "surface_ownership": yload(model_surface_path),
+        "user_journey": yload(model_journey_path),
+        "interaction_state_machine": yload(model_state_machine_path),
+        "component_blueprint": yload(model_component_path),
+    }
+    model_roots = {key: model_root_from_doc(doc, key) for key, doc in model_docs.items()}
+    source_refs = safe_source_refs(payload_root.get("source_refs", []), source_brief.get("prototype_source_brief", {}))
+    names = screen_name_index(payload_root, runtime_doc)
+    components_by_screen = component_index_by_screen(payload_root)
+    journey_edges = model_roots["user_journey"].get("journey_edges", []) or []
+    state_transitions = model_roots["interaction_state_machine"].get("state_transitions", []) or []
+    component_groups = model_roots["component_blueprint"].get("component_groups", []) or []
+    component_intents = {
+        item.get("component_id"): item
+        for item in model_roots["component_blueprint"].get("component_intents", []) or []
+        if isinstance(item, dict) and item.get("component_id")
+    }
+    operation_by_interaction = {
+        item.get("interaction_id"): item
+        for item in operation_root_items(operation_doc)
+        if item.get("interaction_id")
+    }
+    carrier_by_interaction = {
+        item.get("interaction_id"): item
+        for item in carrier_root_items(carrier_doc)
+        if item.get("interaction_id")
+    }
+    screens = []
+    surface_blueprint = model_roots["surface_ownership"].get("surface_blueprint", []) or []
+    if not surface_blueprint:
+        surface_blueprint = [
+            {
+                "screen_id": screen.get("screen_id"),
+                "page_name_zh": screen.get("screen_zh"),
+                "page_purpose_zh": screen.get("screen_zh"),
+                "carrier_type": "embedded_keyboard_panel" if text_contains_any(" ".join([str(screen.get("screen_id", "")), str(screen.get("screen_zh", ""))]), ["键盘", "输入法", "工具栏", "入口"]) else "app_page",
+                "source_refs": screen.get("source_refs", []),
+            }
+            for screen in runtime_doc.get("screens", []) or []
+        ]
+    for index, surface in enumerate(surface_blueprint, start=1):
+        screen_id = surface.get("screen_id") or f"PAGE-{index:02d}"
+        page_name = surface.get("page_name_zh") or surface.get("page_role_zh") or names.get(screen_id) or screen_id
+        comps = components_by_screen.get(screen_id, [])
+        controls = []
+        for component in comps[:12]:
+            intent = component_intents.get(component.get("component_id"), {})
+            controls.append({
+                "control_id": component.get("component_id"),
+                "visible_text_zh": component.get("copy_zh") or intent.get("copy_zh") or "继续",
+                "control_kind": component.get("semantic_role") or "display",
+                "primitive_type": component.get("ui_primitive") or ("primary_action" if component.get("semantic_role") == "button" else "content_text"),
+                "interaction_id": component.get("bound_interaction_id", ""),
+                "purpose_zh": intent.get("description_zh") or component.get("semantic_key") or "在当前输入法面板中展示或操作。",
+                "source_refs": safe_source_refs(component),
+                "rule_ids": normalize_rule_ids(rule_ids_for_artifact("prototype_writer_brief") + component.get("rule_ids", [])),
+            })
+        if not controls:
+            controls.append({
+                "control_id": f"CTRL-{screen_id}-PRIMARY",
+                "visible_text_zh": "继续",
+                "control_kind": "primary_action",
+                "primitive_type": "primary_action",
+                "interaction_id": "",
+                "purpose_zh": "用于承接当前页面的主要下一步。",
+                "source_refs": safe_source_refs(surface),
+                "rule_ids": rule_ids_for_artifact("prototype_writer_brief"),
+            })
+        related_groups = [group for group in component_groups if group.get("screen_id") == screen_id]
+        screens.append({
+            "scene_id": f"SCENE-{screen_id}",
+            "page_id": screen_id,
+            "page_name_zh": clean_md_text(page_name),
+            "page_purpose_zh": clean_md_text(surface.get("page_purpose_zh") or surface.get("page_role_zh") or "承载当前输入法 AI 能力的可操作界面。"),
+            "carrier_type": surface.get("carrier_type") or "embedded_keyboard_panel",
+            "carrier_zh": surface.get("host_context_zh") or "宿主聊天页面中的输入法键盘区域。",
+            "user_task_zh": clean_md_text(surface.get("page_boundary_zh") or "用户在当前承载面完成查看、选择、确认、反馈或结果查看。"),
+            "visual_scene_contract": {
+                "must_render": WRITER_BRIEF_REQUIRED_CONTAINERS,
+                "forbidden_main_ui": ["module_stack", "documentation_board", "state_matrix", "semantic_payload_dump"],
+                "helper_text_policy_zh": "交互说明只能作为辅助区；真实 UI 容器和控件必须先成立。",
+            },
+            "visible_ui_regions": [
+                {"region_id": "host_chat_surface", "region_name_zh": "宿主聊天区", "primitive_type": "host_chat_surface"},
+                {"region_id": "input_bar", "region_name_zh": "输入栏", "primitive_type": "input_bar"},
+                {"region_id": "candidate_bar", "region_name_zh": "候选栏", "primitive_type": "candidate_bar"},
+                {"region_id": "keyboard_key_grid", "region_name_zh": "键盘区域", "primitive_type": "keyboard_key_grid"},
+                {"region_id": "keyboard_ai_toolbar", "region_name_zh": "AI 工具栏", "primitive_type": "keyboard_ai_toolbar"},
+                {"region_id": "keyboard_ai_panel", "region_name_zh": "AI 面板", "primitive_type": "keyboard_ai_panel"},
+                {"region_id": "result_card", "region_name_zh": "结果卡", "primitive_type": "result_card"},
+                {"region_id": "inline_feedback", "region_name_zh": "即时反馈区", "primitive_type": "inline_feedback"},
+            ],
+            "required_controls": controls,
+            "component_group_summary": [
+                {
+                    "group_name_zh": group.get("group_name_zh"),
+                    "element_type": group.get("element_type"),
+                    "description_zh": clean_md_text(group.get("description_zh", "")),
+                    "source_refs": safe_source_refs(group),
+                }
+                for group in related_groups
+            ],
+            "source_refs": safe_source_refs(surface, *(comps[:6] or [])),
+            "rule_ids": rule_ids_for_artifact("prototype_writer_brief"),
+        })
+    page_ids = {scene["page_id"] for scene in screens}
+    interactions = []
+    for idx, item in enumerate(payload_root.get("interactions", []) or [], start=1):
+        carrier = carrier_by_interaction.get(item.get("interaction_id"), {})
+        operation = operation_by_interaction.get(item.get("interaction_id"), {})
+        source_page = item.get("source_screen_id") or item.get("screen_id") or next(iter(page_ids), "")
+        target_page = item.get("target_screen_id") or source_page
+        if source_page not in page_ids:
+            source_page = next(iter(page_ids), source_page)
+        if target_page not in page_ids:
+            target_page = source_page
+        interactions.append({
+            "interaction_id": item.get("interaction_id") or f"INT-WRITER-{idx:03d}",
+            "source_page_id": source_page,
+            "target_page_id": target_page,
+            "source_control_id": item.get("source_component_id") or f"CTRL-{source_page}-PRIMARY",
+            "user_visible_trigger_zh": clean_md_text(item.get("trigger_zh") or "点击继续"),
+            "precondition_zh": clean_md_text(item.get("guard_zh") or "满足当前页面的可操作条件。"),
+            "happens_on_surface_zh": carrier.get("source_carrier_zh") or "输入法键盘区域或其系统交接面。",
+            "transition_kind": carrier.get("transition_scope") or item.get("interaction_kind") or "same_surface_state_change",
+            "next_step_zh": clean_md_text(item.get("route_basis_zh") or operation.get("chain_summary_zh") or "进入下一步状态或展示即时反馈。"),
+            "operation_chain_id": operation.get("operation_chain_id") or "",
+            "reaction_required": True,
+            "source_refs": safe_source_refs(item, operation, carrier),
+            "rule_ids": rule_ids_for_artifact("prototype_writer_brief"),
+        })
+    if not interactions and journey_edges:
+        for idx, edge in enumerate(journey_edges, start=1):
+            source_page = edge.get("source_screen_id") or next(iter(page_ids), "")
+            target_page = edge.get("target_screen_id") or source_page
+            interactions.append({
+                "interaction_id": edge.get("interaction_id") or f"INT-JOURNEY-{idx:03d}",
+                "source_page_id": source_page if source_page in page_ids else next(iter(page_ids), source_page),
+                "target_page_id": target_page if target_page in page_ids else source_page,
+                "source_control_id": f"CTRL-{source_page}-PRIMARY",
+                "user_visible_trigger_zh": clean_md_text(edge.get("trigger_zh") or "点击继续"),
+                "precondition_zh": "用户位于当前输入法面板。",
+                "happens_on_surface_zh": edge.get("carrier_transition_type") or "输入法键盘区域。",
+                "transition_kind": edge.get("path_type") or "scene_navigation",
+                "next_step_zh": clean_md_text(edge.get("reason_zh") or "进入下一步。"),
+                "operation_chain_id": edge.get("operation_chain_id") or "",
+                "reaction_required": True,
+                "source_refs": safe_source_refs(edge),
+                "rule_ids": rule_ids_for_artifact("prototype_writer_brief"),
+            })
+    handoffs = [
+        {
+            "handoff_id": handoff.get("handoff_id"),
+            "interaction_id": handoff.get("interaction_id"),
+            "capability_id": handoff.get("capability_id"),
+            "handoff_surface_type": handoff.get("handoff_surface_type") or "system_picker_overlay",
+            "handoff_surface_zh": handoff.get("handoff_surface_zh") or "系统选择器 overlay。",
+            "expected_overlay_regions": ["picker_header", "picker_grid_region", "picker_action_bar", "picker_feedback_region"],
+            "return_carrier_type": handoff.get("return_carrier_type") or "embedded_keyboard_panel",
+            "cancel_path_zh": handoff.get("cancel_path_zh") or "用户取消后返回原输入法面板。",
+            "failure_path_zh": handoff.get("failure_path_zh") or "失败时在最早可反馈位置展示提示。",
+            "earliest_feedback_surface_zh": handoff.get("preferred_feedback_surface_zh") or "系统选择器内即时反馈区。",
+            "source_refs": safe_source_refs(handoff),
+            "rule_ids": rule_ids_for_artifact("prototype_writer_brief"),
+        }
+        for handoff in handoff_root_items(handoff_doc)
+    ]
+    model_status = {
+        "all_logic_consistent": all(root.get("logic_consistent") is True for root in model_roots.values()),
+        "all_prototype_renderable": all(root.get("prototype_renderable") is True for root in model_roots.values()),
+        "blocking_unknown_count": sum(len(normalize_unknown_list(root.get("blocking_unknowns"))) for root in model_roots.values()),
+        "blocking_findings": [
+            error
+            for key, root in model_roots.items()
+            for error in model_stage_blocking_errors(root, MODEL_STAGE_BY_KEY[key]["stage_id"])
+        ],
+        "non_blocking_unknowns": [
+            item
+            for root in model_roots.values()
+            for item in normalize_unknown_list(root.get("non_blocking_unknowns"))
+        ],
+    }
+    return {
+        "prototype_writer_brief": {
+            "version": "3.2.1",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "generated_by": "prototype_writer_brief_builder_v3_2_1",
+            "playable_profile": "PLAYABLE_PROTOTYPE_WRITE",
+            "source_refs": source_refs,
+            "rule_trace": rule_trace_for_artifact("prototype_writer_brief"),
+            "input_artifacts": {
+                "runtime": {"path": run_artifact_path(runtime_path), "sha256": f"sha256:{sha256_file(runtime_path)}" if runtime_path.exists() else ""},
+                "payload": {"path": run_artifact_path(payload_path), "sha256": f"sha256:{sha256_file(payload_path)}" if payload_path.exists() else ""},
+                "model_surface_ownership": {"path": run_artifact_path(model_surface_path), "sha256": f"sha256:{sha256_file(model_surface_path)}" if model_surface_path.exists() else ""},
+                "model_user_journey": {"path": run_artifact_path(model_journey_path), "sha256": f"sha256:{sha256_file(model_journey_path)}" if model_journey_path.exists() else ""},
+                "model_interaction_state_machine": {"path": run_artifact_path(model_state_machine_path), "sha256": f"sha256:{sha256_file(model_state_machine_path)}" if model_state_machine_path.exists() else ""},
+                "model_component_blueprint": {"path": run_artifact_path(model_component_path), "sha256": f"sha256:{sha256_file(model_component_path)}" if model_component_path.exists() else ""},
+                "interaction_carrier_map": {"path": run_artifact_path(carrier_path), "sha256": f"sha256:{sha256_file(carrier_path)}" if carrier_path.exists() else ""},
+                "system_handoff_map": {"path": run_artifact_path(handoff_path), "sha256": f"sha256:{sha256_file(handoff_path)}" if handoff_path.exists() else ""},
+                "user_operation_chain": {"path": run_artifact_path(operation_chain_path), "sha256": f"sha256:{sha256_file(operation_chain_path)}" if operation_chain_path.exists() else ""},
+                "capability_assessment": {"path": run_artifact_path(capability_path), "sha256": f"sha256:{sha256_file(capability_path)}" if capability_path.exists() else ""},
+            },
+            "forbidden_writer_sources": [
+                "semantic_prototype_payload",
+                "figma_prototype_materialization",
+                "prototype_blueprint_review.md",
+                "compact_payload",
+                "drd_board_packets",
+            ],
+            "model_status": model_status,
+            "required_visual_containers": WRITER_BRIEF_REQUIRED_CONTAINERS,
+            "scenes": screens,
+            "interaction_playback_contracts": interactions,
+            "handoff_visual_contracts": handoffs,
+            "capability_notes": (capability_doc.get("capability_assessment", {}) or {}).get("capabilities", [])[:40],
+        }
+    }
+
+
+def prototype_writer_brief_semantic_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("prototype_writer_brief", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "prototype_writer_brief.rule_trace"))
+    if root.get("playable_profile") != "PLAYABLE_PROTOTYPE_WRITE":
+        errors.append(rule_error("DIRECT_WRITE_DED_001", "prototype_writer_brief.playable_profile must be PLAYABLE_PROTOTYPE_WRITE"))
+    serialized_inputs = json.dumps(root.get("input_artifacts", {}), ensure_ascii=False)
+    for forbidden in ["semantic_prototype_payload", "figma_prototype_materialization", "prototype_blueprint_review.md", "compact_payload", "drd_board_packets"]:
+        if forbidden in serialized_inputs:
+            errors.append(rule_error("DIRECT_WRITE_DED_002", f"prototype_writer_brief must not consume {forbidden} as writer source"))
+    model_status = root.get("model_status", {}) or {}
+    if model_status.get("all_logic_consistent") is not True:
+        errors.append(rule_error("STAGE10_DED_004", "all model stages must be logic_consistent"))
+    if model_status.get("all_prototype_renderable") is not True:
+        errors.append(rule_error("STAGE10_DED_004", "all model stages must be prototype_renderable"))
+    if int(model_status.get("blocking_unknown_count", 0) or 0) > 0 or model_status.get("blocking_findings"):
+        errors.append(rule_error("STAGE10_DED_004", "prototype_writer_brief has blocking model unknowns"))
+    required = set(WRITER_BRIEF_REQUIRED_CONTAINERS)
+    actual = set(root.get("required_visual_containers", []) or [])
+    missing = sorted(required - actual)
+    if missing:
+        errors.append(rule_error("DIRECT_WRITE_DED_003", f"prototype_writer_brief.required_visual_containers missing: {', '.join(missing)}"))
+    scenes = root.get("scenes", []) or []
+    if not scenes:
+        errors.append(rule_error("DIRECT_WRITE_DED_001", "prototype_writer_brief.scenes must not be empty"))
+    for scene in scenes:
+        label = scene.get("scene_id", "<unknown>")
+        must_render = set((scene.get("visual_scene_contract", {}) or {}).get("must_render", []) or [])
+        scene_missing = sorted(required - must_render)
+        if scene_missing:
+            errors.append(rule_error("DIRECT_WRITE_DED_003", f"{label}: visual_scene_contract.must_render missing {', '.join(scene_missing)}"))
+        if not scene.get("required_controls"):
+            errors.append(rule_error("DIRECT_WRITE_DED_004", f"{label}: required_controls must not be empty"))
+        for control in scene.get("required_controls", []) or []:
+            if not control.get("source_refs"):
+                errors.append(rule_error("SEMANTIC_PAYLOAD_DED_004", f"{control.get('control_id', '<unknown>')}: source_refs required"))
+    interactions = root.get("interaction_playback_contracts", []) or []
+    if not interactions:
+        errors.append(rule_error("DIRECT_WRITE_DED_004", "prototype_writer_brief.interaction_playback_contracts must not be empty"))
+    for interaction in interactions:
+        label = interaction.get("interaction_id", "<unknown>")
+        for field in ["source_page_id", "target_page_id", "source_control_id", "user_visible_trigger_zh", "transition_kind"]:
+            if not interaction.get(field):
+                errors.append(rule_error("DIRECT_WRITE_DED_004", f"{label}: missing {field}"))
+        if not interaction.get("source_refs"):
+            errors.append(rule_error("SEMANTIC_PAYLOAD_DED_004", f"{label}: source_refs required"))
+    for handoff in root.get("handoff_visual_contracts", []) or []:
+        regions = set(handoff.get("expected_overlay_regions", []) or [])
+        missing_regions = sorted({"picker_header", "picker_grid_region", "picker_action_bar", "picker_feedback_region"} - regions)
+        if missing_regions:
+            errors.append(rule_error("DIRECT_WRITE_DED_004", f"{handoff.get('handoff_id', '<unknown>')}: system picker overlay missing regions {', '.join(missing_regions)}"))
+    return errors
+
+
+def build_prototype_writer_brief(args):
+    ensure_run_root_write_context("build-prototype-writer-brief")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "prototype_writer_brief.yaml")
+    paths = {
+        "runtime_path": resolve_path(args.runtime, RUN_ROOT / "io" / "output" / "prototype.runtime.candidate.json"),
+        "payload_path": resolve_path(args.payload, RUN_ROOT / "io" / "output" / "prototype-render-payload.yaml"),
+        "source_brief_path": resolve_path(args.source_brief, RUN_ROOT / "io" / "output" / "prototype_source_brief.yaml"),
+        "carrier_path": resolve_path(args.carrier_map, RUN_ROOT / "io" / "output" / "interaction_carrier_map.yaml"),
+        "handoff_path": resolve_path(args.system_handoff_map, RUN_ROOT / "io" / "output" / "system_handoff_map.yaml"),
+        "operation_chain_path": resolve_path(args.operation_chain, RUN_ROOT / "io" / "output" / "user_operation_chain.yaml"),
+        "capability_path": resolve_path(args.capability_assessment, RUN_ROOT / "io" / "output" / "capability_assessment.yaml"),
+        "model_surface_path": resolve_path(args.model_surface_ownership, RUN_ROOT / "io" / "state" / "model_surface_ownership.yaml"),
+        "model_journey_path": resolve_path(args.model_user_journey, RUN_ROOT / "io" / "state" / "model_user_journey.yaml"),
+        "model_state_machine_path": resolve_path(args.model_interaction_state_machine, RUN_ROOT / "io" / "state" / "model_interaction_state_machine.yaml"),
+        "model_component_path": resolve_path(args.model_component_blueprint, RUN_ROOT / "io" / "state" / "model_component_blueprint.yaml"),
+        "surface_mode_path": resolve_path(getattr(args, "surface_mode_contract", None), RUN_ROOT / "io" / "output" / "surface_mode_contract.yaml"),
+        "layout_invariant_path": resolve_path(getattr(args, "layout_invariant_contract", None), RUN_ROOT / "io" / "output" / "layout_invariant_contract.yaml"),
+        "runtime_rule_trace_path": resolve_path(getattr(args, "runtime_rule_execution_trace", None), RUN_ROOT / "io" / "state" / "runtime_rule_execution_trace.yaml"),
+    }
+    missing = [f"{label}: {path}" for label, path in paths.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-prototype-writer-brief:\n- " + "\n- ".join(missing))
+    doc = build_prototype_writer_brief_doc(**paths)
+    ywrite(output_path, doc)
+    errors = validate_schema(output_path, DRD_ROOT / "schemas" / "prototype_writer_brief.schema.json")
+    errors.extend(prototype_writer_brief_semantic_errors(doc))
+    gate_dir = write_renderer_loop_gate(
+        f"PROTOTYPE-WRITER-BRIEF-GATE-{RUN_ID}",
+        errors,
+        [run_artifact_path(output_path)],
+        doc["prototype_writer_brief"].get("source_refs", []),
+        artifact_key="prototype_writer_brief",
+        stage="FIGMA-DIRECT-WRITER-BRIEF",
+        validator="validate-prototype-writer-brief",
+        failure_class_error="FC-FIGMA-STAGE-ALIGNMENT-MISMATCH",
+        failure_class_pass="FC-PROTOTYPE-WRITER-BRIEF-PASS",
+        route_targets=["FIGMA-DIRECT-WRITER-BRIEF", "FIGMA-DIRECT-WRITER-RUNTIME"],
+        repair_hint_error_zh="先修复四段模型推理或承载面/交接链路，再生成 writer brief；不要退回 semantic/materialization 写入。",
+    )
+    if errors:
+        raise SystemExit("BLOCKED: prototype writer brief failed validation; loop gate evidence was written to " f"{gate_dir}\n- " + "\n- ".join(errors))
+    print("# build-prototype-writer-brief")
+    print("PASS")
+    print(f"- WROTE {output_path}")
+
+
+def validate_prototype_writer_brief(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "prototype_writer_brief.schema.json")
+    if not errors:
+        errors.extend(prototype_writer_brief_semantic_errors(yload(path)))
+    print_result("validate-prototype-writer-brief", errors, [])
+
+
+def artifact_ref(path: Path) -> dict:
+    return {
+        "path": run_artifact_path(path) if path.exists() and path_is_within(path, RUN_ROOT) else source_relpath(path),
+        "sha256": f"sha256:{sha256_file(path)}" if path.exists() else "",
+    }
+
+
+def load_pyruntime_rule_registry() -> dict:
+    return yload(DRD_ROOT / "libs" / "pyruntime_rule_registry.yaml")
+
+
+def pyruntime_handler_index() -> dict[str, dict]:
+    root = load_pyruntime_rule_registry().get("pyruntime_rule_registry", {})
+    return {
+        item.get("handler_id"): item
+        for item in root.get("handlers", []) or []
+        if item.get("handler_id")
+    }
+
+
+def runtime_trace_entry(
+    *,
+    rule_id: str,
+    handler_id: str,
+    trigger_reason_zh: str,
+    input_paths: list[Path],
+    output_paths: list[Path],
+    status: str = "pass",
+    fallback_used: bool = False,
+    skip_reason_zh: str = "",
+) -> dict:
+    return {
+        "rule_id": rule_id,
+        "handler_id": handler_id,
+        "trigger_reason_zh": trigger_reason_zh,
+        "input_hashes": [artifact_ref(path) for path in input_paths if path],
+        "output_refs": [run_artifact_path(path) if path_is_within(path, RUN_ROOT) else source_relpath(path) for path in output_paths if path],
+        "status": status,
+        "fallback_used": fallback_used,
+        "skip_reason_zh": skip_reason_zh,
+    }
+
+
+def runtime_rule_execution_trace_doc(entries: list[dict], source_refs: list[str]) -> dict:
+    registry_path = DRD_ROOT / "libs" / "pyruntime_rule_registry.yaml"
+    return {
+        "runtime_rule_execution_trace": {
+            "version": "3.2.3",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "registry_ref": artifact_ref(registry_path),
+            "source_refs": source_refs or ["inputs/PRD.md#L1"],
+            "rule_trace": rule_trace_for_artifact("runtime_rule_execution_trace"),
+            "executed_rules": entries,
+        }
+    }
+
+
+def visible_regions_for_mode(mode_id: str) -> list[str]:
+    if mode_id == "text_keyboard":
+        return ["host_chat_surface", "input_bar", "candidate_bar", "keyboard_key_grid", "keyboard_ai_toolbar"]
+    if mode_id == "system_handoff_overlay":
+        return ["host_chat_surface", "input_bar", "candidate_bar", "keyboard_ai_toolbar", "system_picker_overlay"]
+    return ["host_chat_surface", "input_bar", "candidate_bar", "keyboard_ai_toolbar", "keyboard_ai_panel", "result_card", "inline_feedback"]
+
+
+def hidden_regions_for_mode(mode_id: str) -> list[str]:
+    all_regions = {"keyboard_key_grid", "keyboard_ai_panel", "system_picker_overlay", "result_card", "inline_feedback"}
+    return sorted(all_regions - set(visible_regions_for_mode(mode_id)))
+
+
+def mode_id_for_text(text: str, *, has_handoff: bool = False) -> str:
+    basis = clean_md_text(text)
+    if has_handoff or text_contains_any(basis, ["系统", "选择器", "授权", "相册", "文件", "上传", "外部", "SDK", "支付", "分享"]):
+        return "system_handoff_overlay"
+    if text_contains_any(basis, ["功能", "设置", "分析", "生成", "结果", "推荐", "失败", "恢复", "反馈", "边界", "提示"]):
+        return "ai_function_panel"
+    return "text_keyboard"
+
+
+def build_surface_mode_contract_doc(
+    source_brief_path: Path,
+    carrier_path: Path,
+    handoff_path: Path,
+    operation_chain_path: Path,
+    model_surface_path: Path | None = None,
+    model_state_machine_path: Path | None = None,
+) -> dict:
+    source_doc = yload(source_brief_path)
+    carrier_doc = yload(carrier_path)
+    handoff_doc = yload(handoff_path)
+    operation_doc = yload(operation_chain_path)
+    model_surface_doc = yload(model_surface_path) if model_surface_path and model_surface_path.exists() else {}
+    source_root = source_doc.get("prototype_source_brief", {}) or {}
+    source_refs = safe_source_refs(source_root) or ["inputs/PRD.md#L1"]
+    states = source_root.get("state_candidates", []) or []
+    handoff_interaction_ids = {
+        item.get("interaction_id")
+        for item in handoff_root_items(handoff_doc)
+        if item.get("interaction_id")
+    }
+    handoff_state_ids = {
+        item.get("source_state_id")
+        for item in operation_root_items(operation_doc)
+        if item.get("interaction_id") in handoff_interaction_ids
+    }
+    surface_blueprint = model_root_from_doc(model_surface_doc, "surface_ownership").get("surface_blueprint", []) if model_surface_doc else []
+    page_ids = {surface.get("screen_id") for surface in surface_blueprint if surface.get("screen_id")}
+    if not page_ids:
+        page_ids = {state.get("screen_id") for state in states if state.get("screen_id")}
+    assignments = []
+    for state in sorted(states, key=state_sort_key):
+        page_id = state.get("screen_id") or "PAGE-001"
+        state_text = " ".join([
+            state.get("state_id", ""),
+            state.get("state_zh", ""),
+            state.get("trigger_zh", ""),
+            state.get("feedback_zh", ""),
+            " ".join(state.get("categories", []) or []),
+        ])
+        mode_id = mode_id_for_text(state_text, has_handoff=state.get("state_id") in handoff_state_ids)
+        assignments.append({
+            "scene_id": f"SCENE-{safe_slug(state.get('state_id') or page_id)}",
+            "page_id": page_id,
+            "state_id": state.get("state_id", ""),
+            "active_mode_id": mode_id,
+            "physical_slot": "software_keyboard_bottom_slot",
+            "visible_regions": visible_regions_for_mode(mode_id),
+            "hidden_regions": hidden_regions_for_mode(mode_id),
+            "source_refs": safe_source_refs(state) or source_refs[:1],
+            "rule_ids": rule_ids_for_artifact("surface_mode_contract"),
+        })
+    if not assignments:
+        for page_id in sorted(page_ids or {"PAGE-001"}):
+            mode_id = "text_keyboard"
+            assignments.append({
+                "scene_id": f"SCENE-{safe_slug(page_id)}",
+                "page_id": page_id,
+                "state_id": "",
+                "active_mode_id": mode_id,
+                "physical_slot": "software_keyboard_bottom_slot",
+                "visible_regions": visible_regions_for_mode(mode_id),
+                "hidden_regions": hidden_regions_for_mode(mode_id),
+                "source_refs": source_refs[:1],
+                "rule_ids": rule_ids_for_artifact("surface_mode_contract"),
+            })
+    return {
+        "surface_mode_contract": {
+            "version": "3.2.3",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "source_refs": source_refs,
+            "rule_trace": rule_trace_for_artifact("surface_mode_contract"),
+            "input_artifacts": {
+                "prototype_source_brief": artifact_ref(source_brief_path),
+                "interaction_carrier_map": artifact_ref(carrier_path),
+                "system_handoff_map": artifact_ref(handoff_path),
+                "user_operation_chain": artifact_ref(operation_chain_path),
+                "model_surface_ownership": artifact_ref(model_surface_path) if model_surface_path else {},
+            },
+            "mode_definitions": [
+                {
+                    "mode_id": "text_keyboard",
+                    "physical_slot": "software_keyboard_bottom_slot",
+                    "visible_regions": visible_regions_for_mode("text_keyboard"),
+                    "hidden_regions": hidden_regions_for_mode("text_keyboard"),
+                    "source_refs": source_refs[:1],
+                    "rule_ids": ["MODE_DED_001", "MODE_DED_002", "LAYOUT_DED_001"],
+                },
+                {
+                    "mode_id": "ai_function_panel",
+                    "physical_slot": "software_keyboard_bottom_slot",
+                    "visible_regions": visible_regions_for_mode("ai_function_panel"),
+                    "hidden_regions": hidden_regions_for_mode("ai_function_panel"),
+                    "source_refs": source_refs[:1],
+                    "rule_ids": ["MODE_DED_001", "MODE_DED_002", "LAYOUT_DED_001"],
+                },
+                {
+                    "mode_id": "system_handoff_overlay",
+                    "physical_slot": "system_handoff_overlay_slot",
+                    "visible_regions": visible_regions_for_mode("system_handoff_overlay"),
+                    "hidden_regions": hidden_regions_for_mode("system_handoff_overlay"),
+                    "source_refs": source_refs[:1],
+                    "rule_ids": ["MODE_DED_002", "LAYOUT_DED_003"],
+                },
+            ],
+            "mutual_exclusion_groups": [
+                {
+                    "group_id": "MUTEX-SOFTWARE-KEYBOARD-FUNCTION-PANEL",
+                    "physical_slot": "software_keyboard_bottom_slot",
+                    "regions": ["keyboard_key_grid", "keyboard_ai_panel"],
+                    "allow_override": False,
+                    "override_source_refs": [],
+                    "reason_zh": "同一个软件键盘底部 slot 内，基础键盘和功能面板互斥显示。",
+                    "rule_ids": ["MODE_DED_001", "MODE_DED_003"],
+                }
+            ],
+            "scene_mode_assignments": assignments,
+            "override_allowances": [],
+        }
+    }
+
+
+def surface_mode_contract_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("surface_mode_contract", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "surface_mode_contract.rule_trace"))
+    mode_ids = {item.get("mode_id") for item in root.get("mode_definitions", []) or []}
+    if "text_keyboard" not in mode_ids or "ai_function_panel" not in mode_ids:
+        errors.append(rule_error("MODE_DED_002", "surface_mode_contract must define text_keyboard and ai_function_panel modes"))
+    mutex_groups = root.get("mutual_exclusion_groups", []) or []
+    if not any({"keyboard_key_grid", "keyboard_ai_panel"}.issubset(set(item.get("regions", []) or [])) for item in mutex_groups):
+        errors.append(rule_error("MODE_DED_001", "keyboard_key_grid and keyboard_ai_panel mutual exclusion group is required"))
+    for item in root.get("scene_mode_assignments", []) or []:
+        label = item.get("scene_id", "<unknown>")
+        visible = set(item.get("visible_regions", []) or [])
+        hidden = set(item.get("hidden_regions", []) or [])
+        if not item.get("active_mode_id"):
+            errors.append(rule_error("MODE_DED_002", f"{label}: active_mode_id is required"))
+        if "keyboard_key_grid" in visible and "keyboard_ai_panel" in visible:
+            errors.append(rule_error("MODE_DED_001", f"{label}: keyboard_key_grid and keyboard_ai_panel cannot both be visible"))
+        if visible & hidden:
+            errors.append(rule_error("MODE_DED_002", f"{label}: visible_regions and hidden_regions overlap"))
+        if not item.get("source_refs"):
+            errors.append(rule_error("MODE_DED_002", f"{label}: source_refs required"))
+    return errors
+
+
+def build_layout_invariant_contract_doc(surface_mode_path: Path, carrier_path: Path, handoff_path: Path) -> dict:
+    surface_doc = yload(surface_mode_path)
+    carrier_doc = yload(carrier_path)
+    handoff_doc = yload(handoff_path)
+    source_refs = safe_source_refs(surface_doc.get("surface_mode_contract", {}), carrier_doc, handoff_doc) or ["inputs/PRD.md#L1"]
+    return {
+        "layout_invariant_contract": {
+            "version": "3.2.3",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "source_refs": source_refs,
+            "rule_trace": rule_trace_for_artifact("layout_invariant_contract"),
+            "input_artifacts": {
+                "surface_mode_contract": artifact_ref(surface_mode_path),
+                "interaction_carrier_map": artifact_ref(carrier_path),
+                "system_handoff_map": artifact_ref(handoff_path),
+            },
+            "layout_invariants": [
+                {
+                    "invariant_id": "LAYOUT-IME-BOTTOM-ANCHOR",
+                    "target_region": "keyboard_area",
+                    "target_container": "phone_shell",
+                    "anchor": "bottom",
+                    "min_y_ratio": 0.52,
+                    "max_bottom_gap_ratio": 0.10,
+                    "description_zh": "软件键盘或输入法功能面板必须在手机屏幕下半区并贴近底部。",
+                    "rule_ids": ["LAYOUT_DED_001", "LAYOUT_DED_004"],
+                }
+            ],
+            "relative_position_rules": [
+                {
+                    "rule_id_local": "REL-POS-HOST-ABOVE-INPUT",
+                    "upper_region": "host_chat_surface",
+                    "lower_region": "input_bar",
+                    "description_zh": "宿主内容区位于输入栏上方。",
+                    "rule_ids": ["LAYOUT_DED_002"],
+                },
+                {
+                    "rule_id_local": "REL-POS-INPUT-ABOVE-KEYBOARD",
+                    "upper_region": "input_bar",
+                    "lower_region": "keyboard_area",
+                    "description_zh": "输入栏位于键盘/功能面板上方。",
+                    "rule_ids": ["LAYOUT_DED_002"],
+                },
+            ],
+            "overlay_invariants": [
+                {
+                    "overlay_type": "system_picker_overlay",
+                    "required_regions": ["picker_header", "picker_grid_region", "picker_action_bar", "picker_feedback_region"],
+                    "description_zh": "系统交接面必须是 overlay/handoff，并有 header、内容/网格、操作、反馈四区。",
+                    "rule_ids": ["LAYOUT_DED_003", "VISUAL_GATE_DED_001"],
+                }
+            ],
+        }
+    }
+
+
+def layout_invariant_contract_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("layout_invariant_contract", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "layout_invariant_contract.rule_trace"))
+    invariants = root.get("layout_invariants", []) or []
+    if not any(item.get("target_region") == "keyboard_area" and item.get("anchor") == "bottom" for item in invariants):
+        errors.append(rule_error("LAYOUT_DED_001", "keyboard_area bottom anchor invariant is required"))
+    overlay = root.get("overlay_invariants", []) or []
+    required = {"picker_header", "picker_grid_region", "picker_action_bar", "picker_feedback_region"}
+    if not any(required.issubset(set(item.get("required_regions", []) or [])) for item in overlay):
+        errors.append(rule_error("LAYOUT_DED_003", "system picker overlay must require header/grid/action/feedback regions"))
+    return errors
+
+
+def build_surface_mode_contract(args):
+    ensure_run_root_write_context("build-surface-mode-contract")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "surface_mode_contract.yaml")
+    paths = {
+        "source_brief_path": resolve_path(args.source_brief, RUN_ROOT / "io" / "output" / "prototype_source_brief.yaml"),
+        "carrier_path": resolve_path(args.carrier_map, RUN_ROOT / "io" / "output" / "interaction_carrier_map.yaml"),
+        "handoff_path": resolve_path(args.system_handoff_map, RUN_ROOT / "io" / "output" / "system_handoff_map.yaml"),
+        "operation_chain_path": resolve_path(args.operation_chain, RUN_ROOT / "io" / "output" / "user_operation_chain.yaml"),
+        "model_surface_path": resolve_path(args.model_surface_ownership, RUN_ROOT / "io" / "state" / "model_surface_ownership.yaml"),
+        "model_state_machine_path": resolve_path(args.model_interaction_state_machine, RUN_ROOT / "io" / "state" / "model_interaction_state_machine.yaml"),
+    }
+    required_paths = {key: path for key, path in paths.items() if key not in {"model_surface_path", "model_state_machine_path"}}
+    missing = [f"{label}: {path}" for label, path in required_paths.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-surface-mode-contract:\n- " + "\n- ".join(missing))
+    doc = build_surface_mode_contract_doc(**paths)
+    ywrite(output_path, doc)
+    errors = validate_schema(output_path, DRD_ROOT / "schemas" / "surface_mode_contract.schema.json")
+    errors.extend(surface_mode_contract_errors(doc))
+    if errors:
+        raise SystemExit("BLOCKED: surface mode contract failed:\n- " + "\n- ".join(errors))
+    print("# build-surface-mode-contract")
+    print("PASS")
+    print(f"- WROTE {output_path}")
+
+
+def validate_surface_mode_contract(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "surface_mode_contract.schema.json")
+    if not errors:
+        errors.extend(surface_mode_contract_errors(yload(path)))
+    print_result("validate-surface-mode-contract", errors, [])
+
+
+def build_layout_invariant_contract(args):
+    ensure_run_root_write_context("build-layout-invariant-contract")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "layout_invariant_contract.yaml")
+    surface_mode_path = resolve_path(args.surface_mode_contract, RUN_ROOT / "io" / "output" / "surface_mode_contract.yaml")
+    carrier_path = resolve_path(args.carrier_map, RUN_ROOT / "io" / "output" / "interaction_carrier_map.yaml")
+    handoff_path = resolve_path(args.system_handoff_map, RUN_ROOT / "io" / "output" / "system_handoff_map.yaml")
+    missing = [f"{label}: {path}" for label, path in {"surface_mode_contract": surface_mode_path, "carrier_map": carrier_path, "system_handoff_map": handoff_path}.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-layout-invariant-contract:\n- " + "\n- ".join(missing))
+    doc = build_layout_invariant_contract_doc(surface_mode_path, carrier_path, handoff_path)
+    ywrite(output_path, doc)
+    errors = validate_schema(output_path, DRD_ROOT / "schemas" / "layout_invariant_contract.schema.json")
+    errors.extend(layout_invariant_contract_errors(doc))
+    if errors:
+        raise SystemExit("BLOCKED: layout invariant contract failed:\n- " + "\n- ".join(errors))
+    print("# build-layout-invariant-contract")
+    print("PASS")
+    print(f"- WROTE {output_path}")
+
+
+def validate_layout_invariant_contract(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "layout_invariant_contract.schema.json")
+    if not errors:
+        errors.extend(layout_invariant_contract_errors(yload(path)))
+    print_result("validate-layout-invariant-contract", errors, [])
+
+
+FORBIDDEN_PROJECT_RUNTIME_PATTERNS = [
+    "SCR-RELATION",
+    "SCR-TOPIC",
+    "SCR-INTIMACY",
+    "RELATION-BLOCK",
+    "RELATION-SELECT",
+    "TOPIC-IMAGE",
+    "INTIMACY-EDITING",
+    "TOOLBAR-VISIBLE",
+    "3 到 5 张",
+    "至少上传 3 张图",
+    "最多选择 5 张图",
+    "少于 3 张",
+    "超过 5 张",
+]
+
+
+def validate_pyruntime_rule_registry(args):
+    path = resolve_path(getattr(args, "input", None), DRD_ROOT / "libs" / "pyruntime_rule_registry.yaml")
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "pyruntime_rule_registry.schema.json")
+    if not errors:
+        root = yload(path).get("pyruntime_rule_registry", {}) or {}
+        known = known_drd_rule_ids()
+        commands = {handler.get("command") for handler in root.get("handlers", []) or []}
+        for handler in root.get("handlers", []) or []:
+            for rule_id in handler.get("rule_ids", []) or []:
+                if rule_id not in known:
+                    errors.append(rule_error("RUNTIME_RULE_DED_001", f"{handler.get('handler_id')}: unknown rule_id {rule_id}"))
+            if not handler.get("failure_classes"):
+                errors.append(rule_error("RUNTIME_RULE_DED_001", f"{handler.get('handler_id')}: failure_classes required"))
+        for command in ["build-surface-mode-contract", "build-layout-invariant-contract", "build-prototype-playback-contract", "build-figma-playback-writer-runtime", "gate-figma-live-visual-audit"]:
+            if command not in commands:
+                errors.append(rule_error("RUNTIME_RULE_DED_001", f"pyruntime registry missing command {command}"))
+    print_result("validate-pyruntime-rule-registry", errors, [])
+
+
+def runtime_rule_execution_trace_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("runtime_rule_execution_trace", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "runtime_rule_execution_trace.rule_trace"))
+    handler_index = pyruntime_handler_index()
+    known = known_drd_rule_ids()
+    for entry in root.get("executed_rules", []) or []:
+        label = f"{entry.get('handler_id', '<handler>')}:{entry.get('rule_id', '<rule>')}"
+        if entry.get("handler_id") not in handler_index:
+            errors.append(rule_error("RUNTIME_RULE_DED_001", f"{label}: handler is not registered"))
+        if entry.get("rule_id") not in known:
+            errors.append(rule_error("RUNTIME_RULE_DED_001", f"{label}: unknown rule_id"))
+        registered_rules = set((handler_index.get(entry.get("handler_id"), {}) or {}).get("rule_ids", []) or [])
+        if entry.get("rule_id") and entry.get("rule_id") not in registered_rules:
+            errors.append(rule_error("RUNTIME_RULE_DED_001", f"{label}: rule_id not declared for handler"))
+        if not entry.get("output_refs"):
+            errors.append(rule_error("RUNTIME_RULE_DED_001", f"{label}: output_refs required"))
+    if not root.get("executed_rules"):
+        errors.append(rule_error("RUNTIME_RULE_DED_001", "runtime trace must include executed_rules[]"))
+    return errors
+
+
+def validate_runtime_rule_execution_trace(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "runtime_rule_execution_trace.schema.json")
+    if not errors:
+        errors.extend(runtime_rule_execution_trace_errors(yload(path)))
+    print_result("validate-runtime-rule-execution-trace", errors, [])
+
+
+def production_runtime_sources_for_hardcode_scan() -> dict[str, str]:
+    functions = [
+        build_surface_ownership,
+        explicit_target_state_id,
+        branch_target_state_ids,
+        transition_trigger_zh,
+        playback_visible_text,
+        playback_flow_priority,
+        select_playback_flows,
+        build_prototype_playback_contract_doc,
+        build_figma_playback_writer_runtime_js,
+        figma_playback_step_prelude_js,
+        build_figma_playback_step_page_js,
+        build_figma_playback_step_targets_js,
+    ]
+    return {func.__name__: inspect.getsource(func) for func in functions}
+
+
+def validate_no_project_specific_production_rule(args):
+    errors = []
+    for source_name, source_text in production_runtime_sources_for_hardcode_scan().items():
+        for pattern in FORBIDDEN_PROJECT_RUNTIME_PATTERNS:
+            if pattern in source_text:
+                errors.append(rule_error("GENERALITY_DED_001", f"{source_name}: production runtime contains project-specific pattern `{pattern}`"))
+    print_result("validate-no-project-specific-production-rule", errors, [])
+
+
+def validate_no_hidden_python_rule(args):
+    errors = []
+    registry = load_pyruntime_rule_registry().get("pyruntime_rule_registry", {}) or {}
+    handler_ids = {handler.get("handler_id") for handler in registry.get("handlers", []) or []}
+    registered_commands = {handler.get("command") for handler in registry.get("handlers", []) or []}
+    for required_handler in [
+        "build_surface_mode_contract_doc",
+        "build_layout_invariant_contract_doc",
+        "build_prototype_playback_contract_doc",
+        "build_figma_playback_writer_runtime",
+        "build_figma_layout_invariant_audit_doc",
+        "figma_live_visual_gate_errors",
+    ]:
+        if required_handler not in handler_ids:
+            errors.append(rule_error("RUNTIME_RULE_DED_001", f"missing registered handler {required_handler}"))
+    for command in [
+        "build-surface-mode-contract",
+        "build-layout-invariant-contract",
+        "build-prototype-playback-contract",
+        "build-figma-playback-writer-runtime",
+        "build-figma-layout-invariant-audit",
+        "gate-figma-live-visual-audit",
+    ]:
+        if command not in registered_commands:
+            errors.append(rule_error("RUNTIME_RULE_DED_001", f"runtime command not registered: {command}"))
+    print_result("validate-no-hidden-python-rule", errors, [])
+
+
+def validate_rule_runtime_projection(args):
+    trace_path = resolve_path(getattr(args, "trace", None), RUN_ROOT / "io" / "state" / "runtime_rule_execution_trace.yaml")
+    errors = []
+    report = {
+        "rule_runtime_projection_report": {
+            "version": "3.2.3",
+            "mode": "DRD_MODE",
+            "status": "pass",
+            "source_refs": ["runtime_rule_execution_trace"],
+            "rule_trace": rule_trace_for_artifact("rule_runtime_projection_report"),
+            "checked_artifacts": [],
+            "missing_runtime_traces": [],
+            "hidden_python_rules": [],
+        }
+    }
+    if not trace_path.exists():
+        errors.append(rule_error("RUNTIME_RULE_DED_001", f"missing runtime rule execution trace: {trace_path}"))
+    else:
+        errors.extend(validate_schema(trace_path, DRD_ROOT / "schemas" / "runtime_rule_execution_trace.schema.json"))
+        trace_doc = yload(trace_path)
+        errors.extend(runtime_rule_execution_trace_errors(trace_doc))
+        executed = {
+            (entry.get("rule_id"), entry.get("handler_id"))
+            for entry in (trace_doc.get("runtime_rule_execution_trace", {}) or {}).get("executed_rules", []) or []
+        }
+        required_rules = {
+            "MODE_DED_001",
+            "MODE_DED_002",
+            "LAYOUT_DED_001",
+            "LAYOUT_DED_002",
+            "RUNTIME_RULE_DED_001",
+            "GENERALITY_DED_001",
+        }
+        executed_rule_ids = {rule_id for rule_id, _ in executed}
+        missing_rules = sorted(required_rules - executed_rule_ids)
+        report["rule_runtime_projection_report"]["missing_runtime_traces"] = missing_rules
+        if missing_rules:
+            errors.append(rule_error("RUNTIME_RULE_DED_001", f"missing runtime traces for rule_ids: {', '.join(missing_rules)}"))
+        report["rule_runtime_projection_report"]["checked_artifacts"].append(artifact_ref(trace_path))
+    report["rule_runtime_projection_report"]["status"] = "blocked" if errors else "pass"
+    output = getattr(args, "output", None)
+    if output:
+        ywrite(resolve_run_output_path(output, RUN_ROOT / "io" / "output" / "rule_runtime_projection_report.yaml"), report)
+    print_result("validate-rule-runtime-projection", errors, [])
+
+
+PLAYBACK_FORBIDDEN_VISIBLE_TEXTS = {
+    "展示可点击入口",
+    "选择或输入内容",
+    "结果内容",
+    "应用页面内容区",
+}
+
+
+def playback_visible_text(raw_text: str, *, screen_id: str = "", state_id: str = "", semantic_role: str = "", fallback: str = "继续") -> str:
+    text = clean_md_text(raw_text or "")
+    if text and text not in PLAYBACK_FORBIDDEN_VISIBLE_TEXTS:
+        return text
+    if semantic_role == "feedback":
+        return "当前状态提示"
+    return fallback
+
+
+def source_atom_index(source_brief_doc: dict) -> dict[str, dict]:
+    root = source_brief_doc.get("prototype_source_brief", {}) if isinstance(source_brief_doc, dict) else {}
+    indexed = {}
+    for atom in root.get("source_atoms", []) or []:
+        for key in [atom.get("atom_id"), *(atom.get("raw_ids", []) or [])]:
+            if key:
+                indexed.setdefault(str(key), atom)
+    for state in root.get("state_candidates", []) or []:
+        if state.get("state_id"):
+            indexed.setdefault(str(state.get("state_id")), state)
+    return indexed
+
+
+def state_candidate_index(source_brief_doc: dict) -> dict[str, dict]:
+    root = source_brief_doc.get("prototype_source_brief", {}) if isinstance(source_brief_doc, dict) else {}
+    return {
+        str(state.get("state_id")): state
+        for state in root.get("state_candidates", []) or []
+        if state.get("state_id")
+    }
+
+
+PLAYBACK_CORE_STATE_IDS: set[str] = set()
+PLAYBACK_CORE_INTERACTION_IDS: set[str] = set()
+PLAYBACK_VISIBLE_INTERACTION_IDS: set[str] = set()
+
+
+def playback_flow_priority(flow: dict, index: int) -> tuple[int, int]:
+    interaction_id = str(flow.get("interaction_id", "") or "")
+    source_state_id = str(flow.get("source_state_id", "") or "")
+    target_state_id = str(flow.get("target_state_id", "") or "")
+    text = " ".join([
+        interaction_id,
+        source_state_id,
+        target_state_id,
+        str(flow.get("user_sees_zh", "") or ""),
+        str(flow.get("result_zh", "") or ""),
+    ])
+    if interaction_id in PLAYBACK_VISIBLE_INTERACTION_IDS:
+        return (0, index)
+    if source_state_id in PLAYBACK_CORE_STATE_IDS or target_state_id in PLAYBACK_CORE_STATE_IDS:
+        return (1, index)
+    if text_contains_any(text, ["少于", "超过", "最多", "至少", "失败", "错误", "恢复", "上传", "选择", "设置", "保存", "结果", "边界"]):
+        return (2, index)
+    if flow.get("transition_kind") == "carrier_or_page_transition":
+        return (3, index)
+    return (9, index)
+
+
+def select_playback_flows(flows: list[dict], max_count: int = 15) -> list[dict]:
+    indexed = list(enumerate(flows))
+    required = [
+        flow for index, flow in indexed
+        if str(flow.get("interaction_id", "") or "") in PLAYBACK_VISIBLE_INTERACTION_IDS
+    ]
+    selected_by_id = {flow.get("interaction_id"): flow for flow in required if flow.get("interaction_id")}
+    for index, flow in sorted(indexed, key=lambda item: playback_flow_priority(item[1], item[0])):
+        if len(selected_by_id) >= max_count:
+            break
+        interaction_id = flow.get("interaction_id")
+        if interaction_id and interaction_id not in selected_by_id and playback_flow_priority(flow, index)[0] <= 3:
+            selected_by_id[interaction_id] = flow
+    order = {
+        flow.get("interaction_id"): index
+        for index, flow in indexed
+        if flow.get("interaction_id")
+    }
+    return sorted(selected_by_id.values(), key=lambda flow: order.get(flow.get("interaction_id"), 9999))
+
+
+def build_prototype_playback_contract_doc(
+    *,
+    runtime_path: Path,
+    payload_path: Path,
+    source_brief_path: Path,
+    carrier_path: Path,
+    handoff_path: Path,
+    operation_chain_path: Path,
+    model_surface_path: Path,
+    model_journey_path: Path,
+    model_state_machine_path: Path,
+    model_component_path: Path,
+    surface_mode_path: Path | None = None,
+    layout_invariant_path: Path | None = None,
+    runtime_rule_trace_path: Path | None = None,
+) -> dict:
+    runtime_doc = jload(runtime_path) if runtime_path.exists() else {}
+    payload_doc = load_any(payload_path)
+    payload_root = payload_doc.get("prototype_render_payload", {}) if isinstance(payload_doc, dict) else {}
+    source_brief_doc = yload(source_brief_path)
+    carrier_doc = yload(carrier_path)
+    handoff_doc = yload(handoff_path)
+    operation_doc = yload(operation_chain_path)
+    model_docs = {
+        "surface_ownership": yload(model_surface_path),
+        "user_journey": yload(model_journey_path),
+        "interaction_state_machine": yload(model_state_machine_path),
+        "component_blueprint": yload(model_component_path),
+    }
+    surface_mode_doc = yload(surface_mode_path) if surface_mode_path and surface_mode_path.exists() else {}
+    layout_invariant_doc = yload(layout_invariant_path) if layout_invariant_path and layout_invariant_path.exists() else {}
+    runtime_rule_trace_doc_loaded = yload(runtime_rule_trace_path) if runtime_rule_trace_path and runtime_rule_trace_path.exists() else {}
+    model_roots = {key: model_root_from_doc(doc, key) for key, doc in model_docs.items()}
+    source_refs = safe_source_refs(payload_root.get("source_refs", []), source_brief_doc.get("prototype_source_brief", {}))
+    if not source_refs:
+        source_refs = ["inputs/PRD.md#L1"]
+    names = screen_name_index(payload_root, runtime_doc)
+    components_by_screen = component_index_by_screen(payload_root)
+    state_by_id = state_candidate_index(source_brief_doc)
+    atom_by_id = source_atom_index(source_brief_doc)
+    runtime_state_screen_by_id = {
+        state.get("state_id"): screen.get("screen_id")
+        for screen in runtime_doc.get("screens", []) or []
+        for state in screen.get("states", []) or []
+        if state.get("state_id") and screen.get("screen_id")
+    }
+    runtime_states_by_screen = {
+        screen.get("screen_id"): [
+            state.get("state_id")
+            for state in screen.get("states", []) or []
+            if state.get("state_id")
+        ]
+        for screen in runtime_doc.get("screens", []) or []
+        if screen.get("screen_id")
+    }
+    component_screen_by_id = {
+        component.get("component_id"): screen_id
+        for screen_id, components in components_by_screen.items()
+        for component in components
+        if component.get("component_id")
+    }
+    flow_source_component_ids = {
+        item.get("source_component_id")
+        for item in payload_root.get("interactions", []) or []
+        if item.get("source_component_id")
+    }
+    operation_by_interaction = {
+        item.get("interaction_id"): item
+        for item in operation_root_items(operation_doc)
+        if item.get("interaction_id")
+    }
+    carrier_by_interaction = {
+        item.get("interaction_id"): item
+        for item in carrier_root_items(carrier_doc)
+        if item.get("interaction_id")
+    }
+    handoff_by_interaction = {
+        item.get("interaction_id"): item
+        for item in handoff_root_items(handoff_doc)
+        if item.get("interaction_id")
+    }
+    surface_blueprint = model_roots["surface_ownership"].get("surface_blueprint", []) or []
+    if not surface_blueprint:
+        surface_blueprint = [
+            {
+                "screen_id": screen.get("screen_id"),
+                "page_name_zh": screen.get("screen_zh"),
+                "page_purpose_zh": screen.get("screen_zh"),
+                "carrier_type": "embedded_host_panel",
+                "source_refs": screen.get("source_refs", []),
+            }
+            for screen in runtime_doc.get("screens", []) or []
+        ]
+    ordered_page_ids = [
+        surface.get("screen_id")
+        for surface in surface_blueprint
+        if surface.get("screen_id")
+    ]
+    page_ids = set(ordered_page_ids)
+    default_page_id = ordered_page_ids[0] if ordered_page_ids else "PAGE-001"
+    mode_root = surface_mode_doc.get("surface_mode_contract", {}) if isinstance(surface_mode_doc, dict) else {}
+    mode_by_state = {
+        item.get("state_id"): item
+        for item in mode_root.get("scene_mode_assignments", []) or []
+        if item.get("state_id")
+    }
+    mode_by_page = {}
+    for item in mode_root.get("scene_mode_assignments", []) or []:
+        if item.get("page_id") and item.get("page_id") not in mode_by_page:
+            mode_by_page[item.get("page_id")] = item
+
+    def resolve_interaction_page(item: dict, *, side: str) -> str:
+        screen_key = f"{side}_screen_id"
+        state_key = f"{side}_state_id"
+        candidates = [
+            item.get(screen_key),
+            runtime_state_screen_by_id.get(item.get(state_key, "")),
+        ]
+        if side == "source":
+            candidates.append(component_screen_by_id.get(item.get("source_component_id", "")))
+        for candidate in candidates:
+            if candidate in page_ids:
+                return candidate
+        return default_page_id
+
+    pages = []
+    page_states = []
+    controls = []
+    seen_controls = set()
+    for index, surface in enumerate(surface_blueprint, start=1):
+        page_id = surface.get("screen_id") or f"PAGE-{index:02d}"
+        page_name = surface.get("page_name_zh") or surface.get("screen_zh") or names.get(page_id) or page_id
+        owned_state_ids = surface.get("owned_state_ids", []) or runtime_states_by_screen.get(page_id, []) or []
+        page_mode = mode_by_page.get(page_id, {})
+        default_active_mode_id = page_mode.get("active_mode_id") or "text_keyboard"
+        pages.append({
+            "page_id": page_id,
+            "page_name_zh": clean_md_text(page_name),
+            "page_purpose_zh": clean_md_text(surface.get("page_purpose_zh") or surface.get("page_role_zh") or "承载输入法 AI 任务。"),
+            "carrier_type": surface.get("carrier_type") or "embedded_host_panel",
+            "layout_regions": [
+                "phone_shell",
+                "host_chat_surface",
+                "input_bar",
+                "candidate_bar",
+                "keyboard_key_grid",
+                "keyboard_ai_toolbar",
+                "keyboard_ai_panel",
+                "result_card",
+                "inline_feedback",
+                "interaction_explanation_region",
+            ],
+            "default_active_mode_id": default_active_mode_id,
+            "visible_regions": page_mode.get("visible_regions") or visible_regions_for_mode(default_active_mode_id),
+            "hidden_regions": page_mode.get("hidden_regions") or hidden_regions_for_mode(default_active_mode_id),
+            "source_refs": safe_source_refs(surface) or source_refs[:1],
+            "rule_ids": rule_ids_for_artifact("prototype_playback_contract"),
+        })
+        for state_id in owned_state_ids:
+            state = state_by_id.get(state_id, {})
+            state_mode = mode_by_state.get(state_id, {})
+            active_mode_id = state_mode.get("active_mode_id") or mode_id_for_text(
+                " ".join([state_id, state.get("state_zh", ""), state.get("trigger_zh", ""), state.get("feedback_zh", ""), " ".join(state.get("categories", []) or [])])
+            )
+            visibility = "visible_page" if not page_states or state_id in {owned_state_ids[0]} else "same_page_variant"
+            if any(token in state_id for token in ["FAILED", "BLOCK", "BELOW", "ABOVE", "OCR"]):
+                visibility = "hidden_prototype_target"
+            page_states.append({
+                "state_id": state_id,
+                "page_id": page_id,
+                "surface_id": page_id,
+                "active_mode_id": active_mode_id,
+                "visible_regions": state_mode.get("visible_regions") or visible_regions_for_mode(active_mode_id),
+                "hidden_regions": state_mode.get("hidden_regions") or hidden_regions_for_mode(active_mode_id),
+                "state_name_zh": clean_md_text(state.get("state_zh") or state_id),
+                "state_visibility": visibility,
+                "state_summary_zh": clean_md_text(state.get("feedback_zh") or state.get("trigger_zh") or state.get("state_zh") or state_id),
+                "source_refs": safe_source_refs(state) or safe_source_refs(surface) or source_refs[:1],
+                "rule_ids": rule_ids_for_artifact("prototype_playback_contract"),
+            })
+        page_components = components_by_screen.get(page_id, [])
+        prioritized = sorted(
+            page_components,
+            key=lambda component: (
+                0 if component.get("component_id") in flow_source_component_ids else 1,
+                0 if component.get("semantic_role") in {"button", "input"} else 1,
+                str(component.get("component_id", "")),
+            ),
+        )
+        for component in prioritized[:28]:
+            component_id = component.get("component_id")
+            if not component_id or component_id in seen_controls:
+                continue
+            seen_controls.add(component_id)
+            state_id = component.get("source_atom_id") or ""
+            visible_text = playback_visible_text(
+                component.get("display_copy_zh") or component.get("copy_zh") or "",
+                screen_id=page_id,
+                state_id=state_id,
+                semantic_role=component.get("semantic_role", ""),
+                fallback="继续",
+            )
+            role = component.get("semantic_role") or "display"
+            region = "keyboard_ai_panel"
+            if role == "button":
+                region = "keyboard_ai_toolbar" if default_active_mode_id == "text_keyboard" else "keyboard_ai_panel"
+            elif role == "input":
+                state_text = " ".join([state_id, component.get("display_copy_zh", ""), component.get("copy_zh", ""), component.get("semantic_key", "")])
+                region = "system_picker_overlay" if mode_id_for_text(state_text) == "system_handoff_overlay" else "keyboard_ai_panel"
+            elif role == "feedback":
+                region = "inline_feedback"
+            controls.append({
+                "control_id": component_id,
+                "page_id": page_id,
+                "state_id": state_id,
+                "region_id": region,
+                "control_kind": role,
+                "primitive_type": component.get("ui_primitive") or ("primary_action" if role == "button" else "content_text"),
+                "visible_text_zh": visible_text,
+                "description_zh": clean_md_text(component.get("interaction_intent_zh") or component.get("semantic_key") or "当前页面元素。"),
+                "click_precondition_zh": "用户位于当前页面，且该控件处于可操作状态。",
+                "source_refs": safe_source_refs(component) or source_refs[:1],
+                "rule_ids": normalize_rule_ids(rule_ids_for_artifact("prototype_playback_contract") + component.get("rule_ids", [])),
+            })
+    control_ids = {control["control_id"] for control in controls}
+    interaction_by_id = {
+        item.get("interaction_id"): item
+        for item in payload_root.get("interactions", []) or []
+        if item.get("interaction_id")
+    }
+    overlays = []
+    for handoff in handoff_root_items(handoff_doc):
+        overlay_id = f"OVERLAY-{handoff.get('handoff_id') or handoff.get('interaction_id') or len(overlays) + 1}"
+        handoff_interaction = interaction_by_id.get(handoff.get("interaction_id"), {})
+        parent_page_id = resolve_interaction_page(handoff_interaction, side="source") if handoff_interaction else default_page_id
+        raw_overlay_type = handoff.get("handoff_surface_type") or "system_picker_overlay"
+        overlay_type = "system_picker_overlay" if raw_overlay_type == "system_picker" else raw_overlay_type
+        overlays.append({
+            "overlay_id": overlay_id,
+            "interaction_id": handoff.get("interaction_id", ""),
+            "overlay_type": overlay_type,
+            "raw_overlay_type": raw_overlay_type,
+            "parent_page_id": parent_page_id,
+            "regions": ["picker_header", "picker_grid_region", "picker_action_bar", "picker_feedback_region"],
+            "enter_zh": handoff.get("enter_path_zh") or "进入系统选择器。",
+            "operate_zh": handoff.get("operation_path_zh") or "选择图片、联系人或系统资源。",
+            "cancel_zh": handoff.get("cancel_path_zh") or "取消后返回输入法面板。",
+            "failure_zh": handoff.get("failure_path_zh") or "失败时在选择器内展示恢复提示。",
+            "return_zh": "完成后返回发起任务的输入法面板。",
+            "source_refs": safe_source_refs(handoff) or source_refs[:1],
+            "rule_ids": rule_ids_for_artifact("prototype_playback_contract"),
+        })
+    interaction_flows = []
+    interaction_explanations = []
+    hidden_target_ids = set()
+    for idx, item in enumerate(payload_root.get("interactions", []) or [], start=1):
+        interaction_id = item.get("interaction_id") or f"INT-PLAYBACK-{idx:03d}"
+        source_page = resolve_interaction_page(item, side="source")
+        target_page = resolve_interaction_page(item, side="target")
+        operation = operation_by_interaction.get(interaction_id, {})
+        carrier = carrier_by_interaction.get(interaction_id, {})
+        handoff = handoff_by_interaction.get(interaction_id, {})
+        transition_kind = carrier.get("transition_scope") or item.get("interaction_kind") or operation.get("chain_kind") or "same_page_variant"
+        source_control_id = item.get("source_component_id") or f"CTRL-{source_page}-PRIMARY"
+        if source_control_id not in control_ids:
+            controls.append({
+                "control_id": source_control_id,
+                "page_id": source_page,
+                "state_id": item.get("source_state_id", ""),
+                "region_id": "keyboard_ai_panel",
+                "control_kind": "button",
+                "primitive_type": "primary_action",
+                "visible_text_zh": playback_visible_text(item.get("trigger_zh") or "继续", screen_id=source_page, state_id=item.get("source_state_id", ""), semantic_role="button"),
+                "description_zh": clean_md_text(item.get("trigger_zh") or "继续当前链路。"),
+                "click_precondition_zh": clean_md_text(item.get("guard_zh") or "当前状态允许继续。"),
+                "source_refs": safe_source_refs(item) or source_refs[:1],
+                "rule_ids": rule_ids_for_artifact("prototype_playback_contract"),
+            })
+            control_ids.add(source_control_id)
+        if handoff:
+            target_kind = "system_overlay"
+            target_id = f"OVERLAY-{handoff.get('handoff_id') or interaction_id}"
+        elif target_page != source_page and item.get("interaction_kind") not in {"same_screen_transition", "same_surface_state_change"}:
+            target_kind = "visible_page"
+            target_id = target_page
+        else:
+            target_kind = "hidden_prototype_target"
+            target_id = f"TARGET-{interaction_id}"
+            hidden_target_ids.add(target_id)
+        interaction_flows.append({
+            "interaction_id": interaction_id,
+            "source_page_id": source_page,
+            "source_state_id": item.get("source_state_id", ""),
+            "source_control_id": source_control_id,
+            "target_page_id": target_page,
+            "target_state_id": item.get("target_state_id", ""),
+            "transition_kind": transition_kind,
+            "user_sees_zh": playback_visible_text(item.get("trigger_zh") or "点击继续", screen_id=source_page, state_id=item.get("source_state_id", ""), semantic_role="button"),
+            "precondition_zh": clean_md_text(item.get("guard_zh") or "当前状态满足可操作条件。"),
+            "happens_where_zh": carrier.get("source_carrier_zh") or "输入法键盘内的嵌入面板。",
+            "result_zh": clean_md_text(item.get("route_basis_zh") or operation.get("chain_summary_zh") or item.get("guard_zh") or "进入下一步或展示反馈。"),
+            "operation_chain_id": operation.get("operation_chain_id", ""),
+            "reaction_target": {
+                "target_kind": target_kind,
+                "target_id": target_id,
+                "must_be_top_level_frame": True,
+                "fallback_strategy": "transparent_hotspot_overlay",
+            },
+            "source_refs": safe_source_refs(item, operation, carrier, handoff) or source_refs[:1],
+            "rule_ids": rule_ids_for_artifact("prototype_playback_contract"),
+        })
+        interaction_explanations.append({
+            "explanation_id": f"EXPLAIN-{interaction_id}",
+            "interaction_id": interaction_id,
+            "page_id": source_page,
+            "source_control_id": source_control_id,
+            "target_id": target_id,
+            "text_zh": f"{playback_visible_text(item.get('trigger_zh') or '用户点击控件', screen_id=source_page, state_id=item.get('source_state_id', ''), semantic_role='button')} 后，{clean_md_text(item.get('guard_zh') or item.get('route_basis_zh') or '页面会展示下一步反馈。')}",
+            "source_refs": safe_source_refs(item) or source_refs[:1],
+            "rule_ids": rule_ids_for_artifact("prototype_playback_contract"),
+        })
+    hidden_targets = [
+        {
+            "target_id": target_id,
+            "target_kind": "hidden_prototype_target",
+            "main_canvas_visible": False,
+            "offstage": True,
+            "source_refs": source_refs[:1],
+            "rule_ids": rule_ids_for_artifact("prototype_playback_contract"),
+        }
+        for target_id in sorted(hidden_target_ids)
+    ]
+    source_alignment_requirements = []
+    for state_id, atom in state_by_id.items():
+        atom_text = " ".join([
+            atom.get("state_zh", ""),
+            atom.get("trigger_zh", ""),
+            atom.get("feedback_zh", ""),
+            " ".join(atom.get("raw_ids", []) or []),
+            " ".join(atom.get("categories", []) or []),
+        ])
+        if not atom.get("required_for_rendering") and not text_contains_any(atom_text, ["至少", "最多", "少于", "多于", "超过", "失败", "错误", "不可", "选择", "上传", "设置", "结果"]):
+            continue
+        expected = unique_clean_texts([
+            atom.get("state_zh", ""),
+            atom.get("trigger_zh", ""),
+            atom.get("feedback_zh", ""),
+        ], limit=3)
+        if not expected:
+            expected = [clean_md_text(atom_text)[:40] or state_id]
+        expected_surface = (mode_by_state.get(state_id, {}) or {}).get("visible_regions", [])
+        expected_surface_id = "system_picker_overlay" if "system_picker_overlay" in expected_surface else "keyboard_ai_panel"
+        source_alignment_requirements.append({
+            "requirement_id": f"SRC-ALIGN-{state_id}",
+            "source_state_id": state_id,
+            "expected_visible_texts": expected,
+            "expected_surface": expected_surface_id,
+            "source_refs": safe_source_refs(atom) or source_refs[:1],
+            "rule_ids": rule_ids_for_artifact("prototype_playback_contract"),
+        })
+    for overlay in overlays:
+        overlay_requirements = playback_requirements_for_page(
+            source_alignment_requirements,
+            overlay.get("parent_page_id", ""),
+            expected_surface=overlay.get("overlay_type") or "system_picker_overlay",
+        )
+        overlay["source_alignment_requirements"] = overlay_requirements
+        overlay["required_visible_texts"] = playback_requirement_texts(overlay_requirements)
+    raw_interaction_flow_count = len(interaction_flows)
+    raw_control_count = len(controls)
+    raw_overlay_count = len(overlays)
+    interaction_flows = select_playback_flows(interaction_flows)
+    selected_interaction_ids = {flow.get("interaction_id") for flow in interaction_flows if flow.get("interaction_id")}
+    selected_control_ids = {flow.get("source_control_id") for flow in interaction_flows if flow.get("source_control_id")}
+    selected_state_ids = set()
+    selected_state_ids.update(flow.get("source_state_id") for flow in interaction_flows if flow.get("source_state_id"))
+    selected_state_ids.update(flow.get("target_state_id") for flow in interaction_flows if flow.get("target_state_id"))
+    interaction_explanations = [
+        explanation for explanation in interaction_explanations
+        if explanation.get("interaction_id") in selected_interaction_ids
+    ]
+    overlays = [
+        overlay for overlay in overlays
+        if overlay.get("interaction_id") in selected_interaction_ids
+    ]
+    hidden_target_ids = {
+        (flow.get("reaction_target") or {}).get("target_id")
+        for flow in interaction_flows
+        if (flow.get("reaction_target") or {}).get("target_kind") == "hidden_prototype_target"
+    }
+    hidden_target_ids = {target_id for target_id in hidden_target_ids if target_id}
+    controls = [
+        control for control in controls
+        if (
+            control.get("control_id") in selected_control_ids
+            or control.get("region_id") == "keyboard_ai_toolbar"
+        )
+    ]
+    controls = sorted(
+        {control.get("control_id"): control for control in controls if control.get("control_id")}.values(),
+        key=lambda control: (
+            control.get("page_id", ""),
+            0 if control.get("control_id") in selected_control_ids else 1,
+            control.get("region_id", ""),
+            control.get("control_id", ""),
+        ),
+    )
+    model_status = {
+        "all_logic_consistent": all(root.get("logic_consistent") is True for root in model_roots.values()),
+        "all_prototype_renderable": all(root.get("prototype_renderable") is True for root in model_roots.values()),
+        "blocking_unknown_count": sum(len(normalize_unknown_list(root.get("blocking_unknowns"))) for root in model_roots.values()),
+    }
+    return {
+        "prototype_playback_contract": {
+            "version": "3.2.3",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "generated_by": "prototype_playback_contract_builder_v3_2_3",
+            "playable_profile": "PLAYABLE_PROTOTYPE_WRITE",
+            "source_refs": source_refs,
+            "rule_trace": rule_trace_for_artifact("prototype_playback_contract"),
+            "input_artifacts": {
+                "runtime": {"path": run_artifact_path(runtime_path), "sha256": f"sha256:{sha256_file(runtime_path)}" if runtime_path.exists() else ""},
+                "payload": {"path": run_artifact_path(payload_path), "sha256": f"sha256:{sha256_file(payload_path)}" if payload_path.exists() else ""},
+                "prototype_source_brief": {"path": run_artifact_path(source_brief_path), "sha256": f"sha256:{sha256_file(source_brief_path)}" if source_brief_path.exists() else ""},
+                "model_surface_ownership": {"path": run_artifact_path(model_surface_path), "sha256": f"sha256:{sha256_file(model_surface_path)}" if model_surface_path.exists() else ""},
+                "model_user_journey": {"path": run_artifact_path(model_journey_path), "sha256": f"sha256:{sha256_file(model_journey_path)}" if model_journey_path.exists() else ""},
+                "model_interaction_state_machine": {"path": run_artifact_path(model_state_machine_path), "sha256": f"sha256:{sha256_file(model_state_machine_path)}" if model_state_machine_path.exists() else ""},
+                "model_component_blueprint": {"path": run_artifact_path(model_component_path), "sha256": f"sha256:{sha256_file(model_component_path)}" if model_component_path.exists() else ""},
+                "interaction_carrier_map": {"path": run_artifact_path(carrier_path), "sha256": f"sha256:{sha256_file(carrier_path)}" if carrier_path.exists() else ""},
+                "system_handoff_map": {"path": run_artifact_path(handoff_path), "sha256": f"sha256:{sha256_file(handoff_path)}" if handoff_path.exists() else ""},
+                "user_operation_chain": {"path": run_artifact_path(operation_chain_path), "sha256": f"sha256:{sha256_file(operation_chain_path)}" if operation_chain_path.exists() else ""},
+                "surface_mode_contract": artifact_ref(surface_mode_path) if surface_mode_path else {},
+                "layout_invariant_contract": artifact_ref(layout_invariant_path) if layout_invariant_path else {},
+                "runtime_rule_execution_trace": artifact_ref(runtime_rule_trace_path) if runtime_rule_trace_path else {},
+            },
+            "surface_mode_contract_ref": artifact_ref(surface_mode_path) if surface_mode_path else {},
+            "layout_invariant_contract_ref": artifact_ref(layout_invariant_path) if layout_invariant_path else {},
+            "runtime_rule_execution_trace_ref": artifact_ref(runtime_rule_trace_path) if runtime_rule_trace_path else {},
+            "runtime_rule_trace_status": (runtime_rule_trace_doc_loaded.get("runtime_rule_execution_trace", {}) or {}).get("executed_rules", []),
+            "forbidden_writer_sources": ["prototype_writer_brief", "semantic_prototype_payload", "figma_prototype_materialization", "compact_payload", "drd_board_packets"],
+            "model_status": model_status,
+            "playback_projection_policy": {
+                "policy_id": "PLAYBACK_CONTRACT_MAIN_FLOW_SUBSET_V3_2_3",
+                "raw_control_count": raw_control_count,
+                "selected_control_count": len(controls),
+                "raw_interaction_flow_count": raw_interaction_flow_count,
+                "selected_interaction_flow_count": len(interaction_flows),
+                "raw_overlay_count": raw_overlay_count,
+                "selected_overlay_count": len(overlays),
+                "selection_basis_zh": (
+                    "最终可播放原型只展开主链路、关键边界、系统交接和错误恢复。"
+                    "次要同页状态不再强制成为可见控件，避免画布退化成状态矩阵或控件海。"
+                ),
+                "rule_ids": ["PLAYBACK_DED_002", "PLAYBACK_DED_003", "PLAYBACK_DED_004", "VISUAL_ALIGN_DED_002"],
+            },
+            "required_visual_containers": WRITER_BRIEF_REQUIRED_CONTAINERS,
+            "pages": pages,
+            "page_states": page_states,
+            "overlays": overlays,
+            "hidden_targets": hidden_targets,
+            "controls": controls,
+            "interaction_flows": interaction_flows,
+            "system_handoffs": overlays,
+            "interaction_explanations": interaction_explanations,
+            "source_alignment_requirements": source_alignment_requirements,
+        }
+    }
+
+
+def prototype_playback_contract_semantic_errors(doc: dict) -> list[str]:
+    errors = []
+    root = doc.get("prototype_playback_contract", {}) if isinstance(doc, dict) else {}
+    errors.extend(rule_trace_errors(root, "prototype_playback_contract.rule_trace"))
+    if root.get("playable_profile") != "PLAYABLE_PROTOTYPE_WRITE":
+        errors.append(rule_error("PLAYBACK_DED_001", "prototype_playback_contract.playable_profile must be PLAYABLE_PROTOTYPE_WRITE"))
+    for ref_field, rule_id in [
+        ("surface_mode_contract_ref", "MODE_DED_002"),
+        ("layout_invariant_contract_ref", "LAYOUT_DED_001"),
+        ("runtime_rule_execution_trace_ref", "RUNTIME_RULE_DED_001"),
+    ]:
+        ref = root.get(ref_field, {}) or {}
+        if not ref.get("path") or not ref.get("sha256"):
+            errors.append(rule_error(rule_id, f"prototype_playback_contract.{ref_field} is required"))
+    serialized_inputs = json.dumps(root.get("input_artifacts", {}), ensure_ascii=False)
+    for forbidden in ["prototype_writer_brief", "semantic_prototype_payload", "figma_prototype_materialization", "compact_payload", "drd_board_packets"]:
+        if forbidden in serialized_inputs:
+            errors.append(rule_error("PLAYBACK_DED_002", f"playback contract must not consume {forbidden}"))
+    model_status = root.get("model_status", {}) or {}
+    if model_status.get("all_logic_consistent") is not True or model_status.get("all_prototype_renderable") is not True:
+        errors.append(rule_error("PLAYBACK_DED_001", "all model stages must be logic_consistent and prototype_renderable"))
+    if int(model_status.get("blocking_unknown_count", 0) or 0) > 0:
+        errors.append(rule_error("PLAYBACK_DED_001", "playback contract has blocking model unknowns"))
+    pages = root.get("pages", []) or []
+    page_states = root.get("page_states", []) or []
+    controls = root.get("controls", []) or []
+    flows = root.get("interaction_flows", []) or []
+    explanations = root.get("interaction_explanations", []) or []
+    if not pages:
+        errors.append(rule_error("PLAYBACK_DED_001", "pages[] must not be empty"))
+    if not page_states:
+        errors.append(rule_error("PLAYBACK_DED_003", "page_states[] must not be empty; same-page states must be classified"))
+    if not controls:
+        errors.append(rule_error("PLAYBACK_DED_003", "controls[] must not be empty"))
+    if not flows:
+        errors.append(rule_error("PLAYBACK_DED_004", "interaction_flows[] must not be empty"))
+    if not explanations:
+        errors.append(rule_error("PLAYBACK_DED_006", "interaction_explanations[] must not be empty"))
+    required = set(WRITER_BRIEF_REQUIRED_CONTAINERS)
+    missing = sorted(required - set(root.get("required_visual_containers", []) or []))
+    if missing:
+        errors.append(rule_error("PLAYBACK_DED_003", f"required_visual_containers missing: {', '.join(missing)}"))
+    page_ids = {page.get("page_id") for page in pages}
+    controls_by_id = {control.get("control_id"): control for control in controls if control.get("control_id")}
+    flows_by_id = {flow.get("interaction_id"): flow for flow in flows if flow.get("interaction_id")}
+    hidden_target_ids = {target.get("target_id") for target in root.get("hidden_targets", []) or []}
+    overlay_ids = {overlay.get("overlay_id") for overlay in root.get("overlays", []) or []}
+    for control in controls:
+        label = control.get("control_id", "<unknown>")
+        text = str(control.get("visible_text_zh", "")).strip()
+        if not text:
+            errors.append(rule_error("PLAYBACK_DED_003", f"{label}: visible_text_zh required"))
+        if text in PLAYBACK_FORBIDDEN_VISIBLE_TEXTS:
+            errors.append(rule_error("PLAYBACK_DED_003", f"{label}: forbidden generic visible text `{text}`"))
+        if not control.get("source_refs"):
+            errors.append(rule_error("SEMANTIC_PAYLOAD_DED_004", f"{label}: source_refs required"))
+        if control.get("page_id") not in page_ids:
+            errors.append(rule_error("PLAYBACK_DED_003", f"{label}: page_id must reference pages[]"))
+    for page in pages:
+        label = page.get("page_id", "<unknown-page>")
+        if not page.get("default_active_mode_id"):
+            errors.append(rule_error("MODE_DED_002", f"{label}: default_active_mode_id required"))
+        visible = set(page.get("visible_regions", []) or [])
+        if "keyboard_key_grid" in visible and "keyboard_ai_panel" in visible:
+            errors.append(rule_error("MODE_DED_001", f"{label}: keyboard_key_grid and keyboard_ai_panel cannot both be visible"))
+    for flow in flows:
+        label = flow.get("interaction_id", "<unknown>")
+        for field in ["source_page_id", "source_control_id", "target_page_id", "transition_kind", "reaction_target", "source_refs"]:
+            if not flow.get(field):
+                errors.append(rule_error("PLAYBACK_DED_004", f"{label}: missing {field}"))
+        source_control = controls_by_id.get(flow.get("source_control_id"))
+        if not source_control:
+            errors.append(rule_error("PLAYBACK_DED_004", f"{label}: source_control_id not present in controls[]"))
+        elif source_control.get("page_id") != flow.get("source_page_id"):
+            errors.append(rule_error("PLAYBACK_DED_004", f"{label}: source_control page_id does not match source_page_id"))
+        target = flow.get("reaction_target", {}) or {}
+        if target.get("must_be_top_level_frame") is not True:
+            errors.append(rule_error("PLAYBACK_DED_005", f"{label}: reaction target must be top-level frame"))
+        if target.get("target_kind") == "hidden_prototype_target" and target.get("target_id") not in hidden_target_ids:
+            errors.append(rule_error("PLAYBACK_DED_005", f"{label}: hidden reaction target missing from hidden_targets[]"))
+        if target.get("target_kind") == "system_overlay" and target.get("target_id") not in overlay_ids:
+            errors.append(rule_error("PLAYBACK_DED_005", f"{label}: overlay reaction target missing from overlays[]"))
+        if flow.get("source_page_id") == flow.get("target_page_id") and target.get("target_kind") == "visible_page":
+            errors.append(rule_error("PLAYBACK_DED_005", f"{label}: same-page interaction must not navigate to the same visible page"))
+    for explanation in explanations:
+        interaction_id = explanation.get("interaction_id")
+        flow = flows_by_id.get(interaction_id)
+        label = explanation.get("explanation_id") or interaction_id or "<unknown-explanation>"
+        if not flow:
+            errors.append(rule_error("PLAYBACK_DED_006", f"{label}: interaction_id missing from interaction_flows[]"))
+        elif explanation.get("page_id") != flow.get("source_page_id"):
+            errors.append(rule_error("PLAYBACK_DED_006", f"{label}: page_id must match interaction source_page_id"))
+        if not explanation.get("text_zh"):
+            errors.append(rule_error("PLAYBACK_DED_006", f"{label}: text_zh required"))
+    for state in page_states:
+        visibility = state.get("state_visibility")
+        if visibility not in {"visible_page", "same_page_variant", "system_overlay", "modal_overlay", "inline_feedback", "hidden_prototype_target"}:
+            errors.append(rule_error("PLAYBACK_DED_005", f"{state.get('state_id', '<unknown>')}: invalid state_visibility"))
+        if state.get("page_id") not in page_ids:
+            errors.append(rule_error("PLAYBACK_DED_003", f"{state.get('state_id', '<unknown>')}: page_id must reference pages[]"))
+        visible = set(state.get("visible_regions", []) or [])
+        if not state.get("active_mode_id") or not visible:
+            errors.append(rule_error("MODE_DED_002", f"{state.get('state_id', '<unknown>')}: active_mode_id and visible_regions required"))
+        if "keyboard_key_grid" in visible and "keyboard_ai_panel" in visible:
+            errors.append(rule_error("MODE_DED_001", f"{state.get('state_id', '<unknown>')}: keyboard_key_grid and keyboard_ai_panel cannot both be visible"))
+    for requirement in root.get("source_alignment_requirements", []) or []:
+        if not requirement.get("expected_visible_texts") or not requirement.get("source_refs"):
+            errors.append(rule_error("SOURCE_ALIGN_DED_001", f"{requirement.get('requirement_id', '<unknown>')}: expected_visible_texts and source_refs required"))
+    return errors
+
+
+def build_prototype_playback_contract(args):
+    ensure_run_root_write_context("build-prototype-playback-contract")
+    output_path = resolve_run_output_path(args.output, RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
+    paths = {
+        "runtime_path": resolve_path(args.runtime, RUN_ROOT / "io" / "output" / "prototype.runtime.candidate.json"),
+        "payload_path": resolve_path(args.payload, RUN_ROOT / "io" / "output" / "prototype-render-payload.yaml"),
+        "source_brief_path": resolve_path(args.source_brief, RUN_ROOT / "io" / "output" / "prototype_source_brief.yaml"),
+        "carrier_path": resolve_path(args.carrier_map, RUN_ROOT / "io" / "output" / "interaction_carrier_map.yaml"),
+        "handoff_path": resolve_path(args.system_handoff_map, RUN_ROOT / "io" / "output" / "system_handoff_map.yaml"),
+        "operation_chain_path": resolve_path(args.operation_chain, RUN_ROOT / "io" / "output" / "user_operation_chain.yaml"),
+        "model_surface_path": resolve_path(args.model_surface_ownership, RUN_ROOT / "io" / "state" / "model_surface_ownership.yaml"),
+        "model_journey_path": resolve_path(args.model_user_journey, RUN_ROOT / "io" / "state" / "model_user_journey.yaml"),
+        "model_state_machine_path": resolve_path(args.model_interaction_state_machine, RUN_ROOT / "io" / "state" / "model_interaction_state_machine.yaml"),
+        "model_component_path": resolve_path(args.model_component_blueprint, RUN_ROOT / "io" / "state" / "model_component_blueprint.yaml"),
+    }
+    missing = [f"{label}: {path}" for label, path in paths.items() if not path.exists()]
+    if missing:
+        raise SystemExit("BLOCKED: missing inputs for build-prototype-playback-contract:\n- " + "\n- ".join(missing))
+    doc = build_prototype_playback_contract_doc(**paths)
+    ywrite(output_path, doc)
+    errors = validate_schema(output_path, DRD_ROOT / "schemas" / "prototype_playback_contract.schema.json")
+    errors.extend(prototype_playback_contract_semantic_errors(doc))
+    gate_dir = write_renderer_loop_gate(
+        f"PROTOTYPE-PLAYBACK-CONTRACT-GATE-{RUN_ID}",
+        errors,
+        [run_artifact_path(output_path)],
+        doc["prototype_playback_contract"].get("source_refs", []),
+        artifact_key="prototype_playback_contract",
+        stage="FIGMA-PLAYBACK-CONTRACT",
+        validator="validate-prototype-playback-contract",
+        failure_class_error="FC-FIGMA-STAGE-ALIGNMENT-MISMATCH",
+        failure_class_pass="FC-PROTOTYPE-PLAYBACK-CONTRACT-PASS",
+        route_targets=["FIGMA-PLAYBACK-CONTRACT", "FIGMA-PLAYBACK-WRITER-RUNTIME"],
+        repair_hint_error_zh="先修复 playback contract 的页面、控件、状态、交互和 source 对照；不要退回 writer brief 或 semantic/materialization 写入。",
+    )
+    if errors:
+        raise SystemExit("BLOCKED: prototype playback contract failed validation; loop gate evidence was written to " f"{gate_dir}\n- " + "\n- ".join(errors))
+    print("# build-prototype-playback-contract")
+    print("PASS")
+    print(f"- WROTE {output_path}")
+
+
+def validate_prototype_playback_contract(args):
+    path = resolve_path(args.input)
+    errors = validate_schema(path, DRD_ROOT / "schemas" / "prototype_playback_contract.schema.json")
+    if not errors:
+        errors.extend(prototype_playback_contract_semantic_errors(yload(path)))
+    print_result("validate-prototype-playback-contract", errors, [])
+
+
+def playback_requirement_matches_page(requirement: dict, page_id: str) -> bool:
+    source_state = str(requirement.get("source_state_id", "") or "")
+    page = str(page_id or "")
+    if not source_state or not page:
+        return False
+    source_tokens = {token for token in re.split(r"[^A-Za-z0-9\u4e00-\u9fa5]+", source_state.upper()) if len(token) >= 3}
+    page_tokens = {token for token in re.split(r"[^A-Za-z0-9\u4e00-\u9fa5]+", page.upper()) if len(token) >= 3}
+    if source_tokens & page_tokens:
+        return True
+    requirement_refs = " ".join(requirement.get("source_refs", []) or [])
+    return bool(page and page in requirement_refs)
+
+
+def playback_requirements_for_page(
+    requirements: list[dict],
+    page_id: str,
+    *,
+    expected_surface: str | None = None,
+) -> list[dict]:
+    matched = []
+    for requirement in requirements or []:
+        if expected_surface and requirement.get("expected_surface") != expected_surface:
+            continue
+        if playback_requirement_matches_page(requirement, page_id):
+            matched.append(requirement)
+    return matched
+
+
+def playback_requirement_texts(requirements: list[dict]) -> list[str]:
+    texts: list[str] = []
+    for requirement in requirements or []:
+        for text in requirement.get("expected_visible_texts", []) or []:
+            text = str(text or "").strip()
+            if text and text not in texts:
+                texts.append(text)
+    return texts
+
+
+def slim_playback_contract_for_runtime(contract_doc: dict) -> dict:
+    root = contract_doc.get("prototype_playback_contract", {}) or {}
+
+    def text(value: object, fallback: str = "", limit: int = 180) -> str:
+        return " ".join(str(value or fallback or "").split())[:limit]
+
+    return {
+        "run_id": root.get("run_id") or RUN_ID,
+        "version": root.get("version", "3.2.3"),
+        "pages": [
+            {
+                "page_id": page.get("page_id", ""),
+                "page_name_zh": text(page.get("page_name_zh"), "原型页面", 48),
+                "page_purpose_zh": text(page.get("page_purpose_zh"), "完成当前任务。", 160),
+                "carrier_type": page.get("carrier_type", "embedded_host_panel"),
+                "layout_regions": page.get("layout_regions", []) or [],
+                "default_active_mode_id": page.get("default_active_mode_id", "text_keyboard"),
+                "visible_regions": page.get("visible_regions", []) or [],
+                "hidden_regions": page.get("hidden_regions", []) or [],
+            }
+            for page in root.get("pages", []) or []
+        ],
+        "page_states": [
+            {
+                "state_id": state.get("state_id", ""),
+                "page_id": state.get("page_id", ""),
+                "active_mode_id": state.get("active_mode_id", ""),
+                "visible_regions": state.get("visible_regions", []) or [],
+                "hidden_regions": state.get("hidden_regions", []) or [],
+                "state_visibility": state.get("state_visibility", ""),
+            }
+            for state in root.get("page_states", []) or []
+        ],
+        "controls": [
+            {
+                "control_id": control.get("control_id", ""),
+                "page_id": control.get("page_id", ""),
+                "region_id": control.get("region_id", ""),
+                "control_kind": control.get("control_kind", ""),
+                "primitive_type": control.get("primitive_type", ""),
+                "visible_text_zh": text(control.get("visible_text_zh"), "继续", 48),
+                "description_zh": text(control.get("description_zh"), "", 96),
+                "state_id": control.get("state_id", ""),
+            }
+            for control in root.get("controls", []) or []
+        ],
+        "interaction_flows": [
+            {
+                "interaction_id": flow.get("interaction_id", ""),
+                "source_page_id": flow.get("source_page_id", ""),
+                "source_control_id": flow.get("source_control_id", ""),
+                "target_page_id": flow.get("target_page_id", ""),
+                "target_state_id": flow.get("target_state_id", ""),
+                "transition_kind": flow.get("transition_kind", ""),
+                "user_sees_zh": text(flow.get("user_sees_zh"), "点击控件", 64),
+                "precondition_zh": text(flow.get("precondition_zh"), "当前状态可操作。", 96),
+                "result_zh": text(flow.get("result_zh"), "显示下一步反馈。", 120),
+                "operation_chain_id": flow.get("operation_chain_id", ""),
+                "reaction_target": flow.get("reaction_target", {}) or {},
+            }
+            for flow in root.get("interaction_flows", []) or []
+        ],
+        "overlays": [
+            {
+                "overlay_id": overlay.get("overlay_id", ""),
+                "interaction_id": overlay.get("interaction_id", ""),
+                "overlay_type": overlay.get("overlay_type", "system_picker_overlay"),
+                "parent_page_id": overlay.get("parent_page_id", ""),
+                "regions": overlay.get("regions", []) or [],
+                "enter_zh": text(overlay.get("enter_zh"), "进入系统选择器。", 80),
+                "operate_zh": text(overlay.get("operate_zh"), "完成系统选择。", 80),
+                "cancel_zh": text(overlay.get("cancel_zh"), "取消后返回。", 80),
+                "failure_zh": text(overlay.get("failure_zh"), "失败时提示恢复。", 80),
+                "return_zh": text(overlay.get("return_zh"), "完成后返回发起任务的输入法面板。", 80),
+                "required_visible_texts": overlay.get("required_visible_texts", []) or [],
+                "source_alignment_requirements": overlay.get("source_alignment_requirements", []) or [],
+            }
+            for overlay in root.get("overlays", []) or []
+        ],
+        "hidden_targets": root.get("hidden_targets", []) or [],
+        "interaction_explanations": [
+            {
+                "interaction_id": item.get("interaction_id", ""),
+                "page_id": item.get("page_id", ""),
+                "text_zh": text(item.get("text_zh"), "点击后显示下一步反馈。", 140),
+                "source_control_id": item.get("source_control_id", ""),
+                "target_id": item.get("target_id", ""),
+            }
+            for item in root.get("interaction_explanations", []) or []
+        ],
+        "source_alignment_requirements": [
+            {
+                "requirement_id": item.get("requirement_id", ""),
+                "source_state_id": item.get("source_state_id", ""),
+                "expected_visible_texts": item.get("expected_visible_texts", []) or [],
+                "expected_surface": item.get("expected_surface", ""),
+            }
+            for item in root.get("source_alignment_requirements", []) or []
+        ],
+    }
+
+
+def build_figma_playback_writer_runtime_js(contract_doc: dict) -> str:
+    payload_json = json.dumps(slim_playback_contract_for_runtime(contract_doc), ensure_ascii=False, separators=(",", ":"))
+    template = r"""// Generated by prototype harness v3.2.2. Do not hand-edit inside the run.
+// Playback writer consumes prototype_playback_contract.yaml only.
+const PROTOTYPE_PLAYBACK_CONTRACT=__CONTRACT__;
+const NS="prototype_harness",B={r:0,g:0,b:0},D={r:.16,g:.16,b:.16},L={r:.94,g:.94,b:.94},W={r:1,g:1,b:1};
+const createdNodeIds=[],mutatedNodeIds=[],reactionErrors=[],fallbackHotspots=[],pageFrameById={},targetFrameById={},controlNodeById={};
+function solid(c,o=1){return[{type:"SOLID",color:c,opacity:o}]}
+function keep(n){createdNodeIds.push(n.id);return n}
+function mark(n,k,v){if(n.setSharedPluginData)n.setSharedPluginData(NS,k,String(v??""))}
+function clean(t,f=""){return String(t||f||"").replace(/\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|TARGET|OVERLAY|SRC|ALIGN)-[A-Z0-9_-]+\b/g,"").replace(/\s+/g," ").trim()||f||"继续"}
+function fr(name,w,h,o={}){const n=keep(figma.createFrame());n.name=name;n.resize(w,h);n.fills=solid(o.fill||W,o.opacity??1);if(o.stroke!==false){n.strokes=solid(o.strokeColor||B);n.strokeWeight=o.strokeWeight||1}n.cornerRadius=o.radius||0;if(o.layout){n.layoutMode=o.layout;n.primaryAxisSizingMode=o.primaryAuto===false?"FIXED":"AUTO";n.counterAxisSizingMode="FIXED";n.itemSpacing=o.gap??8;n.paddingLeft=n.paddingRight=n.paddingTop=n.paddingBottom=o.padding??8}return n}
+function tx(t,s=12,c=B,name="text"){const n=keep(figma.createText());n.name=name;n.fontName={family:"Inter",style:"Regular"};n.characters=clean(t);n.fontSize=s;n.lineHeight={unit:"AUTO"};n.fills=solid(c);n.textAutoResize="WIDTH_AND_HEIGHT";return n}
+function at(parent,t,s=12,c=B,name="text"){const n=tx(t,s,c,name);parent.appendChild(n);n.textAutoResize="HEIGHT";n.layoutSizingHorizontal="FILL";return n}
+function row(parent,name,h=34){const n=fr(name,344,h,{fill:W,stroke:false,layout:"HORIZONTAL",gap:7,padding:0});parent.appendChild(n);n.layoutSizingHorizontal="FILL";return n}
+function pill(parent,label,dark=false,role="control"){const labelText=clean(label);const isKey=role==="key";const w=isKey?26:Math.max(58,Math.min(132,labelText.length*9+24));const h=isKey?26:34;const n=fr(`${role}:${labelText}`,w,h,{fill:dark?D:W,radius:isKey?7:9,layout:"VERTICAL",padding:isKey?4:8});parent.appendChild(n);if(parent.layoutMode==="HORIZONTAL"&&!isKey)n.layoutSizingHorizontal="FILL";at(n,labelText,isKey?10:10,dark?W:B);return n}
+function controlsFor(pageId,regionId){return (PROTOTYPE_PLAYBACK_CONTRACT.controls||[]).filter(c=>c.page_id===pageId&&(!regionId||c.region_id===regionId))}
+function explanationsFor(pageId){return (PROTOTYPE_PLAYBACK_CONTRACT.interaction_explanations||[]).filter(e=>e.page_id===pageId)}
+function requirementTexts(surface){const texts=[];for(const r of PROTOTYPE_PLAYBACK_CONTRACT.source_alignment_requirements||[]){if(!surface||r.expected_surface===surface)for(const t of r.expected_visible_texts||[])if(t&&!texts.includes(t))texts.push(t)}return texts}
+function drawHost(phone,page){const host=fr("host_chat_surface",360,154,{fill:L,radius:18,layout:"VERTICAL",gap:8,padding:12});phone.appendChild(host);host.layoutSizingHorizontal="FILL";mark(host,"harnessRole","host_chat_surface");at(host,page.page_name_zh||"输入法 AI",17,B,"product_title");at(host,"对话消息区域",11,D,"host_surface_label");const bubble=fr("message_context",236,46,{fill:W,radius:14,layout:"VERTICAL",gap:3,padding:9});host.appendChild(bubble);at(bubble,page.page_purpose_zh||"在聊天里使用输入法 AI 能力。",10,D);const input=fr("input_bar",336,42,{fill:W,radius:18,layout:"HORIZONTAL",gap:8,padding:8});host.appendChild(input);mark(input,"harnessRole","input_bar");at(input,"输入栏",11,B,"input_bar_text")}
+function drawKeyboard(phone,page){const activeMode=page.default_active_mode_id||"text_keyboard";const kb=fr("keyboard_area",360,306,{fill:L,radius:22,layout:"VERTICAL",gap:8,padding:10});phone.appendChild(kb);kb.layoutSizingHorizontal="FILL";mark(kb,"harnessRole","keyboard_area");mark(kb,"activeMode",activeMode);const candidate=row(kb,"candidate_bar",30);mark(candidate,"harnessRole","candidate_bar");["候选","联想","符号"].forEach(x=>pill(candidate,x,false,"candidate"));if(activeMode==="text_keyboard"){const keys=fr("keyboard_key_grid",340,112,{fill:W,radius:12,layout:"VERTICAL",gap:6,padding:8});kb.appendChild(keys);mark(keys,"harnessRole","keyboard_key_grid");["Q W E R T Y U I O P","A S D F G H J K L","Z X C V B N M"].forEach(line=>{const r=row(keys,"key_row",26);line.split(" ").forEach(k=>pill(r,k,false,"key"))})}const toolbar=row(kb,"keyboard_ai_toolbar",40);mark(toolbar,"harnessRole","keyboard_ai_toolbar");const toolbarControls=controlsFor(page.page_id,"keyboard_ai_toolbar").slice(0,4);(toolbarControls.length?toolbarControls:[{visible_text_zh:"功能入口"}]).forEach((c,i)=>{const node=pill(toolbar,c.visible_text_zh,i===0,"toolbar_action");if(c.control_id){mark(node,"component_id",c.control_id);controlNodeById[c.control_id]=node}});if(activeMode!=="text_keyboard"){const panel=fr("keyboard_ai_panel",340,132,{fill:W,radius:14,layout:"VERTICAL",gap:6,padding:10});kb.appendChild(panel);mark(panel,"harnessRole","keyboard_ai_panel");at(panel,"功能面板",13,B,"ai_panel_title");const panelRows=[controlsFor(page.page_id,"keyboard_ai_panel"),controlsFor(page.page_id,"system_picker_overlay")].flat().slice(0,8);for(let i=0;i<panelRows.length;i+=3){const r=row(panel,"panel_controls",34);panelRows.slice(i,i+3).forEach((c,j)=>{const node=pill(r,c.visible_text_zh,j===0&&i===0,"primary_action");mark(node,"component_id",c.control_id);controlNodeById[c.control_id]=node})}const result=fr("result_card",320,72,{fill:L,radius:12,layout:"VERTICAL",gap:5,padding:10});panel.appendChild(result);mark(result,"harnessRole","result_card");at(result,"结果区域",13,B,"result_card_title");at(result,page.page_purpose_zh||"展示当前任务结果。",9,D,"result_card_copy");const feedback=fr("inline_feedback",320,30,{fill:L,radius:8,layout:"VERTICAL",padding:6});panel.appendChild(feedback);mark(feedback,"harnessRole","inline_feedback");at(feedback,"反馈出现在最早可反馈的位置。",9,D,"inline_feedback_text")}}
+function drawPicker(phone,page){const pickerReq=requirementTexts("system_picker_overlay");if(!(page.visible_regions||[]).includes("system_picker_overlay")&&!pickerReq.length)return;const overlay=fr("system_picker_overlay",336,Math.max(214,214+pickerReq.length*13),{fill:W,radius:16,layout:"VERTICAL",gap:8,padding:10});overlay.x=28;overlay.y=218;phone.appendChild(overlay);mark(overlay,"harnessRole","system_picker_overlay");at(overlay,"系统选择器",14,B,"picker_header");pickerReq.forEach(t=>at(overlay,t,9,D,"picker_source_requirements"));const grid=fr("picker_grid_region",316,100,{fill:L,radius:10,layout:"HORIZONTAL",gap:7,padding:8});overlay.appendChild(grid);mark(grid,"harnessRole","picker_grid_region");const cellTexts=(pickerReq.length?pickerReq:["选择项"]).slice(0,8);for(let i=0;i<Math.max(4,cellTexts.length);i++){const label=cellTexts[i]||`选项 ${i+1}`;const tile=fr(`picker_choice_${i+1}`,Math.max(58,Math.min(94,label.length*8+18)),82,{fill:W,radius:8,layout:"VERTICAL",gap:4,padding:5});grid.appendChild(tile);at(tile,String(i+1),14,B,"tile_index");at(tile,label,7,D,"tile_hint")}const actions=row(overlay,"picker_action_bar",34);mark(actions,"harnessRole","picker_action_bar");pill(actions,"取消",false,"cancel_action");pill(actions,"确认",true,"confirm_action");const fb=fr("picker_feedback_region",316,Math.max(30,24+pickerReq.length*12),{fill:L,radius:8,layout:"VERTICAL",padding:6});overlay.appendChild(fb);mark(fb,"harnessRole","picker_feedback_region");(pickerReq.length?pickerReq:["选择时在当前选择器内反馈。"]).forEach(t=>at(fb,t,9,D,"picker_feedback"))}
+function drawExplanation(group,page){const items=explanationsFor(page.page_id);const box=fr("interaction_explanation_region",392,Math.max(96,30+items.length*24),{fill:W,stroke:false,layout:"VERTICAL",gap:4,padding:0});group.appendChild(box);mark(box,"harnessRole","interaction_explanation_region");at(box,"交互说明",11,B,"interaction_explanation_title");if(items.length){items.forEach(item=>at(box,item.text_zh,9,D,"interaction_hint"))}else{at(box,"点击后会进入下一步或显示对应反馈。",9,D,"interaction_hint")}}
+function drawPage(pageSpec,index){const group=fr(`PLAYABLE-PAGE-GROUP:${pageSpec.page_id}`,430,880,{fill:W,radius:0,layout:"VERTICAL",gap:10,padding:16});group.x=430+(index%3)*470;group.y=Math.floor(index/3)*960;figma.currentPage.appendChild(group);mark(group,"sceneId",`SCENE-${pageSpec.page_id}`);mark(group,"frameId",pageSpec.page_id);mark(group,"carrier",pageSpec.carrier_type||"embedded_host_panel");pageFrameById[pageSpec.page_id]=group;const phone=fr("phone_shell",392,704,{fill:W,radius:30,layout:"VERTICAL",gap:10,padding:14});group.appendChild(phone);mark(phone,"harnessRole","phone_shell");const status=row(phone,"status_bar",24);at(status,"9:41",10,B,"status_time");drawHost(phone,pageSpec);drawKeyboard(phone,pageSpec);drawPicker(phone,pageSpec);drawExplanation(group,pageSpec)}
+function drawOffstageTarget(id,label,idx){const t=fr(`PROTOTYPE-TARGET:${id}`,390,620,{fill:W,radius:0,layout:"VERTICAL",gap:8,padding:16});t.x=6000+(idx%5)*430;t.y=Math.floor(idx/5)*680;figma.currentPage.appendChild(t);mark(t,"offstage","true");mark(t,"targetNodeRole","hidden_prototype_target");at(t,label||id,16,B,"target_title");at(t,"此 Frame 是 Figma reaction 的顶层目标，用于表达同页状态、overlay 或系统交接。",11,D,"target_note");targetFrameById[id]=t;return t}
+async function attachReaction(flow){const src=controlNodeById[flow.source_control_id];let dest=null;const rt=flow.reaction_target||{};if(rt.target_kind==="visible_page")dest=pageFrameById[rt.target_id]||pageFrameById[flow.target_page_id];else dest=targetFrameById[rt.target_id]||drawOffstageTarget(rt.target_id||flow.interaction_id,flow.result_zh||flow.target_state_id,Object.keys(targetFrameById).length);if(!src||!dest||!("setReactionsAsync"in src)){reactionErrors.push({interaction_id:flow.interaction_id,error:"missing source or destination"});return}const action={type:"NODE",destinationId:dest.id,navigation:"NAVIGATE",transition:{type:"DISSOLVE",easing:{type:"EASE_OUT"},duration:.2},preserveScrollPosition:false};try{await src.setReactionsAsync([{trigger:{type:"ON_CLICK"},actions:[action]}]);mark(src,"interactionId",flow.interaction_id);mutatedNodeIds.push(src.id)}catch(err){const fb=figma.createRectangle();keep(fb);fb.name=`hotspot_fallback:${flow.interaction_id}`;fb.resize(Math.max(80,src.width||80),Math.max(34,src.height||34));fb.x=(src.absoluteBoundingBox?src.absoluteBoundingBox.x:src.x)||0;fb.y=(src.absoluteBoundingBox?src.absoluteBoundingBox.y:src.y)||0;fb.fills=solid(B,0.01);figma.currentPage.appendChild(fb);mark(fb,"reactionFallback","transparent_hotspot_overlay");mark(fb,"interactionId",flow.interaction_id);try{await fb.setReactionsAsync([{trigger:{type:"ON_CLICK"},actions:[action]}]);fallbackHotspots.push(fb.id);mutatedNodeIds.push(fb.id)}catch(err2){reactionErrors.push({interaction_id:flow.interaction_id,error:String(err2&&err2.message||err2)})}}}
+await figma.loadFontAsync({family:"Inter",style:"Regular"});
+const finalPageName=`PROTOTYPE-FINAL-${PROTOTYPE_PLAYBACK_CONTRACT.run_id||"manual"}`;
+for(const p of figma.root.children.filter(p=>p.name===finalPageName))p.remove();
+const page=figma.createPage();page.name=finalPageName;await figma.setCurrentPageAsync(page);
+const entry=fr("PROTOTYPE-FINAL-ENTRY",390,150,{fill:W,radius:0,layout:"VERTICAL",gap:8,padding:16});entry.x=0;entry.y=0;page.appendChild(entry);mark(entry,"harnessRole","prototype_entry");mark(entry,"writerFormat","prototype_playback_contract_v3_2_3");at(entry,"可播放原型",20,B,"entry_title");at(entry,"主画布显示真实承载面；同页状态和系统交接通过顶层 target 保证 reaction 可播放。",12,D,"entry_copy");
+(PROTOTYPE_PLAYBACK_CONTRACT.pages||[]).forEach((p,i)=>drawPage(p,i));
+(PROTOTYPE_PLAYBACK_CONTRACT.overlays||[]).forEach((o,i)=>drawOffstageTarget(o.overlay_id,o.enter_zh,i));
+(PROTOTYPE_PLAYBACK_CONTRACT.hidden_targets||[]).forEach((h,i)=>drawOffstageTarget(h.target_id,h.target_id,i+(PROTOTYPE_PLAYBACK_CONTRACT.overlays||[]).length));
+for(const flow of (PROTOTYPE_PLAYBACK_CONTRACT.interaction_flows||[])) await attachReaction(flow);
+const audit=fr("LIVE-AUDIT-MARKERS:playback-writer-runtime",310,96,{fill:L,radius:6,layout:"VERTICAL",gap:4,padding:8});audit.x=0;audit.y=170;page.appendChild(audit);mark(audit,"createdByHarnessRuntime","figma-playback-writer-runtime.js");mark(audit,"expectedReactionCount",(PROTOTYPE_PLAYBACK_CONTRACT.interaction_flows||[]).length);mark(audit,"reactionErrorCount",reactionErrors.length);mark(audit,"fallbackHotspotCount",fallbackHotspots.length);mark(audit,"reactionErrorsJson",JSON.stringify(reactionErrors.slice(0,20)));at(audit,`页面 ${(PROTOTYPE_PLAYBACK_CONTRACT.pages||[]).length}\n反应 ${mutatedNodeIds.length}\n失败 ${reactionErrors.length}\nfallback ${fallbackHotspots.length}`,10,B,"audit_text");
+figma.viewport.scrollAndZoomIntoView([entry]);
+return {status:reactionErrors.length?"blocked":"pass",pageId:page.id,pageName:finalPageName,createdNodeIds,mutatedNodeIds,visiblePageCount:(PROTOTYPE_PLAYBACK_CONTRACT.pages||[]).length,expectedReactionCount:(PROTOTYPE_PLAYBACK_CONTRACT.interaction_flows||[]).length,reactionCount:mutatedNodeIds.length,reactionErrors,fallbackHotspots,topLevelNodeNames:page.children.map(n=>n.name)};
+"""
+    return template.replace("__CONTRACT__", payload_json)
+
+
+def chunked(items: list, size: int) -> list[list]:
+    return [items[index:index + size] for index in range(0, len(items), size)]
+
+
+def figma_playback_step_prelude_js() -> str:
+    return r"""
+const NS="prototype_harness",B={r:0,g:0,b:0},D={r:.16,g:.16,b:.16},L={r:.94,g:.94,b:.94},W={r:1,g:1,b:1};
+const createdNodeIds=[],mutatedNodeIds=[];
+function solid(c,o=1){return[{type:"SOLID",color:c,opacity:o}]}
+function keep(n){createdNodeIds.push(n.id);return n}
+function mark(n,k,v){if(n&&n.setSharedPluginData)n.setSharedPluginData(NS,k,String(v??""))}
+function clean(t,f=""){return String(t||f||"").replace(/\b(?:INT|FRAME|CMP|PROTOTYPE|PLAYABLE|SCENE|SCR|STATE|OPCHAIN|HANDOFF|TARGET|OVERLAY|SRC|ALIGN)-[A-Z0-9_-]+\b/g,"").replace(/\s+/g," ").trim()||f||"继续"}
+function fr(name,w,h,o={}){const n=keep(figma.createFrame());n.name=name;n.resize(w,h);n.fills=solid(o.fill||W,o.opacity??1);if(o.stroke!==false){n.strokes=solid(o.strokeColor||B);n.strokeWeight=o.strokeWeight||1}n.cornerRadius=o.radius||0;if(o.layout){n.layoutMode=o.layout;n.primaryAxisSizingMode=o.primaryAuto===false?"FIXED":"AUTO";n.counterAxisSizingMode="FIXED";n.itemSpacing=o.gap??8;n.paddingLeft=n.paddingRight=n.paddingTop=n.paddingBottom=o.padding??8}return n}
+function tx(t,s=12,c=B,name="text"){const n=keep(figma.createText());n.name=name;n.fontName={family:"Inter",style:"Regular"};n.characters=clean(t);n.fontSize=s;n.lineHeight={unit:"AUTO"};n.fills=solid(c);n.textAutoResize="WIDTH_AND_HEIGHT";return n}
+function at(parent,t,s=12,c=B,name="text"){const n=tx(t,s,c,name);parent.appendChild(n);n.textAutoResize="HEIGHT";n.layoutSizingHorizontal="FILL";return n}
+function row(parent,name,h=34){const n=fr(name,344,h,{fill:W,stroke:false,layout:"HORIZONTAL",gap:7,padding:0});parent.appendChild(n);n.layoutSizingHorizontal="FILL";return n}
+function pill(parent,label,dark=false,role="control"){const labelText=clean(label);const isKey=role==="key";const w=isKey?26:Math.max(58,Math.min(132,labelText.length*9+24));const h=isKey?26:34;const n=fr(`${role}:${labelText}`,w,h,{fill:dark?D:W,radius:isKey?7:9,layout:"VERTICAL",padding:isKey?4:8});parent.appendChild(n);if(parent.layoutMode==="HORIZONTAL"&&!isKey)n.layoutSizingHorizontal="FILL";at(n,labelText,isKey?10:10,dark?W:B);return n}
+function collect(node,out=[]){out.push(node);if("children"in node)for(const child of node.children)collect(child,out);return out}
+function findFinalPage(runId){return figma.root.children.find(p=>p.name===`PROTOTYPE-FINAL-${runId}`)}
+"""
+
+
+def build_figma_playback_step_setup_js(contract: dict) -> str:
+    payload_json = json.dumps({
+        "run_id": contract.get("run_id") or RUN_ID,
+        "page_count": len(contract.get("pages", []) or []),
+        "expected_reaction_count": len(contract.get("interaction_flows", []) or []),
+    }, ensure_ascii=False, separators=(",", ":"))
+    return f"""// Generated by prototype harness v3.2.2. Split runtime step: setup page.
+const STEP_DATA={payload_json};
+{figma_playback_step_prelude_js()}
+await figma.loadFontAsync({{family:"Inter",style:"Regular"}});
+const finalPageName=`PROTOTYPE-FINAL-${{STEP_DATA.run_id||"manual"}}`;
+for(const p of figma.root.children.filter(p=>p.name===finalPageName))p.remove();
+const page=figma.createPage();page.name=finalPageName;await figma.setCurrentPageAsync(page);
+mark(page,"writerFormat","prototype_playback_contract_v3_2_2_split_runtime");
+mark(page,"runId",STEP_DATA.run_id);
+mark(page,"expectedReactionCount",STEP_DATA.expected_reaction_count);
+const entry=fr("PROTOTYPE-FINAL-ENTRY",390,150,{{fill:W,radius:0,layout:"VERTICAL",gap:8,padding:16}});
+entry.x=0;entry.y=0;page.appendChild(entry);mark(entry,"harnessRole","prototype_entry");mark(entry,"writerFormat","prototype_playback_contract_v3_2_2_split_runtime");
+at(entry,"输入法 AI 可播放原型",20,B,"entry_title");
+at(entry,"主画布显示真实输入法承载面；同页状态和系统交接通过顶层 target 保证 reaction 可播放。",12,D,"entry_copy");
+figma.viewport.scrollAndZoomIntoView([entry]);
+return {{status:"pass",step:"setup",pageId:page.id,pageName:page.name,createdNodeCount:createdNodeIds.length,mutatedNodeCount:mutatedNodeIds.length,pageCount:STEP_DATA.page_count,expectedReactionCount:STEP_DATA.expected_reaction_count}};
+"""
+
+
+def build_figma_playback_step_page_js(contract: dict, page: dict, page_index: int) -> str:
+    page_id = page.get("page_id", "")
+    controls = [item for item in contract.get("controls", []) or [] if item.get("page_id") == page_id]
+    explanations = [item for item in contract.get("interaction_explanations", []) or [] if item.get("page_id") == page_id]
+    flows = [item for item in contract.get("interaction_flows", []) or [] if item.get("source_page_id") == page_id]
+    requirements = playback_requirements_for_page(contract.get("source_alignment_requirements", []) or [], page_id)
+    payload_json = json.dumps({
+        "run_id": contract.get("run_id") or RUN_ID,
+        "page": page,
+        "page_index": page_index,
+        "controls": controls,
+        "flows": flows,
+        "explanations": explanations,
+        "source_alignment_requirements": requirements,
+    }, ensure_ascii=False, separators=(",", ":"))
+    return f"""// Generated by prototype harness v3.2.2. Split runtime step: draw page.
+const STEP_DATA={payload_json};
+{figma_playback_step_prelude_js()}
+await figma.loadFontAsync({{family:"Inter",style:"Regular"}});
+const page=findFinalPage(STEP_DATA.run_id);if(!page)throw new Error(`Missing final prototype page for ${{STEP_DATA.run_id}}`);await figma.setCurrentPageAsync(page);
+function controlsFor(regionId){{return (STEP_DATA.controls||[]).filter(c=>!regionId||c.region_id===regionId)}}
+function uniqueControls(items){{const seen=new Set(),out=[];for(const c of items||[]){{const key=c.control_id||`${{c.visible_text_zh||""}}:${{c.region_id||""}}:${{out.length}}`;if(seen.has(key))continue;seen.add(key);out.push(c)}}return out}}
+function flowsForControl(controlId){{return (STEP_DATA.flows||[]).filter(f=>f.source_control_id===controlId)}}
+function controlLabel(controlId){{const c=(STEP_DATA.controls||[]).find(item=>item.control_id===controlId);return c&&(c.visible_text_zh||c.description_zh)||"当前控件"}}
+function drawControlRows(parent,items,role="primary_action",darkFirst=true){{const list=uniqueControls(items);if(!list.length)return 0;for(let i=0;i<list.length;i+=3){{const r=row(parent,`${{role}}_row`,34);list.slice(i,i+3).forEach((c,j)=>{{const node=pill(r,c.visible_text_zh,j===0&&i===0&&darkFirst,role);if(c.control_id){{mark(node,"component_id",c.control_id);mark(node,"controlRole","clickable");mark(node,"interactionExplanationCount",flowsForControl(c.control_id).length)}}}})}}return list.length}}
+function requirementTexts(surface){{const texts=[];for(const r of STEP_DATA.source_alignment_requirements||[]){{if(!surface||r.expected_surface===surface)for(const t of r.expected_visible_texts||[])if(t&&!texts.includes(t))texts.push(t)}}return texts}}
+function drawHost(phone,pageSpec){{const host=fr("host_chat_surface",360,154,{{fill:L,radius:18,layout:"VERTICAL",gap:8,padding:12}});phone.appendChild(host);host.layoutSizingHorizontal="FILL";mark(host,"harnessRole","host_chat_surface");at(host,pageSpec.page_name_zh||"输入法 AI",17,B,"product_title");at(host,"对话消息区域",11,D,"host_surface_label");const bubble=fr("message_context",236,46,{{fill:W,radius:14,layout:"VERTICAL",gap:3,padding:9}});host.appendChild(bubble);at(bubble,pageSpec.page_purpose_zh||"在聊天里使用输入法 AI 能力。",10,D);const input=fr("input_bar",336,42,{{fill:W,radius:18,layout:"HORIZONTAL",gap:8,padding:8}});host.appendChild(input);mark(input,"harnessRole","input_bar");at(input,"输入栏",11,B,"input_bar_text")}}
+	function regionVisible(pageSpec,region){{const visible=pageSpec.visible_regions||[];return !visible.length||visible.includes(region)}}
+	function drawKeyboard(phone,pageSpec){{const activeMode=pageSpec.default_active_mode_id||"text_keyboard";const panelControls=uniqueControls([controlsFor("keyboard_ai_panel"),controlsFor("system_picker_overlay")].flat());const toolbarControls=uniqueControls(controlsFor("keyboard_ai_toolbar"));const panelRows=Math.max(1,Math.ceil(Math.max(panelControls.length,1)/3));const toolbarRows=Math.max(1,Math.ceil(Math.max(toolbarControls.length,1)/3));const keyboardReq=requirementTexts("keyboard_ai_panel");const kbHeight=activeMode==="text_keyboard"?306:Math.max(306,210+toolbarRows*40+panelRows*42+keyboardReq.length*14);const panelHeight=Math.max(132,88+panelRows*42+keyboardReq.length*14);const kb=fr("keyboard_area",360,kbHeight,{{fill:L,radius:22,layout:"VERTICAL",gap:8,padding:10}});phone.appendChild(kb);kb.layoutSizingHorizontal="FILL";mark(kb,"harnessRole","keyboard_area");mark(kb,"activeMode",activeMode);const candidate=row(kb,"candidate_bar",30);mark(candidate,"harnessRole","candidate_bar");["候选","联想","符号"].forEach(x=>pill(candidate,x,false,"candidate"));if(activeMode==="text_keyboard"&&regionVisible(pageSpec,"keyboard_key_grid")){{const keys=fr("keyboard_key_grid",340,112,{{fill:W,radius:12,layout:"VERTICAL",gap:6,padding:8}});kb.appendChild(keys);mark(keys,"harnessRole","keyboard_key_grid");["Q W E R T Y U I O P","A S D F G H J K L","Z X C V B N M"].forEach(line=>{{const r=row(keys,"key_row",26);line.split(" ").forEach(k=>pill(r,k,false,"key"))}})}}const toolbarBox=fr("keyboard_ai_toolbar",340,Math.max(40,toolbarRows*40),{{fill:W,stroke:false,layout:"VERTICAL",gap:6,padding:0}});kb.appendChild(toolbarBox);toolbarBox.layoutSizingHorizontal="FILL";mark(toolbarBox,"harnessRole","keyboard_ai_toolbar");drawControlRows(toolbarBox,toolbarControls.length?toolbarControls:[{{visible_text_zh:"功能入口"}}],"toolbar_action",true);if(activeMode!=="text_keyboard"&&regionVisible(pageSpec,"keyboard_ai_panel")){{const panel=fr("keyboard_ai_panel",340,panelHeight,{{fill:W,radius:14,layout:"VERTICAL",gap:6,padding:10}});kb.appendChild(panel);mark(panel,"harnessRole","keyboard_ai_panel");at(panel,"功能面板",13,B,"ai_panel_title");drawControlRows(panel,panelControls,"primary_action",true);const result=fr("result_card",320,72+keyboardReq.length*14,{{fill:L,radius:12,layout:"VERTICAL",gap:5,padding:10}});panel.appendChild(result);mark(result,"harnessRole","result_card");at(result,"结果区域",13,B,"result_card_title");at(result,pageSpec.page_purpose_zh||"展示当前任务结果。",9,D,"result_card_copy");if(keyboardReq.length)keyboardReq.forEach(t=>at(result,t,9,D,"source_requirement_text"));const feedback=fr("inline_feedback",320,30,{{fill:L,radius:8,layout:"VERTICAL",padding:6}});panel.appendChild(feedback);mark(feedback,"harnessRole","inline_feedback");at(feedback,"反馈出现在最早可反馈的位置。",9,D,"inline_feedback_text")}}}}
+	function drawPicker(phone,pageSpec){{const pickerReq=requirementTexts("system_picker_overlay");if(!regionVisible(pageSpec,"system_picker_overlay")&&!pickerReq.length&&!controlsFor("system_picker_overlay").length)return;const overlay=fr("system_picker_overlay",336,Math.max(242,214+pickerReq.length*13),{{fill:W,radius:16,layout:"VERTICAL",gap:8,padding:10}});overlay.x=28;overlay.y=218;phone.appendChild(overlay);mark(overlay,"harnessRole","system_picker_overlay");at(overlay,"系统选择器",14,B,"picker_header");if(pickerReq.length)pickerReq.forEach(t=>at(overlay,t,9,D,"picker_source_requirements"));const grid=fr("picker_grid_region",316,100,{{fill:L,radius:10,layout:"HORIZONTAL",gap:7,padding:8}});overlay.appendChild(grid);mark(grid,"harnessRole","picker_grid_region");const cellTexts=(pickerReq.length?pickerReq:["选择项"]).slice(0,8);for(let i=0;i<Math.max(4,cellTexts.length);i++){{const label=cellTexts[i]||`选项 ${{i+1}}`;const tile=fr(`picker_choice_${{i+1}}`,Math.max(58,Math.min(94,label.length*8+18)),82,{{fill:W,radius:8,layout:"VERTICAL",gap:4,padding:5}});grid.appendChild(tile);at(tile,String(i+1),14,B,"tile_index");at(tile,label,7,D,"tile_hint")}}const actions=row(overlay,"picker_action_bar",34);mark(actions,"harnessRole","picker_action_bar");pill(actions,"取消",false,"cancel_action");pill(actions,"确认",true,"confirm_action");const fb=fr("picker_feedback_region",316,Math.max(40,28+pickerReq.length*12),{{fill:L,radius:8,layout:"VERTICAL",padding:6}});overlay.appendChild(fb);mark(fb,"harnessRole","picker_feedback_region");const feedbackTexts=pickerReq.length?pickerReq:["选择时在当前选择器内反馈。"];feedbackTexts.forEach(t=>at(fb,t,9,D,"picker_feedback"))}}
+function drawExplanation(group){{const items=STEP_DATA.explanations||[];const box=fr("interaction_explanation_region",392,Math.max(112,34+items.length*24),{{fill:W,stroke:false,layout:"VERTICAL",gap:4,padding:0}});group.appendChild(box);mark(box,"harnessRole","interaction_explanation_region");at(box,"交互说明",11,B,"interaction_explanation_title");if(items.length)items.forEach(item=>at(box,`${{controlLabel(item.source_control_id)}}：${{item.text_zh}}`,8,D,"interaction_hint"));else at(box,"点击后会进入下一步或显示对应反馈。",9,D,"interaction_hint")}}
+const pageSpec=STEP_DATA.page;
+const group=fr(`PLAYABLE-PAGE-GROUP:${{pageSpec.page_id}}`,430,900,{{fill:W,radius:0,layout:"VERTICAL",gap:10,padding:16}});
+group.x=430+(STEP_DATA.page_index%3)*470;group.y=Math.floor(STEP_DATA.page_index/3)*980;figma.currentPage.appendChild(group);
+mark(group,"sceneId",`SCENE-${{pageSpec.page_id}}`);mark(group,"frameId",pageSpec.page_id);mark(group,"carrier",pageSpec.carrier_type||"embedded_host_panel");
+const pageControlCount=(STEP_DATA.controls||[]).length;const pickerReqCount=requirementTexts("system_picker_overlay").length;const keyboardReqCount=requirementTexts("keyboard_ai_panel").length;const dynamicPhoneHeight=Math.max(724,724+Math.max(0,pageControlCount-12)*18+pickerReqCount*13+keyboardReqCount*12);if(dynamicPhoneHeight>724)group.resize(group.width,group.height+(dynamicPhoneHeight-724));const phone=fr("phone_shell",392,dynamicPhoneHeight,{{fill:W,radius:30,layout:"VERTICAL",gap:10,padding:14}});group.appendChild(phone);mark(phone,"harnessRole","phone_shell");
+const status=row(phone,"status_bar",24);at(status,"9:41",10,B,"status_time");
+drawHost(phone,pageSpec);drawKeyboard(phone,pageSpec);drawPicker(phone,pageSpec);drawExplanation(group);
+return {{status:"pass",step:"draw-page",page_id:pageSpec.page_id,createdNodeCount:createdNodeIds.length,mutatedNodeCount:mutatedNodeIds.length,controlCount:(STEP_DATA.controls||[]).length,explanationCount:(STEP_DATA.explanations||[]).length}};
+"""
+
+
+def build_figma_playback_step_targets_js(contract: dict, targets: list[dict], step_index: int) -> str:
+    payload_json = json.dumps({
+        "run_id": contract.get("run_id") or RUN_ID,
+        "targets": targets,
+        "step_index": step_index,
+    }, ensure_ascii=False, separators=(",", ":"))
+    return f"""// Generated by prototype harness v3.2.2. Split runtime step: draw targets.
+const STEP_DATA={payload_json};
+{figma_playback_step_prelude_js()}
+await figma.loadFontAsync({{family:"Inter",style:"Regular"}});
+const page=findFinalPage(STEP_DATA.run_id);if(!page)throw new Error(`Missing final prototype page for ${{STEP_DATA.run_id}}`);await figma.setCurrentPageAsync(page);
+function targetTexts(target){{const texts=[];for(const t of target.required_visible_texts||[])if(t&&!texts.includes(t))texts.push(t);for(const r of target.source_alignment_requirements||[])for(const t of r.expected_visible_texts||[])if(t&&!texts.includes(t))texts.push(t);return texts}}
+	function drawPickerTarget(target,t){{const texts=targetTexts(target);at(t,target.enter_zh||"进入系统选择器。",11,D,"handoff_enter");const picker=fr("system_picker_overlay",354,Math.max(306,246+texts.length*13),{{fill:W,radius:16,layout:"VERTICAL",gap:8,padding:10}});t.appendChild(picker);mark(picker,"harnessRole","system_picker_overlay");at(picker,"系统选择器",14,B,"picker_header");const header=fr("picker_header",334,Math.max(28,20+Math.min(4,texts.length)*12),{{fill:W,stroke:false,layout:"VERTICAL",gap:2,padding:0}});picker.appendChild(header);mark(header,"harnessRole","picker_header");texts.slice(0,4).forEach(x=>at(header,x,9,D,"picker_source_requirements"));const grid=fr("picker_grid_region",334,104,{{fill:L,radius:10,layout:"HORIZONTAL",gap:7,padding:8}});picker.appendChild(grid);mark(grid,"harnessRole","picker_grid_region");const cellTexts=(texts.length?texts:["选择项"]).slice(0,8);for(let i=0;i<Math.max(4,cellTexts.length);i++){{const label=cellTexts[i]||`选项 ${{i+1}}`;const tile=fr(`picker_choice_${{i+1}}`,Math.max(58,Math.min(98,label.length*8+18)),86,{{fill:W,radius:8,layout:"VERTICAL",gap:4,padding:5}});grid.appendChild(tile);at(tile,String(i+1),14,B,"tile_index");at(tile,label,7,D,"tile_hint")}}const actions=row(picker,"picker_action_bar",34);mark(actions,"harnessRole","picker_action_bar");pill(actions,"取消",false,"cancel_action");pill(actions,"确认",true,"confirm_action");const fb=fr("picker_feedback_region",334,Math.max(50,28+texts.length*12),{{fill:L,radius:8,layout:"VERTICAL",gap:3,padding:6}});picker.appendChild(fb);mark(fb,"harnessRole","picker_feedback_region");(texts.length?texts:["选择时在当前选择器内反馈。"]).forEach(x=>at(fb,x,9,D,"picker_feedback"));at(t,target.cancel_zh||"取消后返回发起面板。",10,D,"handoff_cancel");at(t,target.failure_zh||"失败时在当前选择器内提示恢复。",10,D,"handoff_failure");at(t,target.return_zh||"完成后返回发起面板。",10,D,"handoff_return")}}
+function drawGenericTarget(target,t){{const label=target.label_zh||target.enter_zh||target.explanation_zh||"同页状态变化";at(t,label,16,B,"target_title");at(t,target.explanation_zh||"这里承载同页状态、overlay 或系统交接的可播放目标。",11,D,"target_note")}}
+function drawOffstageTarget(target,idx){{const id=target.target_id||target.overlay_id;const kind=target.target_kind||target.overlay_type||"hidden_prototype_target";const isPicker=kind==="system_picker_overlay"||kind==="system_picker"||kind==="system_overlay";const t=fr(`PROTOTYPE-TARGET:${{id}}`,390,isPicker?720:620,{{fill:W,radius:0,layout:"VERTICAL",gap:8,padding:16}});t.x=6000+((STEP_DATA.step_index*25+idx)%5)*430;t.y=Math.floor((STEP_DATA.step_index*25+idx)/5)*760;figma.currentPage.appendChild(t);mark(t,"offstage","true");mark(t,"targetNodeRole",kind);mark(t,"targetId",id);if(isPicker)drawPickerTarget(target,t);else drawGenericTarget(target,t);return t}}
+(STEP_DATA.targets||[]).forEach((target,idx)=>drawOffstageTarget(target,idx));
+return {{status:"pass",step:"draw-targets",createdNodeCount:createdNodeIds.length,mutatedNodeCount:mutatedNodeIds.length,targetCount:(STEP_DATA.targets||[]).length}};
+"""
+
+
+def build_figma_playback_step_ensure_sources_js(contract: dict) -> str:
+    source_ids = {
+        flow.get("source_control_id")
+        for flow in contract.get("interaction_flows", []) or []
+        if flow.get("source_control_id")
+    }
+    controls_by_id = {
+        control.get("control_id"): control
+        for control in contract.get("controls", []) or []
+        if control.get("control_id") in source_ids
+    }
+    controls = [
+        {
+            "control_id": control_id,
+            "page_id": item.get("page_id", ""),
+            "region_id": item.get("region_id", ""),
+            "visible_text_zh": item.get("visible_text_zh", control_id),
+            "description_zh": item.get("description_zh", ""),
+        }
+        for control_id, item in controls_by_id.items()
+    ]
+    payload_json = json.dumps({
+        "run_id": contract.get("run_id") or RUN_ID,
+        "controls": controls,
+        "expected_source_count": len(source_ids),
+    }, ensure_ascii=False, separators=(",", ":"))
+    return f"""// Generated by prototype harness v3.2.2. Split runtime step: ensure reaction sources.
+const STEP_DATA={payload_json};
+{figma_playback_step_prelude_js()}
+await figma.loadFontAsync({{family:"Inter",style:"Regular"}});
+const page=findFinalPage(STEP_DATA.run_id);if(!page)throw new Error(`Missing final prototype page for ${{STEP_DATA.run_id}}`);await figma.setCurrentPageAsync(page);
+const all=collect(page,[]);
+const pageFrameById={{}},controlNodeById={{}},banksByPage={{}};
+for(const node of all){{if(!node.getSharedPluginData)continue;const frameId=node.getSharedPluginData(NS,"frameId");const componentId=node.getSharedPluginData(NS,"component_id");const bankFor=node.getSharedPluginData(NS,"reactionSourceBankFor");if(frameId)pageFrameById[frameId]=node;if(componentId)controlNodeById[componentId]=node;if(bankFor)banksByPage[bankFor]=node;}}
+function ensureBank(pageId){{if(banksByPage[pageId])return banksByPage[pageId];const host=pageFrameById[pageId]||page;const bank=fr("reaction_source_bank",392,92,{{fill:W,stroke:false,layout:"VERTICAL",gap:5,padding:0}});host.appendChild(bank);mark(bank,"reactionSourceBankFor",pageId);at(bank,"补齐可点击源控件",9,D,"source_bank_title");banksByPage[pageId]=bank;return bank}}
+function addControl(bank,c,index){{const rowIndex=Math.floor(index/3);let r=bank.children.find(n=>n.name===`reaction_source_row_${{rowIndex}}`);if(!r){{r=fr(`reaction_source_row_${{rowIndex}}`,360,34,{{fill:W,stroke:false,layout:"HORIZONTAL",gap:7,padding:0}});bank.appendChild(r)}}const node=pill(r,c.visible_text_zh||c.description_zh||c.control_id,false,"reaction_source");mark(node,"component_id",c.control_id);mark(node,"controlRole","clickable");mark(node,"sourceEnsured","true");return node}}
+let ensured=0,already=0,missingPage=0;
+const addedPerPage={{}};
+for(const c of STEP_DATA.controls||[]){{if(!c.control_id)continue;if(controlNodeById[c.control_id]){{already++;continue}}const pageId=c.page_id;if(!pageFrameById[pageId]){{missingPage++;continue}}const bank=ensureBank(pageId);const index=addedPerPage[pageId]||0;addControl(bank,c,index);addedPerPage[pageId]=index+1;ensured++;}}
+mark(page,"ensuredReactionSourceCount",ensured);
+mark(page,"existingReactionSourceCount",already);
+mark(page,"missingReactionSourcePageCount",missingPage);
+return {{status:missingPage?"blocked":"pass",step:"ensure-reaction-sources",ensuredReactionSourceCount:ensured,existingReactionSourceCount:already,missingReactionSourcePageCount:missingPage,expectedSourceCount:STEP_DATA.expected_source_count,createdNodeCount:createdNodeIds.length,mutatedNodeCount:mutatedNodeIds.length}};
+"""
+
+
+def build_figma_playback_step_reactions_js(contract: dict, flows: list[dict], step_index: int) -> str:
+    compact_flows = [
+        {
+            "interaction_id": flow.get("interaction_id", ""),
+            "source_control_id": flow.get("source_control_id", ""),
+            "target_page_id": flow.get("target_page_id", ""),
+            "reaction_target": {
+                "target_kind": (flow.get("reaction_target") or {}).get("target_kind", ""),
+                "target_id": (flow.get("reaction_target") or {}).get("target_id", ""),
+            },
+        }
+        for flow in flows
+    ]
+    payload_json = json.dumps({
+        "run_id": contract.get("run_id") or RUN_ID,
+        "flows": compact_flows,
+        "step_index": step_index,
+    }, ensure_ascii=False, separators=(",", ":"))
+    return f"""// Generated by prototype harness v3.2.2. Split runtime step: attach reactions.
+const STEP_DATA={payload_json};
+{figma_playback_step_prelude_js()}
+const reactionErrors=[],fallbackHotspots=[];
+const page=findFinalPage(STEP_DATA.run_id);if(!page)throw new Error(`Missing final prototype page for ${{STEP_DATA.run_id}}`);await figma.setCurrentPageAsync(page);
+const all=collect(page,[]);
+const pageFrameById={{}},targetFrameById={{}},controlNodeById={{}};
+for(const node of all){{if(!node.getSharedPluginData)continue;const frameId=node.getSharedPluginData(NS,"frameId");const componentId=node.getSharedPluginData(NS,"component_id");const targetId=node.getSharedPluginData(NS,"targetId");if(frameId)pageFrameById[frameId]=node;if(componentId)controlNodeById[componentId]=node;if(targetId)targetFrameById[targetId]=node;const name=String(node.name||"");if(name.startsWith("PROTOTYPE-TARGET:"))targetFrameById[name.slice("PROTOTYPE-TARGET:".length)]=node;}}
+async function attachReaction(flow){{const src=controlNodeById[flow.source_control_id];let dest=null;const rt=flow.reaction_target||{{}};if(rt.target_kind==="visible_page")dest=pageFrameById[rt.target_id]||pageFrameById[flow.target_page_id];else dest=targetFrameById[rt.target_id]||targetFrameById[flow.interaction_id];if(!src||!dest||!("setReactionsAsync"in src)){{reactionErrors.push({{interaction_id:flow.interaction_id,error:"missing source or destination",source_control_id:flow.source_control_id,target_id:rt.target_id||flow.target_page_id}});return}}const action={{type:"NODE",destinationId:dest.id,navigation:"NAVIGATE",transition:{{type:"DISSOLVE",easing:{{type:"EASE_OUT"}},duration:.2}},preserveScrollPosition:false}};try{{await src.setReactionsAsync([{{trigger:{{type:"ON_CLICK"}},actions:[action]}}]);mark(src,"interactionId",flow.interaction_id);mutatedNodeIds.push(src.id)}}catch(err){{const fb=figma.createRectangle();keep(fb);fb.name=`hotspot_fallback:${{flow.interaction_id}}`;fb.resize(Math.max(80,src.width||80),Math.max(34,src.height||34));const box=src.absoluteBoundingBox||{{x:src.x||0,y:src.y||0}};fb.x=box.x;fb.y=box.y;fb.fills=solid(B,0.01);figma.currentPage.appendChild(fb);mark(fb,"reactionFallback","transparent_hotspot_overlay");mark(fb,"interactionId",flow.interaction_id);try{{await fb.setReactionsAsync([{{trigger:{{type:"ON_CLICK"}},actions:[action]}}]);fallbackHotspots.push(fb.id);mutatedNodeIds.push(fb.id)}}catch(err2){{reactionErrors.push({{interaction_id:flow.interaction_id,error:String(err2&&err2.message||err2),source_control_id:flow.source_control_id,target_id:rt.target_id||flow.target_page_id}})}}}}}}
+for(const flow of (STEP_DATA.flows||[])) await attachReaction(flow);
+mark(page,`reactionErrorCount_${{STEP_DATA.step_index}}`,reactionErrors.length);
+mark(page,`reactionErrorsJson_${{STEP_DATA.step_index}}`,JSON.stringify(reactionErrors.slice(0,20)));
+mark(page,`fallbackHotspotCount_${{STEP_DATA.step_index}}`,fallbackHotspots.length);
+return {{status:reactionErrors.length?"blocked":"pass",step:"attach-reactions",stepIndex:STEP_DATA.step_index,mutatedNodeCount:mutatedNodeIds.length,createdNodeCount:createdNodeIds.length,reactionErrorCount:reactionErrors.length,fallbackHotspotCount:fallbackHotspots.length,reactionErrors:reactionErrors.slice(0,8),flowCount:(STEP_DATA.flows||[]).length}};
+"""
+
+
+def build_figma_playback_step_audit_js(contract: dict, reaction_step_count: int) -> str:
+    payload_json = json.dumps({
+        "run_id": contract.get("run_id") or RUN_ID,
+        "page_count": len(contract.get("pages", []) or []),
+        "expected_reaction_count": len(contract.get("interaction_flows", []) or []),
+        "reaction_step_count": reaction_step_count,
+    }, ensure_ascii=False, separators=(",", ":"))
+    return f"""// Generated by prototype harness v3.2.2. Split runtime step: audit marker.
+const STEP_DATA={payload_json};
+{figma_playback_step_prelude_js()}
+await figma.loadFontAsync({{family:"Inter",style:"Regular"}});
+const page=findFinalPage(STEP_DATA.run_id);if(!page)throw new Error(`Missing final prototype page for ${{STEP_DATA.run_id}}`);await figma.setCurrentPageAsync(page);
+const all=collect(page,[]);
+let totalReactionCount=0,fallbackHotspotCount=0,reactionErrorCount=0;const reactionErrors=[];
+for(const node of all){{if("reactions"in node)totalReactionCount+=(node.reactions||[]).length;if(node.getSharedPluginData&&node.getSharedPluginData(NS,"reactionFallback"))fallbackHotspotCount++;}}
+for(let i=0;i<STEP_DATA.reaction_step_count;i++){{reactionErrorCount+=Number(page.getSharedPluginData(NS,`reactionErrorCount_${{i}}`)||0);try{{const items=JSON.parse(page.getSharedPluginData(NS,`reactionErrorsJson_${{i}}`)||"[]");for(const item of items)reactionErrors.push(item)}}catch(err){{}}fallbackHotspotCount+=Number(page.getSharedPluginData(NS,`fallbackHotspotCount_${{i}}`)||0);}}
+for(const node of page.children.filter(n=>String(n.name||"").startsWith("LIVE-AUDIT-MARKERS:playback-writer-runtime")))node.remove();
+const audit=fr("LIVE-AUDIT-MARKERS:playback-writer-runtime",330,104,{{fill:L,radius:6,layout:"VERTICAL",gap:4,padding:8}});audit.x=0;audit.y=170;page.appendChild(audit);
+mark(audit,"createdByHarnessRuntime","figma-playback-writer-runtime.split.js");mark(audit,"writerExecutionMode","split_runtime_steps");mark(audit,"expectedReactionCount",STEP_DATA.expected_reaction_count);mark(audit,"reactionErrorCount",reactionErrorCount);mark(audit,"fallbackHotspotCount",fallbackHotspotCount);mark(audit,"reactionErrorsJson",JSON.stringify(reactionErrors.slice(0,20)));
+at(audit,`页面 ${{STEP_DATA.page_count}}\\n反应 ${{totalReactionCount}}\\n失败 ${{reactionErrorCount}}\\nfallback ${{fallbackHotspotCount}}`,10,B,"audit_text");
+figma.viewport.scrollAndZoomIntoView(page.children.slice(0,5));
+return {{status:reactionErrorCount?"blocked":"pass",step:"audit",createdNodeCount:createdNodeIds.length,mutatedNodeCount:mutatedNodeIds.length,pageId:page.id,pageName:page.name,expectedReactionCount:STEP_DATA.expected_reaction_count,reactionCount:totalReactionCount,reactionErrorCount,fallbackHotspotCount,reactionErrors:reactionErrors.slice(0,12),topLevelNodeNames:page.children.map(n=>n.name)}};
+"""
+
+
+def build_figma_playback_writer_step_files(contract_doc: dict, output_dir: Path) -> dict:
+    contract = slim_playback_contract_for_runtime(contract_doc)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for old_step in output_dir.glob("*.js"):
+        old_step.unlink()
+    steps = []
+
+    def write_step(step_id: str, phase: str, js: str, index: int) -> Path:
+        path = output_dir / f"{index:02d}-{step_id}.js"
+        path.write_text(js, encoding="utf-8")
+        steps.append({
+            "step_id": step_id,
+            "phase": phase,
+            "path": run_artifact_path(path),
+            "sha256": f"sha256:{sha256_file(path)}",
+            "size_bytes": path.stat().st_size,
+        })
+        return path
+
+    step_index = 1
+    write_step("setup-final-page", "setup", build_figma_playback_step_setup_js(contract), step_index)
+    step_index += 1
+    for page_index, page in enumerate(contract.get("pages", []) or []):
+        write_step(
+            f"draw-page-{page.get('page_id', f'page-{page_index}')}",
+            "draw_visible_page",
+            build_figma_playback_step_page_js(contract, page, page_index),
+            step_index,
+        )
+        step_index += 1
+    targets = []
+    for overlay in contract.get("overlays", []) or []:
+        target_payload = dict(overlay)
+        target_payload.update({
+            "target_id": overlay.get("overlay_id", ""),
+            "target_kind": overlay.get("overlay_type", "system_picker_overlay"),
+            "label_zh": overlay.get("enter_zh") or overlay.get("overlay_id", ""),
+        })
+        targets.append(target_payload)
+    explanation_by_target = {
+        item.get("target_id"): item
+        for item in contract.get("interaction_explanations", []) or []
+        if item.get("target_id")
+    }
+    for target in contract.get("hidden_targets", []) or []:
+        explanation = explanation_by_target.get(target.get("target_id", ""), {})
+        targets.append({
+            "target_id": target.get("target_id", ""),
+            "target_kind": target.get("target_kind", "hidden_prototype_target"),
+            "label_zh": explanation.get("text_zh") or "同页状态变化",
+            "explanation_zh": explanation.get("text_zh") or "同页状态变化后展示对应反馈。",
+        })
+    for target_chunk_index, target_chunk in enumerate(chunked(targets, 8)):
+        write_step(
+            f"draw-targets-{target_chunk_index + 1}",
+            "draw_reaction_targets",
+            build_figma_playback_step_targets_js(contract, target_chunk, target_chunk_index),
+            step_index,
+        )
+        step_index += 1
+    write_step(
+        "ensure-reaction-sources",
+        "ensure_reaction_sources",
+        build_figma_playback_step_ensure_sources_js(contract),
+        step_index,
+    )
+    step_index += 1
+    reaction_chunks = chunked(contract.get("interaction_flows", []) or [], 18)
+    for reaction_chunk_index, flow_chunk in enumerate(reaction_chunks):
+        write_step(
+            f"attach-reactions-{reaction_chunk_index + 1}",
+            "attach_reactions",
+            build_figma_playback_step_reactions_js(contract, flow_chunk, reaction_chunk_index),
+            step_index,
+        )
+        step_index += 1
+    write_step(
+        "write-audit-marker",
+        "write_audit_marker",
+        build_figma_playback_step_audit_js(contract, len(reaction_chunks)),
+        step_index,
+    )
+    return {
+        "figma_writer_step_manifest": {
+            "version": "3.2.2",
+            "mode": "DRD_MODE",
+            "run_id": contract.get("run_id") or RUN_ID,
+            "writer_execution_mode": "split_runtime_steps",
+            "step_count": len(steps),
+            "steps": steps,
+            "single_runtime_diagnostic": "io/output/figma-writer-runtime.js",
+            "source_contract": "io/output/prototype_playback_contract.yaml",
+            "rule_trace": rule_trace_for_artifact("prototype_playback_contract", ["PLAYBACK_DED_001", "PLAYBACK_DED_004", "PLAYBACK_DED_005", "VISUAL_DED_008"]),
+        }
+    }
+
+
+def figma_playback_writer_runtime_errors(path: Path) -> list[str]:
+    errors = []
+    if not path.exists():
+        return [rule_error("PLAYBACK_DED_001", f"missing playback writer runtime {path}")]
+    text = path.read_text(encoding="utf-8")
+    if "PROTOTYPE_PLAYBACK_CONTRACT" not in text:
+        errors.append(rule_error("PLAYBACK_DED_001", "playback writer runtime must embed PROTOTYPE_PLAYBACK_CONTRACT"))
+    for forbidden in ["PROTOTYPE_DIRECT_WRITER_BRIEF", "prototype_writer_brief", "SEMANTIC_WRITER_PAYLOAD", "semantic_prototype_payload", "figma_prototype_materialization", "HARNESS_WRITER_PAYLOAD", "PLAYABLE_WRITER_PAYLOAD"]:
+        if forbidden in text:
+            errors.append(rule_error("PLAYBACK_DED_002", f"playback writer runtime must not consume {forbidden}"))
+    for required in WRITER_BRIEF_REQUIRED_CONTAINERS:
+        if required not in text:
+            errors.append(rule_error("PLAYBACK_DED_003", f"playback writer runtime missing required UI container {required}"))
+    if "setReactionsAsync" not in text:
+        errors.append(rule_error("PLAYBACK_DED_004", "playback writer runtime must attach real reactions"))
+    if "drawOffstageTarget" not in text:
+        errors.append(rule_error("PLAYBACK_DED_005", "playback writer runtime must create top-level hidden/overlay reaction targets"))
+    return errors
+
+
+def build_figma_playback_writer_runtime(args):
+    ensure_run_root_write_context("build-figma-playback-writer-runtime")
+    contract_path = resolve_path(args.playback_contract, RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
+    surface_mode_path = resolve_path(getattr(args, "surface_mode_contract", None), RUN_ROOT / "io" / "output" / "surface_mode_contract.yaml")
+    layout_invariant_path = resolve_path(getattr(args, "layout_invariant_contract", None), RUN_ROOT / "io" / "output" / "layout_invariant_contract.yaml")
+    writer_runtime_path = resolve_run_output_path(args.writer_runtime, RUN_ROOT / "io" / "output" / "figma-writer-runtime.js")
+    writer_step_manifest_path = RUN_ROOT / "io" / "output" / "figma-writer-runtime.manifest.yaml"
+    writer_steps_dir = RUN_ROOT / "io" / "output" / "figma-writer-steps"
+    readback_runtime_path = resolve_run_output_path(args.readback_runtime, RUN_ROOT / "io" / "output" / "figma-live-readback-runtime.js")
+    screenshot_plan_path = resolve_run_output_path(args.screenshot_plan, RUN_ROOT / "io" / "output" / "figma-screenshot-plan.yaml")
+    if not contract_path.exists():
+        raise SystemExit(f"BLOCKED: missing prototype_playback_contract {contract_path}")
+    missing_contracts = [str(path) for path in [surface_mode_path, layout_invariant_path] if not path.exists()]
+    if missing_contracts:
+        raise SystemExit("BLOCKED: missing mode/layout contracts for playback writer:\n- " + "\n- ".join(missing_contracts))
+    contract_doc = yload(contract_path)
+    errors = validate_schema(contract_path, DRD_ROOT / "schemas" / "prototype_playback_contract.schema.json")
+    errors.extend(prototype_playback_contract_semantic_errors(contract_doc))
+    errors.extend(validate_schema(surface_mode_path, DRD_ROOT / "schemas" / "surface_mode_contract.schema.json"))
+    if not errors:
+        errors.extend(surface_mode_contract_errors(yload(surface_mode_path)))
+    errors.extend(validate_schema(layout_invariant_path, DRD_ROOT / "schemas" / "layout_invariant_contract.schema.json"))
+    if not errors:
+        errors.extend(layout_invariant_contract_errors(yload(layout_invariant_path)))
+    if errors:
+        raise SystemExit("BLOCKED: prototype_playback_contract is not ready for playback writer:\n- " + "\n- ".join(errors))
+    writer_runtime_path.parent.mkdir(parents=True, exist_ok=True)
+    writer_runtime_path.write_text(build_figma_playback_writer_runtime_js(contract_doc), encoding="utf-8")
+    step_manifest = build_figma_playback_writer_step_files(contract_doc, writer_steps_dir)
+    ywrite(writer_step_manifest_path, step_manifest)
+    readback_runtime_path.write_text(build_figma_live_readback_runtime_js(), encoding="utf-8")
+    screenshot_plan = {
+        "figma_screenshot_manifest": {
+            "version": "3.1.3",
+            "mode": "DRD_MODE",
+            "run_id": RUN_ID,
+            "source_refs": contract_doc["prototype_playback_contract"].get("source_refs", ["inputs/PRD.md#L1"]),
+            "rule_trace": rule_trace_for_artifact("figma_screenshot_manifest", ["PLAYBACK_DED_001", "VISUAL_ALIGN_DED_001"]),
+            "screenshots": [
+                {"target": "PROTOTYPE-FINAL-ENTRY", "purpose_zh": "确认入口和真实手机输入法容器。"},
+                {"target": "PLAYABLE-PAGE-GROUP:*", "purpose_zh": "确认主画布是可播放输入法产品原型。"},
+                {"target": "PROTOTYPE-TARGET:*", "purpose_zh": "确认同页状态和 overlay target 离屏存在，不是主画布矩阵。"},
+            ],
+        }
+    }
+    ywrite(screenshot_plan_path, screenshot_plan)
+    errors = figma_playback_writer_runtime_errors(writer_runtime_path)
+    generated_runtime_text = writer_runtime_path.read_text(encoding="utf-8")
+    for pattern in FORBIDDEN_PROJECT_RUNTIME_PATTERNS:
+        if pattern in generated_runtime_text:
+            errors.append(rule_error("GENERALITY_DED_005", f"playback writer runtime contains project-specific pattern `{pattern}`"))
+    step_root = step_manifest.get("figma_writer_step_manifest", {})
+    if step_root.get("writer_execution_mode") != "split_runtime_steps":
+        errors.append(rule_error("PLAYBACK_DED_001", "writer step manifest must use split_runtime_steps"))
+    if not step_root.get("steps"):
+        errors.append(rule_error("PLAYBACK_DED_001", "writer step manifest must include steps[]"))
+    for step in step_root.get("steps", []) or []:
+        step_path = (RUN_ROOT / step.get("path", "")).resolve() if not Path(step.get("path", "")).is_absolute() else Path(step.get("path", "")).resolve()
+        if not step_path.exists():
+            errors.append(rule_error("PLAYBACK_DED_001", f"writer step missing: {step.get('path')}"))
+        elif step_path.stat().st_size > 45000:
+            errors.append(rule_error("PLAYBACK_DED_001", f"writer step too large for MCP execution: {step.get('path')} ({step_path.stat().st_size} bytes)"))
+    if "figma.currentPage" not in readback_runtime_path.read_text(encoding="utf-8"):
+        errors.append(rule_error("VISUAL_DED_001", "readback runtime missing Figma page readback logic"))
+    errors.extend(validate_schema(screenshot_plan_path, DRD_ROOT / "schemas" / "figma_screenshot_manifest.schema.json"))
+    if errors:
+        raise SystemExit("BLOCKED: build-figma-playback-writer-runtime failed:\n- " + "\n- ".join(errors))
+    print("# build-figma-playback-writer-runtime")
+    print("PASS")
+    print(f"- WROTE {writer_runtime_path}")
+    print(f"- WROTE {writer_step_manifest_path}")
+    print(f"- WROTE {readback_runtime_path}")
+    print(f"- WROTE {screenshot_plan_path}")
+
+
 def generate_prototype_artifacts(args):
     ensure_write_allowed("generate-prototype-artifacts")
     source_path = resolve_generator_source(args.source)
@@ -13205,6 +17840,8 @@ def generate_prototype_artifacts(args):
         "system_handoff_map": output_root / "system_handoff_map.yaml",
         "user_operation_chain": output_root / "user_operation_chain.yaml",
         "capability_assessment": output_root / "capability_assessment.yaml",
+        "surface_mode_contract": output_root / "surface_mode_contract.yaml",
+        "layout_invariant_contract": output_root / "layout_invariant_contract.yaml",
         "prototype_review_view_model": state_root / "prototype_review_view_model.yaml",
         "semantic_prototype_payload": output_root / "semantic_prototype_payload.yaml",
         "model_contract_promotion_report": state_root / "model_contract_promotion_report.yaml",
@@ -13213,6 +17850,7 @@ def generate_prototype_artifacts(args):
         "codex_inference_raw": state_root / "codex_inference_review.raw.md",
         "model_execution_contract": state_root / "model_execution_contract.yaml",
         "model_invocation_trace": state_root / "model_invocation_trace.yaml",
+        "runtime_rule_execution_trace": state_root / "runtime_rule_execution_trace.yaml",
         "generation_job_queue": state_root / "generation_job_queue.yaml",
         "generation_trace": state_root / "generation_trace.yaml",
         "stage_timing_trace": state_root / "stage_timing_trace.yaml",
@@ -13382,7 +18020,72 @@ def generate_prototype_artifacts(args):
     )
 
     stage = start_stage_record(
-        "GEN-JOB-009-FINAL-MATERIALIZATION",
+        "GEN-JOB-009-SURFACE-MODE-CONTRACT",
+        "GEN-SURFACE-MODE-CONTRACT",
+        "GEN-DETERMINISTIC-SURFACE-MODE",
+        "deterministic",
+        "GEN-WORKER-SURFACE-MODE-CONTRACT",
+        rule_ids_for_artifact("surface_mode_contract"),
+        [
+            run_artifact_path(paths["source_brief"]),
+            run_artifact_path(paths["interaction_carrier_map"]),
+            run_artifact_path(paths["system_handoff_map"]),
+            run_artifact_path(paths["user_operation_chain"]),
+            run_artifact_path(paths[model_path_key("surface_ownership")]),
+            run_artifact_path(paths[model_path_key("interaction_state_machine")]),
+        ],
+    )
+    surface_mode_contract = build_surface_mode_contract_doc(
+        paths["source_brief"],
+        paths["interaction_carrier_map"],
+        paths["system_handoff_map"],
+        paths["user_operation_chain"],
+        paths[model_path_key("surface_ownership")],
+        paths[model_path_key("interaction_state_machine")],
+    )
+    ywrite(paths["surface_mode_contract"], surface_mode_contract)
+    stage_records.append(finish_stage_record(stage, "pass", [run_artifact_path(paths["surface_mode_contract"])]))
+
+    stage = start_stage_record(
+        "GEN-JOB-010-LAYOUT-INVARIANT-CONTRACT",
+        "GEN-LAYOUT-INVARIANT-CONTRACT",
+        "GEN-DETERMINISTIC-LAYOUT-INVARIANT",
+        "deterministic",
+        "GEN-WORKER-LAYOUT-INVARIANT-CONTRACT",
+        rule_ids_for_artifact("layout_invariant_contract"),
+        [
+            run_artifact_path(paths["surface_mode_contract"]),
+            run_artifact_path(paths["interaction_carrier_map"]),
+            run_artifact_path(paths["system_handoff_map"]),
+        ],
+    )
+    layout_invariant_contract = build_layout_invariant_contract_doc(
+        paths["surface_mode_contract"],
+        paths["interaction_carrier_map"],
+        paths["system_handoff_map"],
+    )
+    ywrite(paths["layout_invariant_contract"], layout_invariant_contract)
+    stage_records.append(finish_stage_record(stage, "pass", [run_artifact_path(paths["layout_invariant_contract"])]))
+
+    runtime_trace_entries = []
+    handler_rules = {
+        "build_surface_mode_contract_doc": rule_ids_for_artifact("surface_mode_contract"),
+        "build_layout_invariant_contract_doc": rule_ids_for_artifact("layout_invariant_contract"),
+    }
+    for handler_id, rule_ids in handler_rules.items():
+        output_paths = [paths["surface_mode_contract"]] if handler_id == "build_surface_mode_contract_doc" else [paths["layout_invariant_contract"]]
+        for rule_id in rule_ids:
+            runtime_trace_entries.append(runtime_trace_entry(
+                rule_id=rule_id,
+                handler_id=handler_id,
+                trigger_reason_zh="生成隔离 run root projection artifact 时执行显化 pyruntime 规则。",
+                input_paths=[paths["source_brief"], paths["interaction_carrier_map"], paths["system_handoff_map"], paths["user_operation_chain"]],
+                output_paths=output_paths,
+            ))
+    ywrite(paths["runtime_rule_execution_trace"], runtime_rule_execution_trace_doc(runtime_trace_entries, payload["prototype_render_payload"].get("source_refs", [])))
+
+    stage = start_stage_record(
+        "GEN-JOB-011-FINAL-MATERIALIZATION",
         "GEN-FINAL-MATERIALIZATION",
         "GEN-DETERMINISTIC-FINAL-MATERIALIZER",
         "deterministic",
@@ -14148,6 +18851,7 @@ def validate_model_invocation_trace(args):
                 label = item.get("stage_id", "<unknown>")
                 if item.get("execution_mode") == "required" and item.get("model_called") is not True:
                     errors.append(f"{label}: required mode must call Codex CLI")
+                errors.extend(model_stage_blocking_errors(item, label))
                 if item.get("execution_mode") == "required" and item.get("exit_code") != 0:
                     errors.append(f"{label}: required mode must have exit_code 0")
                 if item.get("execution_mode") == "required" and int(item.get("duration_ms") or 0) <= 0:
@@ -14207,8 +18911,8 @@ def model_artifact_validation_errors(path: Path, stage_key: str) -> list[str]:
     if not isinstance(root, dict):
         return [f"{stage['root_key']} root must be an object"]
     errors.extend(rule_trace_errors(root, f"{stage['root_key']}.rule_trace"))
-    if root.get("version") not in {"3.1.1", "3.1.2"}:
-        errors.append(f"{stage['root_key']}.version must be 3.1.1 or 3.1.2")
+    if root.get("version") not in {"3.1.1", "3.1.2", "3.2.1"}:
+        errors.append(f"{stage['root_key']}.version must be 3.1.1, 3.1.2, or 3.2.1")
     if root.get("mode") != "DRD_MODE":
         errors.append(f"{stage['root_key']}.mode must be DRD_MODE")
     if root.get("stage_id") != stage["stage_id"]:
@@ -14217,6 +18921,7 @@ def model_artifact_validation_errors(path: Path, stage_key: str) -> list[str]:
         errors.append(f"{stage['root_key']}.stage_role must be {stage_key}")
     if root.get("status") not in {"pass", "review_required", "blocked", "skipped"}:
         errors.append(f"{stage['root_key']}.status must be pass/review_required/blocked/skipped")
+    errors.extend(model_stage_blocking_errors(root, stage["stage_id"]))
     if root.get("status") != "skipped" and not root.get("source_refs"):
         errors.append(f"{stage['root_key']}.source_refs must not be empty")
     primary = root.get(stage["primary_collection"], []) or []
@@ -14230,11 +18935,15 @@ def model_artifact_validation_errors(path: Path, stage_key: str) -> list[str]:
                 if not item.get(field):
                     errors.append(f"{label}: missing {field}")
             if promoted_contract:
-                for field in ["carrier_type", "host_context_zh", "system_surface_refs"]:
+                for field in ["carrier_type", "host_context_zh", "system_surface_refs", "carrier_resolution_rule_id", "carrier_resolution_zh"]:
                     if field not in item or item.get(field) in [None, ""]:
                         errors.append(f"{label}: promoted contract missing {field}")
                 if item.get("standalone_page_allowed") not in {True, False}:
                     errors.append(f"{label}: promoted contract missing standalone_page_allowed boolean")
+                if item.get("carrier_type") == "app_page" and item.get("standalone_page_allowed") is not True:
+                    errors.append(f"{label}: app_page carrier requires standalone_page_allowed=true")
+                if item.get("standalone_page_allowed") is True and item.get("carrier_resolution_rule_id") in {"CARRIER_DED_003", "CARRIER_DED_004"}:
+                    errors.append(f"{label}: inherited task carrier cannot be standalone_page_allowed=true")
             if not item.get("source_refs"):
                 errors.append(f"{label}: missing source_refs")
     elif stage_key == "user_journey":
@@ -14340,12 +19049,14 @@ def validate_model_stage_coverage(args):
                 errors.append(f"model_invocation_trace missing {stage['stage_id']}")
         if trace.get("execution_mode") == "required":
             for item in stage_roots:
+                label = item.get("stage_id", "<unknown>")
                 if item.get("model_called") is not True:
-                    errors.append(f"{item.get('stage_id', '<unknown>')}: model_called must be true in required mode")
-                if item.get("status") not in {"pass", "review_required"}:
-                    errors.append(f"{item.get('stage_id', '<unknown>')}: status must be pass or review_required in required mode")
+                    errors.append(f"{label}: model_called must be true in required mode")
+                if item.get("status") != "pass":
+                    errors.append(f"{label}: status must be pass in required mode")
+                errors.extend(model_stage_blocking_errors(item, label))
                 if int(item.get("duration_ms") or 0) <= 0:
-                    errors.append(f"{item.get('stage_id', '<unknown>')}: duration_ms must be > 0")
+                    errors.append(f"{label}: duration_ms must be > 0")
         jobs_by_id = {job.get("job_id"): job for job in queue.get("jobs", []) or []}
         model_job_ids = [stage["job_id"] for stage in MODEL_STAGE_DEFINITIONS]
         for job_id in model_job_ids:
@@ -14666,6 +19377,8 @@ def validate_loop_rules(args):
     ]:
         if boundary.get(key) is not False:
             errors.append(f"gate_only_harness_alignment.execution_boundary.{key} must be false")
+    if boundary.get("bounded_projection_auto_repair_enabled") is not True:
+        errors.append("gate_only_harness_alignment.execution_boundary.bounded_projection_auto_repair_enabled must be true")
     figma_policy = alignment.get("figma_policy", {}) or {}
     if figma_policy.get("final_prototype_canvas_only") is not True:
         errors.append("loop figma_policy.final_prototype_canvas_only must be true")
@@ -15127,7 +19840,9 @@ def validate_figma_write_readiness(args):
     render_plan_path = resolve_path(args.figma_render_plan, RUN_ROOT / "io" / "output" / "figma-render-plan.yaml")
     ui_blueprint_path = resolve_path(args.ui_blueprint, RUN_ROOT / "io" / "output" / "prototype_ui_blueprint.yaml")
     playable_model_path = resolve_path(args.playable_model, RUN_ROOT / "io" / "output" / "playable_prototype_model.yaml")
+    playback_contract_path = resolve_path(getattr(args, "playback_contract", None), RUN_ROOT / "io" / "output" / "prototype_playback_contract.yaml")
     semantic_payload_path = resolve_path(args.semantic_payload, RUN_ROOT / "io" / "output" / "semantic_prototype_payload.yaml")
+    writer_brief_path = resolve_path(args.writer_brief, RUN_ROOT / "io" / "output" / "prototype_writer_brief.yaml")
     writer_input_path = resolve_path(args.writer_input, RUN_ROOT / "io" / "output" / "figma-semantic-writer-input.full.json")
     materialization_path = resolve_path(args.materialization, RUN_ROOT / "io" / "output" / "figma-prototype-materialization.yaml")
     surface_hierarchy_path = resolve_path(args.surface_hierarchy, RUN_ROOT / "io" / "output" / "surface_hierarchy_map.yaml")
@@ -15135,18 +19850,16 @@ def validate_figma_write_readiness(args):
     canvas_view_model_path = resolve_path(args.canvas_view_model, RUN_ROOT / "io" / "output" / "prototype_canvas_view_model.yaml")
     writer_runtime_path = resolve_path(args.writer_runtime, RUN_ROOT / "io" / "output" / "figma-writer-runtime.js")
     readback_runtime_path = resolve_path(args.readback_runtime, RUN_ROOT / "io" / "output" / "figma-live-readback-runtime.js")
+    surface_mode_contract_path = resolve_path(getattr(args, "surface_mode_contract", None), RUN_ROOT / "io" / "output" / "surface_mode_contract.yaml")
+    layout_invariant_contract_path = resolve_path(getattr(args, "layout_invariant_contract", None), RUN_ROOT / "io" / "output" / "layout_invariant_contract.yaml")
+    runtime_rule_trace_path = resolve_path(getattr(args, "runtime_rule_execution_trace", None), RUN_ROOT / "io" / "state" / "runtime_rule_execution_trace.yaml")
     required_paths = {
         "runtime": runtime_path,
         "payload": payload_path,
-        "figma_render_plan": render_plan_path,
-        "prototype_ui_blueprint": ui_blueprint_path,
-        "surface_hierarchy_map": surface_hierarchy_path,
-        "prototype_scene_graph": scene_graph_path,
-        "playable_prototype_model": playable_model_path,
-        "semantic_prototype_payload": semantic_payload_path,
-        "prototype_canvas_view_model": canvas_view_model_path,
-        "figma_semantic_writer_input_full": writer_input_path,
-        "figma_prototype_materialization": materialization_path,
+        "prototype_playback_contract": playback_contract_path,
+        "surface_mode_contract": surface_mode_contract_path,
+        "layout_invariant_contract": layout_invariant_contract_path,
+        "runtime_rule_execution_trace": runtime_rule_trace_path,
         "figma_writer_runtime": writer_runtime_path,
         "figma_live_readback_runtime": readback_runtime_path,
     }
@@ -15176,15 +19889,48 @@ def validate_figma_write_readiness(args):
         else:
             errors.append(rule_error("RENDER_DED_010", "final Figma writer requires prototype_render_payload root"))
 
+    playback_contract_doc = None
+    if playback_contract_path.exists():
+        playback_errors = validate_schema(playback_contract_path, DRD_ROOT / "schemas" / "prototype_playback_contract.schema.json")
+        errors.extend(playback_errors)
+        if not playback_errors:
+            playback_contract_doc = yload(playback_contract_path)
+            errors.extend(prototype_playback_contract_semantic_errors(playback_contract_doc))
+
+    if surface_mode_contract_path.exists():
+        surface_mode_errors = validate_schema(surface_mode_contract_path, DRD_ROOT / "schemas" / "surface_mode_contract.schema.json")
+        errors.extend(surface_mode_errors)
+        if not surface_mode_errors:
+            errors.extend(surface_mode_contract_errors(yload(surface_mode_contract_path)))
+
+    if layout_invariant_contract_path.exists():
+        layout_errors = validate_schema(layout_invariant_contract_path, DRD_ROOT / "schemas" / "layout_invariant_contract.schema.json")
+        errors.extend(layout_errors)
+        if not layout_errors:
+            errors.extend(layout_invariant_contract_errors(yload(layout_invariant_contract_path)))
+
+    if runtime_rule_trace_path.exists():
+        trace_errors = validate_schema(runtime_rule_trace_path, DRD_ROOT / "schemas" / "runtime_rule_execution_trace.schema.json")
+        errors.extend(trace_errors)
+        if not trace_errors:
+            errors.extend(runtime_rule_execution_trace_errors(yload(runtime_rule_trace_path)))
+
+    writer_brief_doc = None
+    if writer_brief_path.exists():
+        brief_errors = validate_schema(writer_brief_path, DRD_ROOT / "schemas" / "prototype_writer_brief.schema.json")
+        warnings.extend(f"legacy prototype_writer_brief diagnostic: {error}" for error in brief_errors)
+        if not brief_errors:
+            writer_brief_doc = yload(writer_brief_path)
+            warnings.extend(f"legacy prototype_writer_brief diagnostic: {error}" for error in prototype_writer_brief_semantic_errors(writer_brief_doc))
+
     semantic_payload_doc = None
     if semantic_payload_path.exists():
         semantic_errors = validate_schema(semantic_payload_path, DRD_ROOT / "schemas" / "semantic_prototype_payload.schema.json")
-        errors.extend(semantic_errors)
+        warnings.extend(f"legacy semantic_prototype_payload diagnostic: {error}" for error in semantic_errors)
         if not semantic_errors:
             semantic_payload_doc = yload(semantic_payload_path)
-            errors.extend(semantic_prototype_payload_semantic_errors(semantic_payload_doc))
-    else:
-        errors.append(rule_error("SEMANTIC_PAYLOAD_DED_001", f"missing semantic_prototype_payload for final Figma writer: {semantic_payload_path}"))
+            legacy_semantic_errors = semantic_prototype_payload_semantic_errors(semantic_payload_doc)
+            warnings.extend(f"legacy semantic_prototype_payload diagnostic: {error}" for error in legacy_semantic_errors)
 
     if not INSTANCE_ROOT_PROVIDED:
         errors.append(rule_error("RENDER_DED_010", "final Figma writer readiness must run with --instance-root"))
@@ -15243,13 +19989,11 @@ def validate_figma_write_readiness(args):
     if writer_input_path.exists():
         writer_input = jload(writer_input_path)
         if not isinstance(writer_input, dict):
-            errors.append(rule_error("SEMANTIC_PAYLOAD_DED_002", "figma writer input must be a semantic writer object, not a compact tuple/list payload"))
+            errors.append(rule_error("DIRECT_WRITE_DED_002", "final writer must not use compact tuple/list writer input"))
+        elif writer_input.get("format") in {"semantic_prototype_writer_input_v3_2", "playable_prototype_writer_input_v3_1_4"}:
+            warnings.append(f"legacy writer_input diagnostic ignored by playback writer: {writer_input_path} ({writer_input.get('format')})")
         else:
-            if writer_input.get("format") == "semantic_prototype_writer_input_v3_2":
-                errors.extend(validate_schema(writer_input_path, DRD_ROOT / "schemas" / "figma_semantic_writer_input.schema.json"))
-                errors.extend(figma_semantic_writer_input_semantic_errors(writer_input, semantic_payload_doc))
-            else:
-                errors.append(rule_error("SEMANTIC_PAYLOAD_DED_002", "figma writer input must use semantic_prototype_writer_input_v3_2 format"))
+            warnings.append(f"unrecognized writer_input present but direct writer ignores it: {writer_input_path}")
 
     surface_hierarchy_doc = None
     if surface_hierarchy_path.exists():
@@ -15277,13 +20021,13 @@ def validate_figma_write_readiness(args):
 
     if writer_runtime_path.exists():
         runtime_text = writer_runtime_path.read_text(encoding="utf-8")
-        if "SEMANTIC_WRITER_PAYLOAD" not in runtime_text or "PROTOTYPE-FINAL-ENTRY" not in runtime_text:
-            errors.append(rule_error("SEMANTIC_PAYLOAD_DED_002", "figma-writer-runtime.js is not the harness-owned v3.2 semantic writer runtime"))
-        if "HARNESS_WRITER_PAYLOAD" in runtime_text:
-            errors.append(rule_error("PLAYABLE_DED_005", "figma-writer-runtime.js still contains legacy HARNESS_WRITER_PAYLOAD"))
+        errors.extend(figma_playback_writer_runtime_errors(writer_runtime_path))
         for forbidden_text in ["功能：", "承载面：", "页面组"]:
             if forbidden_text in runtime_text:
-                errors.append(rule_error("SEMANTIC_PAYLOAD_DED_003", f"figma-writer-runtime.js must not draw documentation label `{forbidden_text}`"))
+                errors.append(rule_error("DIRECT_WRITE_DED_002", f"figma-writer-runtime.js must not draw documentation label `{forbidden_text}`"))
+        for pattern in FORBIDDEN_PROJECT_RUNTIME_PATTERNS:
+            if pattern in runtime_text:
+                errors.append(rule_error("GENERALITY_DED_005", f"figma-writer-runtime.js contains project-specific pattern `{pattern}`"))
     if readback_runtime_path.exists():
         readback_text = readback_runtime_path.read_text(encoding="utf-8")
         if "figma.currentPage" not in readback_text or "figma_live_readback" not in readback_text:
@@ -15292,32 +20036,21 @@ def validate_figma_write_readiness(args):
     materialization_doc = None
     if materialization_path.exists():
         materialization_schema_errors = validate_schema(materialization_path, DRD_ROOT / "schemas" / "figma_prototype_materialization.schema.json")
-        errors.extend(materialization_schema_errors)
+        warnings.extend(f"legacy figma_prototype_materialization diagnostic: {error}" for error in materialization_schema_errors)
         if not materialization_schema_errors:
             materialization_doc = yload(materialization_path)
             materialization_siblings = figma_materialization_sibling_paths(materialization_path)
-            errors.extend(figma_prototype_materialization_semantic_errors(
+            legacy_materialization_errors = figma_prototype_materialization_semantic_errors(
                 materialization_doc,
                 payload_doc=payload,
                 handoff_doc=load_if_exists(materialization_siblings["handoff"]),
                 ui_blueprint_doc=ui_blueprint_doc or load_if_exists(materialization_siblings["ui_blueprint"]),
-            ))
+            )
+            warnings.extend(f"legacy figma_prototype_materialization diagnostic: {error}" for error in legacy_materialization_errors)
             root = materialization_doc.get("figma_prototype_materialization", {}) or {}
             writer_contract = root.get("writer_contract", {}) or {}
-            if writer_contract.get("writer_must_consume_this_spec") is not True:
-                errors.append(rule_error("RENDER_DED_010", "writer_contract.writer_must_consume_this_spec must be true"))
-            if writer_contract.get("writer_must_not_scan_review_md") is not True:
-                errors.append(rule_error("RENDER_DED_010", "writer_contract.writer_must_not_scan_review_md must be true"))
-            if writer_contract.get("writer_must_create_prototype_starting_point") is not True:
-                errors.append(rule_error("RENDER_DED_010", "writer_contract.writer_must_create_prototype_starting_point must be true"))
-            if "SCROLL_TO" not in (writer_contract.get("forbidden_primary_reaction_types") or []):
-                errors.append(rule_error("RENDER_DED_010", "writer_contract must forbid SCROLL_TO primary reactions"))
             if writer_contract.get("writer_input_format") != "playable_prototype_writer_input_v3_1_4":
                 warnings.append("legacy materialization writer_contract is playable_prototype_writer_input_v3_1_4; semantic writer input supersedes it")
-            if writer_contract.get("compact_writer_input_forbidden") is not True:
-                errors.append(rule_error("PLAYABLE_DED_005", "writer_contract.compact_writer_input_forbidden must be true"))
-            if writer_contract.get("writer_must_consume_playable_model") is not True:
-                errors.append(rule_error("PLAYABLE_DED_001", "writer_contract.writer_must_consume_playable_model must be true"))
 
     print("# figma-write-readiness-summary")
     print(json.dumps({
@@ -15328,18 +20061,31 @@ def validate_figma_write_readiness(args):
         "surface_hierarchy_map": str(surface_hierarchy_path),
         "prototype_scene_graph": str(scene_graph_path),
         "playable_prototype_model": str(playable_model_path),
+        "prototype_playback_contract": str(playback_contract_path),
+        "surface_mode_contract": str(surface_mode_contract_path),
+        "layout_invariant_contract": str(layout_invariant_contract_path),
+        "runtime_rule_execution_trace": str(runtime_rule_trace_path),
+        "legacy_prototype_writer_brief": str(writer_brief_path),
         "semantic_prototype_payload": str(semantic_payload_path),
         "prototype_canvas_view_model": str(canvas_view_model_path),
-        "figma_semantic_writer_input_full": str(writer_input_path),
+        "legacy_figma_semantic_writer_input_full": str(writer_input_path),
         "figma_prototype_materialization": str(materialization_path),
         "figma_writer_runtime": str(writer_runtime_path),
         "figma_live_readback_runtime": str(readback_runtime_path),
+        "figma_write_handoff": str(RUN_ROOT / "io" / "output" / "figma-write-handoff.yaml"),
+        "next_command_after_pass": (
+            "build-figma-write-handoff "
+            "--writer-runtime runs/<run-id>/io/output/figma-writer-runtime.js "
+            "--readback-runtime runs/<run-id>/io/output/figma-live-readback-runtime.js"
+        ),
         "runtime_counts": counts,
         "render_plan_loaded": render_plan_doc is not None,
         "ui_blueprint_loaded": ui_blueprint_doc is not None,
         "surface_hierarchy_loaded": surface_hierarchy_doc is not None,
         "scene_graph_loaded": scene_graph_doc is not None,
         "playable_model_loaded": playable_model_doc is not None,
+        "prototype_playback_contract_loaded": playback_contract_doc is not None,
+        "legacy_prototype_writer_brief_loaded": writer_brief_doc is not None,
         "semantic_payload_loaded": semantic_payload_doc is not None,
         "canvas_view_model_loaded": canvas_view_model_doc is not None,
         "materialization_loaded": materialization_doc is not None,
@@ -15862,6 +20608,129 @@ def main():
     p.add_argument("--screenshot-plan")
     p.set_defaults(func=build_figma_semantic_writer_runtime)
 
+    p = sub.add_parser("build-figma-write-handoff")
+    p.add_argument("--writer-input")
+    p.add_argument("--writer-brief")
+    p.add_argument("--playback-contract")
+    p.add_argument("--writer-runtime")
+    p.add_argument("--readback-runtime")
+    p.add_argument("--materialization")
+    p.add_argument("--semantic-payload")
+    p.add_argument("--screenshot-plan")
+    p.add_argument("--output")
+    p.add_argument("--figma-url")
+    p.set_defaults(func=build_figma_write_handoff)
+
+    p = sub.add_parser("build-surface-mode-contract")
+    p.add_argument("--source-brief")
+    p.add_argument("--carrier-map")
+    p.add_argument("--system-handoff-map")
+    p.add_argument("--operation-chain")
+    p.add_argument("--model-surface-ownership")
+    p.add_argument("--model-interaction-state-machine")
+    p.add_argument("--output")
+    p.set_defaults(func=build_surface_mode_contract)
+
+    p = sub.add_parser("validate-surface-mode-contract")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_surface_mode_contract)
+
+    p = sub.add_parser("build-layout-invariant-contract")
+    p.add_argument("--surface-mode-contract")
+    p.add_argument("--carrier-map")
+    p.add_argument("--system-handoff-map")
+    p.add_argument("--output")
+    p.set_defaults(func=build_layout_invariant_contract)
+
+    p = sub.add_parser("validate-layout-invariant-contract")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_layout_invariant_contract)
+
+    p = sub.add_parser("validate-pyruntime-rule-registry")
+    p.add_argument("--input")
+    p.set_defaults(func=validate_pyruntime_rule_registry)
+
+    p = sub.add_parser("validate-runtime-rule-execution-trace")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_runtime_rule_execution_trace)
+
+    p = sub.add_parser("validate-no-project-specific-production-rule")
+    p.set_defaults(func=validate_no_project_specific_production_rule)
+
+    p = sub.add_parser("validate-no-hidden-python-rule")
+    p.set_defaults(func=validate_no_hidden_python_rule)
+
+    p = sub.add_parser("validate-rule-runtime-projection")
+    p.add_argument("--trace")
+    p.add_argument("--output")
+    p.set_defaults(func=validate_rule_runtime_projection)
+
+    p = sub.add_parser("build-prototype-playback-contract")
+    p.add_argument("--runtime")
+    p.add_argument("--payload")
+    p.add_argument("--source-brief")
+    p.add_argument("--carrier-map")
+    p.add_argument("--system-handoff-map")
+    p.add_argument("--operation-chain")
+    p.add_argument("--model-surface-ownership")
+    p.add_argument("--model-user-journey")
+    p.add_argument("--model-interaction-state-machine")
+    p.add_argument("--model-component-blueprint")
+    p.add_argument("--surface-mode-contract")
+    p.add_argument("--layout-invariant-contract")
+    p.add_argument("--runtime-rule-execution-trace")
+    p.add_argument("--output")
+    p.set_defaults(func=build_prototype_playback_contract)
+
+    p = sub.add_parser("validate-prototype-playback-contract")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_prototype_playback_contract)
+
+    p = sub.add_parser("build-figma-playback-writer-runtime")
+    p.add_argument("--playback-contract")
+    p.add_argument("--surface-mode-contract")
+    p.add_argument("--layout-invariant-contract")
+    p.add_argument("--writer-runtime")
+    p.add_argument("--readback-runtime")
+    p.add_argument("--screenshot-plan")
+    p.set_defaults(func=build_figma_playback_writer_runtime)
+
+    p = sub.add_parser("repair-figma-projection-loop")
+    p.add_argument("--gate-dir")
+    p.add_argument("--figma-url")
+    p.add_argument("--allow-blocked-report", action="store_true")
+    p.set_defaults(func=repair_figma_projection_loop)
+
+    p = sub.add_parser("build-prototype-writer-brief")
+    p.add_argument("--runtime")
+    p.add_argument("--payload")
+    p.add_argument("--source-brief")
+    p.add_argument("--carrier-map")
+    p.add_argument("--system-handoff-map")
+    p.add_argument("--operation-chain")
+    p.add_argument("--capability-assessment")
+    p.add_argument("--model-surface-ownership")
+    p.add_argument("--model-user-journey")
+    p.add_argument("--model-interaction-state-machine")
+    p.add_argument("--model-component-blueprint")
+    p.add_argument("--output")
+    p.set_defaults(func=build_prototype_writer_brief)
+
+    p = sub.add_parser("validate-prototype-writer-brief")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_prototype_writer_brief)
+
+    p = sub.add_parser("build-figma-direct-writer-runtime")
+    p.add_argument("--writer-brief")
+    p.add_argument("--writer-runtime")
+    p.add_argument("--readback-runtime")
+    p.add_argument("--screenshot-plan")
+    p.set_defaults(func=build_figma_direct_writer_runtime)
+
+    p = sub.add_parser("validate-figma-direct-writer-runtime")
+    p.add_argument("--input")
+    p.set_defaults(func=validate_figma_direct_writer_runtime)
+
     p = sub.add_parser("build-figma-playable-writer-input")
     p.add_argument("--playable-model")
     p.add_argument("--canvas-view-model")
@@ -15909,6 +20778,8 @@ def main():
     p.add_argument("--figma-render-plan")
     p.add_argument("--ui-blueprint")
     p.add_argument("--playable-model")
+    p.add_argument("--playback-contract")
+    p.add_argument("--writer-brief")
     p.add_argument("--writer-input")
     p.add_argument("--materialization")
     p.add_argument("--surface-hierarchy")
@@ -15917,6 +20788,9 @@ def main():
     p.add_argument("--semantic-payload")
     p.add_argument("--writer-runtime")
     p.add_argument("--readback-runtime")
+    p.add_argument("--surface-mode-contract")
+    p.add_argument("--layout-invariant-contract")
+    p.add_argument("--runtime-rule-execution-trace")
     p.set_defaults(func=validate_figma_write_readiness)
 
     p = sub.add_parser("validate-figma-post-write-audit")
@@ -15951,21 +20825,76 @@ def main():
     p.add_argument("--input", required=True)
     p.set_defaults(func=validate_model_figma_visual_comprehension)
 
+    p = sub.add_parser("build-figma-layout-invariant-audit")
+    p.add_argument("--readback")
+    p.add_argument("--surface-mode-contract")
+    p.add_argument("--layout-invariant-contract")
+    p.add_argument("--playback-contract")
+    p.add_argument("--output")
+    p.set_defaults(func=build_figma_layout_invariant_audit)
+
+    p = sub.add_parser("validate-figma-layout-invariant-audit")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_figma_layout_invariant_audit)
+
     p = sub.add_parser("build-figma-live-audit-artifacts")
     p.add_argument("--readback-raw")
     p.add_argument("--playable-model")
     p.add_argument("--semantic-payload")
+    p.add_argument("--writer-brief")
+    p.add_argument("--playback-contract")
     p.add_argument("--readback")
     p.add_argument("--geometry")
     p.add_argument("--semantic")
     p.add_argument("--model")
     p.set_defaults(func=build_figma_live_audit_artifacts)
 
+    p = sub.add_parser("build-figma-visual-reverse-inference")
+    p.add_argument("--readback")
+    p.add_argument("--writer-brief")
+    p.add_argument("--playback-contract")
+    p.add_argument("--output")
+    p.set_defaults(func=build_figma_visual_reverse_inference)
+
+    p = sub.add_parser("validate-figma-visual-reverse-inference")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_figma_visual_reverse_inference)
+
+    p = sub.add_parser("build-figma-stage-alignment-audit")
+    p.add_argument("--reverse-inference")
+    p.add_argument("--writer-brief")
+    p.add_argument("--playback-contract")
+    p.add_argument("--model-user-journey")
+    p.add_argument("--model-interaction-state-machine")
+    p.add_argument("--model-component-blueprint")
+    p.add_argument("--operation-chain")
+    p.add_argument("--output")
+    p.set_defaults(func=build_figma_stage_alignment_audit)
+
+    p = sub.add_parser("validate-figma-stage-alignment-audit")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_figma_stage_alignment_audit)
+
+    p = sub.add_parser("build-figma-source-alignment-audit")
+    p.add_argument("--readback")
+    p.add_argument("--playback-contract")
+    p.add_argument("--output")
+    p.set_defaults(func=build_figma_source_alignment_audit)
+
+    p = sub.add_parser("validate-figma-source-alignment-audit")
+    p.add_argument("--input", required=True)
+    p.set_defaults(func=validate_figma_source_alignment_audit)
+
     p = sub.add_parser("gate-figma-live-visual-audit")
     p.add_argument("--readback")
     p.add_argument("--geometry")
     p.add_argument("--semantic")
     p.add_argument("--model")
+    p.add_argument("--reverse-inference")
+    p.add_argument("--stage-alignment")
+    p.add_argument("--source-alignment")
+    p.add_argument("--layout-invariant-audit")
+    p.add_argument("--no-auto-repair-projection", action="store_true")
     p.set_defaults(func=gate_figma_live_visual_audit)
 
     p = sub.add_parser("validate-loop-rules")

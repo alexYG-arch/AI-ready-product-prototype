@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "layout_invariant_contract.schema.json",
+  "type": "object",
+  "required": ["layout_invariant_contract"],
+  "properties": {
+    "layout_invariant_contract": {
+      "type": "object",
+      "required": ["version", "mode", "run_id", "layout_invariants", "relative_position_rules", "overlay_invariants", "source_refs", "rule_trace"],
+      "properties": {
+        "version": {"const": "3.2.3"},
+        "mode": {"const": "DRD_MODE"},
+        "run_id": {"type": "string", "minLength": 1},
+        "source_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "rule_trace": {"type": "object"},
+        "layout_invariants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["invariant_id", "target_region", "target_container", "anchor", "rule_ids"],
+            "properties": {
+              "invariant_id": {"type": "string", "minLength": 1},
+              "target_region": {"type": "string", "minLength": 1},
+              "target_container": {"type": "string", "minLength": 1},
+              "anchor": {"enum": ["bottom", "top", "center", "overlay"]},
+              "min_y_ratio": {"type": "number"},
+              "max_bottom_gap_ratio": {"type": "number"},
+              "rule_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+            },
+            "additionalProperties": true
+          }
+        },
+        "relative_position_rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule_id_local", "upper_region", "lower_region", "rule_ids"],
+            "properties": {
+              "rule_id_local": {"type": "string", "minLength": 1},
+              "upper_region": {"type": "string", "minLength": 1},
+              "lower_region": {"type": "string", "minLength": 1},
+              "rule_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+            },
+            "additionalProperties": true
+          }
+        },
+        "overlay_invariants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["overlay_type", "required_regions", "rule_ids"],
+            "properties": {
+              "overlay_type": {"type": "string", "minLength": 1},
+              "required_regions": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+              "rule_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

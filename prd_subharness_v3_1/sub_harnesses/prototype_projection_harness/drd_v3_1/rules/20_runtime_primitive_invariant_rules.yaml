@@ -1,0 +1,175 @@
+prototype_runtime_primitive_invariant_rules:
+  id: RUNTIME_PRIMITIVE_INVARIANTS_V3_2_3
+  id_zh: pyruntime 显化规则与通用 Primitive Invariant v3.2.3
+  version: "3.2.3"
+  mode: DRD_MODE
+  purpose_zh: >
+    将 Python runtime 中可执行的通用规则显化为 rule_id，并把输入法/软件键盘、
+    嵌入功能面板、系统交接 overlay、真实视觉 gate 的约束投射到 generator、
+    writer、validator、gate 和 loop。生产 runtime 只能执行这些显化规则，不能藏项目业务分支。
+
+  rules:
+    - rule_id: MODE_DED_001
+      rule_name_zh: 同一物理 slot 内 mode 必须互斥
+      deduction_zh: >
+        如果两个 region 共享同一个 physical_slot，且一个代表基础输入 mode、
+        另一个代表功能面板 mode，则同一 scene 只能有一个 region active。
+      required_outputs:
+        - surface_mode_contract.mutual_exclusion_groups[]
+        - prototype_playback_contract.page_states[].active_mode_id
+        - figma_layout_invariant_audit.mode_exclusion_checks[]
+      failure_class: FC-SURFACE-MODE-MUTUAL-EXCLUSION
+
+    - rule_id: MODE_DED_002
+      rule_name_zh: mode 显隐必须落入 contract
+      deduction_zh: >
+        每个可见 scene 必须声明 active_mode_id、visible_regions 和 hidden_regions；
+        writer 不得自行决定哪些 region 显示。
+      required_outputs:
+        - surface_mode_contract.scene_mode_assignments[]
+        - prototype_playback_contract.pages[].default_active_mode_id
+        - prototype_playback_contract.page_states[].visible_regions
+        - prototype_playback_contract.page_states[].hidden_regions
+      failure_class: FC-SURFACE-MODE-MISSING
+
+    - rule_id: MODE_DED_003
+      rule_name_zh: mode override 必须来自源或模型
+      deduction_zh: >
+        如果同一物理 slot 需要同时显示互斥 region，必须存在 PRD/source atom 或模型产物中的 override 证据。
+      required_outputs:
+        - surface_mode_contract.override_allowances[]
+        - runtime_rule_execution_trace.executed_rules[]
+      failure_class: FC-SURFACE-MODE-MUTUAL-EXCLUSION
+
+    - rule_id: LAYOUT_DED_001
+      rule_name_zh: 软件键盘或 IME 面板默认底部锚定
+      deduction_zh: >
+        当承载面属于 software keyboard、IME panel 或 embedded keyboard panel，
+        键盘/功能面板所在 keyboard_area 必须位于 phone_shell 下半区，并贴近底部。
+      required_outputs:
+        - layout_invariant_contract.layout_invariants[]
+        - figma_layout_invariant_audit.layout_checks[]
+      failure_class: FC-LAYOUT-INVARIANT-BROKEN
+
+    - rule_id: LAYOUT_DED_002
+      rule_name_zh: 宿主内容、输入栏、键盘区必须有上下层级
+      deduction_zh: >
+        host content 应位于 input bar 上方，keyboard area 应位于 input bar 下方；
+        writer 不得把键盘面板画成普通中部模块。
+      required_outputs:
+        - layout_invariant_contract.relative_position_rules[]
+        - figma_layout_invariant_audit.relative_position_checks[]
+      failure_class: FC-LAYOUT-INVARIANT-BROKEN
+
+    - rule_id: LAYOUT_DED_003
+      rule_name_zh: 系统交接面必须以 overlay/handoff 形态表达
+      deduction_zh: >
+        系统选择器、授权、SDK、外部能力交接等不得提升为普通业务页面；
+        需要 header/content-or-grid/action/feedback 四区。
+      required_outputs:
+        - layout_invariant_contract.overlay_invariants[]
+        - prototype_playback_contract.overlays[]
+        - figma_layout_invariant_audit.overlay_checks[]
+      failure_class: FC-FIGMA-HANDOFF-OVERLAY-MISSING
+
+    - rule_id: LAYOUT_DED_004
+      rule_name_zh: 视觉坐标回读必须验证 invariant
+      deduction_zh: >
+        写后 gate 不能只检查节点名或数量；必须通过 Figma live bbox/readback 验证底部锚定、互斥和 overlay 形态。
+      required_outputs:
+        - figma_layout_invariant_audit
+        - figma_visual_reverse_inference.prototype_shape
+        - figma_stage_alignment_audit
+      failure_class: FC-FIGMA-LAYOUT-INVARIANT-FAILED
+
+    - rule_id: RUNTIME_RULE_DED_001
+      rule_name_zh: pyruntime 只能执行显化规则
+      deduction_zh: >
+        Python runtime handler 必须登记在 pyruntime_rule_registry.yaml，
+        运行时必须写 runtime_rule_execution_trace.yaml；artifact 中出现的 rule_id 必须能回查执行记录。
+      required_outputs:
+        - pyruntime_rule_registry
+        - runtime_rule_execution_trace
+        - rule_runtime_projection_report
+      failure_class: FC-PYRUNTIME-HIDDEN-RULE
+
+    - rule_id: GENERALITY_DED_001
+      rule_name_zh: production runtime 禁止项目专有 ID 白名单
+      deduction_zh: >
+        生产 Python/writer runtime 不得用当前项目 ID 前缀、状态 ID 或交互 ID 白名单决定页面、链路或视觉结构。
+        这些内容只能来自 PRD source atoms 或 run root 生成物。
+      required_outputs:
+        - runtime_rule_execution_trace.executed_rules[]
+        - validate-no-project-specific-production-rule
+      failure_class: FC-PRODUCTION-HARDCODE
+
+    - rule_id: GENERALITY_DED_002
+      rule_name_zh: 边界值来自通用 min/max 推导
+      deduction_zh: >
+        如果 source atom 明确 min/max 或少于/多于/至少/最多约束，
+        运行时只能按通用 boundary-value 算法生成 min-1/min/max/max+1。
+      required_outputs:
+        - prototype_source_brief.coverage_expectations[]
+        - prototype_playback_contract.source_alignment_requirements[]
+      failure_class: FC-PRODUCTION-HARDCODE
+
+    - rule_id: GENERALITY_DED_003
+      rule_name_zh: 页面归属来自 source/model 而非项目枚举
+      deduction_zh: >
+        screen/page ownership 必须由 source atoms、screen role、model surface ownership 和 action semantics 推导；
+        不允许 hardcode topic/intimacy/relation 等项目枚举。
+      required_outputs:
+        - model_surface_ownership
+        - prototype_playback_contract.pages[]
+      failure_class: FC-PRODUCTION-HARDCODE
+
+    - rule_id: GENERALITY_DED_004
+      rule_name_zh: 状态跳转来自模型状态机和 operation chain
+      deduction_zh: >
+        interaction target 和 reaction target 必须来自 model state machine、operation chain 或 source ordering；
+        不允许 project-specific state map。
+      required_outputs:
+        - user_operation_chain
+        - prototype_playback_contract.interaction_flows[]
+      failure_class: FC-PRODUCTION-HARDCODE
+
+    - rule_id: GENERALITY_DED_005
+      rule_name_zh: writer 不补业务文案
+      deduction_zh: >
+        Figma writer 可以画通用 primitive，但不得写入项目业务文案；
+        业务文案必须来自 playback contract 的 visible_text/source_alignment_requirements。
+      required_outputs:
+        - figma_playback_writer_runtime
+        - figma_visual_reverse_inference
+      failure_class: FC-PRODUCTION-HARDCODE
+
+    - rule_id: GENERALITY_DED_006
+      rule_name_zh: 泛化正例不得带当前项目残留
+      deduction_zh: >
+        使用非图片、非当前项目 PRD 时，生成物和 Figma 画布不得出现当前项目专属词或边界值。
+      required_outputs:
+        - validate-no-project-specific-production-rule
+        - figma_source_alignment_audit
+      failure_class: FC-PRODUCTION-HARDCODE
+
+    - rule_id: VISUAL_GATE_DED_001
+      rule_name_zh: live gate 必须从真实画布反推语义与交互
+      deduction_zh: >
+        gate 必须消费 Figma live readback、bbox、截图或截图计划，反推页面、承载面、active mode、
+        控件、reaction、反馈位置和系统交接，再与 PRD/source atoms、模型产物和 playback contract 对照。
+      required_outputs:
+        - figma_visual_reverse_inference
+        - figma_layout_invariant_audit
+        - figma_stage_alignment_audit
+      failure_class: FC-FIGMA-STAGE-ALIGNMENT-MISMATCH
+
+    - rule_id: VISUAL_GATE_DED_002
+      rule_name_zh: loop 失败必须指向 artifact、rule_id、handler
+      deduction_zh: >
+        visual gate 失败时 loop evidence 必须说明上游 primary artifact、相关 rule_id、
+        runtime handler 和需要重建的 run root projection artifacts。
+      required_outputs:
+        - loop_finding.yaml
+        - repair_plan.yaml
+        - loop_manifest.yaml
+      failure_class: FC-FIGMA-LAYOUT-INVARIANT-FAILED
